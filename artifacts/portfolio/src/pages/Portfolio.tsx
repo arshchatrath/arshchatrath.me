@@ -1,7 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Link } from "wouter";
+
+import arshMicCutout from "@assets/extracted/img-037.png";
+import arshPortrait from "@assets/extracted/img-017.png";
+import arshPresenting from "@assets/extracted/img-020.png";
+import arshSideProfile from "@assets/extracted/img-057.png";
+import arshCollage from "@assets/extracted/img-062.jpg";
+import arshPodium from "@assets/extracted/img-013.jpg";
+import botanical from "@assets/extracted/img-001.png";
+import butterfly from "@assets/extracted/img-005.png";
+import stampFrame from "@assets/extracted/img-009.png";
+import magnifyingGlass from "@assets/extracted/img-030.png";
+import thinkingMonkey from "@assets/extracted/img-040.png";
+import pointingMonkey from "@assets/extracted/img-045.png";
+import laptopHands from "@assets/extracted/img-025.png";
+import tornNewspaper from "@assets/extracted/img-023.png";
+import universityBuilding from "@assets/extracted/img-034.jpg";
 
 // Ensure GSAP registers the plugin
 gsap.registerPlugin(ScrollTrigger);
@@ -233,20 +248,43 @@ export default function Portfolio() {
       </a>
 
       {/* 1. Hero */}
-      <section className="h-screen w-full flex flex-col items-center justify-center relative px-6">
-        <div className="text-center z-10 flex flex-col items-center">
-          <h1 className="hero-name text-[12vw] leading-none font-bold uppercase tracking-tighter mix-blend-difference z-20">
+      <section className="h-screen w-full flex flex-col items-center justify-center relative px-6 overflow-hidden">
+        {/* Botanical decoration top-left */}
+        <img
+          src={botanical}
+          alt=""
+          className="absolute -top-16 -left-16 w-80 opacity-15 pointer-events-none select-none"
+          style={{ filter: 'invert(1)' }}
+        />
+
+        {/* Arsh halftone mic cutout — large, right side */}
+        <img
+          src={arshMicCutout}
+          alt="Arsh Chatrath"
+          className="absolute bottom-0 right-0 h-[85vh] object-contain object-bottom opacity-60 pointer-events-none select-none"
+          style={{ mixBlendMode: 'luminosity' }}
+        />
+
+        {/* Butterfly decoration */}
+        <img
+          src={butterfly}
+          alt=""
+          className="absolute top-24 right-8 w-24 opacity-20 pointer-events-none select-none rotate-12"
+        />
+
+        <div className="text-center z-10 flex flex-col items-center relative">
+          <h1 className="hero-name text-[12vw] leading-none font-bold uppercase tracking-tighter z-20">
             {'ARSH CHATRATH'.split('').map((char, i) => (
-              char === ' ' 
-              ? <span key={i} className="char-wrap w-[4vw]">&nbsp;</span>
-              : <span key={i} className="char-wrap"><span className="char">{char}</span></span>
+              char === ' '
+              ? <span key={i} className="char-wrap inline-block w-[4vw]">&nbsp;</span>
+              : <span key={i} className="char-wrap inline-block overflow-hidden"><span className="char inline-block">{char}</span></span>
             ))}
           </h1>
-          
+
           <div className="hero-tagline mt-6 inline-block border-2 border-primary text-primary px-6 py-2 rounded-full font-mono text-xl uppercase tracking-widest font-semibold bg-background/50 backdrop-blur-sm">
             Creative Builder
           </div>
-          
+
           <p className="hero-sub mt-8 text-muted-foreground font-mono text-sm tracking-widest uppercase">
             CS Student · Product Builder · Thapar University
           </p>
@@ -292,28 +330,70 @@ export default function Portfolio() {
             </div>
           </div>
           
-          <div className="relative aspect-square max-w-md mx-auto w-full group">
-            <div className="absolute inset-0 bg-secondary/20 transform rotate-6 transition-transform group-hover:rotate-12 duration-500 rounded-lg"></div>
-            <div className="absolute inset-0 bg-card border border-border p-4 flex flex-col transform -rotate-3 transition-transform group-hover:rotate-0 duration-500 rounded-lg shadow-2xl">
-              <div className="flex-1 bg-muted flex items-center justify-center rounded overflow-hidden relative">
-                 {/* Visual placeholder for photo */}
-                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-luminosity grayscale"></div>
-                 <span className="font-mono text-muted-foreground/50 z-10">[ SYSTEM OVERRIDE ]</span>
+          <div className="relative flex flex-col items-center gap-8">
+            {/* Main portrait in stamp frame */}
+            <div className="relative group">
+              <img
+                src={stampFrame}
+                alt=""
+                className="absolute inset-0 w-full h-full object-fill pointer-events-none z-10 scale-110"
+                style={{ filter: 'invert(1) brightness(0.15)' }}
+              />
+              <div className="relative w-72 h-80 mx-auto overflow-hidden bg-muted transform -rotate-2 transition-transform group-hover:rotate-0 duration-500">
+                <img
+                  src={arshPortrait}
+                  alt="Arsh Chatrath"
+                  className="w-full h-full object-cover object-top grayscale"
+                />
               </div>
-              <div className="pt-4 pb-2 text-center font-mono text-sm">
-                SYSTEMS &gt; CHAOS
-              </div>
+              <p className="text-center font-mono text-xs mt-3 tracking-widest opacity-50">ARSH CHATRATH — BUILDER</p>
             </div>
+
+            {/* University building */}
+            <div className="relative w-full max-w-xs">
+              <img
+                src={universityBuilding}
+                alt="Thapar University"
+                className="w-full grayscale opacity-50 rounded"
+              />
+              <span className="absolute bottom-2 right-2 font-mono text-xs bg-background/80 px-2 py-1 text-muted-foreground">THAPAR UNIVERSITY, PATIALA</span>
+            </div>
+
+            {/* Butterfly decoration */}
+            <img src={butterfly} alt="" className="absolute -bottom-8 -right-8 w-20 opacity-30 pointer-events-none rotate-45" />
           </div>
         </div>
       </section>
 
       {/* 3. Philosophy */}
       <section className="philosophy-section w-full py-32 px-6 md:px-12 bg-card relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+        {/* Torn newspaper background decoration */}
+        <img
+          src={tornNewspaper}
+          alt=""
+          className="absolute top-8 right-0 w-96 opacity-10 pointer-events-none select-none"
+          style={{ mixBlendMode: 'luminosity' }}
+        />
+        {/* Thinking monkey — sits near the questions */}
+        <img
+          src={thinkingMonkey}
+          alt=""
+          className="absolute bottom-48 right-8 w-48 opacity-25 pointer-events-none select-none"
+          style={{ mixBlendMode: 'luminosity' }}
+        />
+
+        <div className="max-w-7xl mx-auto relative">
           <h2 className="section-header text-5xl md:text-7xl font-bold uppercase mb-24 max-w-4xl tracking-tighter leading-tight">
             What does it take to be a <span className="text-primary">great PM?</span>
           </h2>
+
+          {/* Magnifying glass illustration */}
+          <img
+            src={magnifyingGlass}
+            alt=""
+            className="absolute top-0 right-0 w-64 opacity-30 pointer-events-none select-none hidden lg:block"
+            style={{ mixBlendMode: 'luminosity' }}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-32">
             {[
@@ -360,6 +440,14 @@ export default function Portfolio() {
 
       {/* 4. Case Studies */}
       <section className="case-section h-screen w-full flex flex-col justify-center bg-background overflow-hidden relative">
+        {/* Laptop hands decoration */}
+        <img
+          src={laptopHands}
+          alt=""
+          className="absolute bottom-0 left-0 w-64 opacity-10 pointer-events-none select-none"
+          style={{ mixBlendMode: 'luminosity' }}
+        />
+
         <div className="px-6 md:px-12 mb-12 shrink-0">
           <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter">Proof, Not Promises</h2>
         </div>
@@ -373,7 +461,9 @@ export default function Portfolio() {
               role: "Product & Operations Head",
               problem: "Low event engagement, declining user participation",
               approach: "User research, A/B tested 3 engagement strategies, prioritized features based on data",
-              result: "60% increase in participation | Scaled to 1000+ active users"
+              result: "60% increase in participation | Scaled to 1000+ active users",
+              img: arshPresenting,
+              imgAlt: "Arsh presenting Talkeys at BizQuiz"
             },
             {
               id: "02",
@@ -382,7 +472,9 @@ export default function Portfolio() {
               role: "Product Builder",
               problem: "Students relied on fragmented hostel groups, couldn't reach whole college",
               approach: "Identified pain point, built platform for posting projects with tech requirements",
-              result: "Transformed WhatsApp chaos into centralized, systematic team formation"
+              result: "Transformed WhatsApp chaos into centralized, systematic team formation",
+              img: arshPodium,
+              imgAlt: "Arsh at podium"
             },
             {
               id: "03",
@@ -391,45 +483,61 @@ export default function Portfolio() {
               role: "VIP Campus Partner",
               problem: "Drive product adoption in saturated student market",
               approach: "Targeted CS students and research-focused users, designed campus activations",
-              result: "Engaged 1500+ students | Top 25 Partners nationwide"
+              result: "Engaged 1500+ students | Top 25 Partners nationwide",
+              img: null,
+              imgAlt: ""
             }
           ].map((study) => (
-            <div 
+            <div
               key={study.id}
-              className="perspective-container shrink-0 w-[85vw] md:w-[600px] h-[60vh] max-h-[600px]"
+              className="perspective-container shrink-0 w-[85vw] md:w-[680px] h-[65vh] max-h-[640px]"
               data-interactive="true"
             >
-              <div 
-                className="tilt-card w-full h-full bg-card border border-border p-8 md:p-12 flex flex-col relative overflow-hidden group"
+              <div
+                className="tilt-card w-full h-full bg-card border border-border flex flex-col relative overflow-hidden group"
                 onMouseMove={handleCardMouseMove}
                 onMouseLeave={handleCardMouseLeave}
               >
-                <div className="absolute top-0 right-0 p-8 text-8xl font-bold text-muted opacity-20 group-hover:text-primary group-hover:opacity-10 transition-colors pointer-events-none">
-                  {study.id}
-                </div>
-                
-                <div className="mb-8">
-                  <span className="inline-block px-3 py-1 border border-border text-xs font-mono uppercase tracking-wider mb-4 rounded-full bg-background">
-                    {study.company}
-                  </span>
-                  <h3 className="text-3xl md:text-4xl font-bold uppercase tracking-tight">{study.title}</h3>
-                  <p className="text-secondary font-mono text-sm mt-2">{study.role}</p>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-center space-y-6">
-                  <div>
-                    <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Problem</h4>
-                    <p className="text-lg">{study.problem}</p>
+                {/* Card image strip */}
+                {study.img && (
+                  <div className="h-40 w-full overflow-hidden shrink-0 relative">
+                    <img
+                      src={study.img}
+                      alt={study.imgAlt}
+                      className="w-full h-full object-cover object-center grayscale opacity-60 group-hover:opacity-80 transition-opacity duration-500 scale-105 group-hover:scale-100 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
                   </div>
-                  <div>
-                    <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Approach</h4>
-                    <p className="text-lg">{study.approach}</p>
-                  </div>
-                </div>
+                )}
 
-                <div className="mt-8 pt-6 border-t border-border">
-                  <h4 className="font-mono text-xs text-primary uppercase tracking-widest mb-2">Result</h4>
-                  <p className="text-xl font-bold">{study.result}</p>
+                <div className={`flex flex-col flex-1 p-8 md:p-10 ${!study.img ? 'pt-8' : ''}`}>
+                  <div className="absolute top-0 right-0 p-6 text-8xl font-bold text-muted opacity-20 group-hover:text-primary group-hover:opacity-10 transition-colors pointer-events-none">
+                    {study.id}
+                  </div>
+
+                  <div className="mb-6">
+                    <span className="inline-block px-3 py-1 border border-border text-xs font-mono uppercase tracking-wider mb-3 rounded-full bg-background">
+                      {study.company}
+                    </span>
+                    <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight">{study.title}</h3>
+                    <p className="text-secondary font-mono text-sm mt-2">{study.role}</p>
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-center space-y-4">
+                    <div>
+                      <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Problem</h4>
+                      <p className="text-base leading-relaxed">{study.problem}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Approach</h4>
+                      <p className="text-base leading-relaxed">{study.approach}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <h4 className="font-mono text-xs text-primary uppercase tracking-widest mb-2">Result</h4>
+                    <p className="text-lg font-bold">{study.result}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -457,39 +565,71 @@ export default function Portfolio() {
       </section>
 
       {/* 6. Achievements */}
-      <section className="wins-section py-32 w-full px-6 md:px-12 max-w-5xl mx-auto">
-        <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter mb-16">The Wins</h2>
-        
-        <div className="space-y-4">
-          {[
-            { rank: "1ST", title: "IIT Roorkee National Competition" },
-            { rank: "TOP 3", title: "American Express Competition" },
-            { rank: "SELECT", title: "Amazon ML School" },
-            { rank: "TOP 25", title: "Perplexity AI Campus Partners Nationwide" },
-            { rank: "10K+", title: "Helix Event Registrations" },
-            { rank: "60%", title: "Talkeys Growth | 3000+ Users" }
-          ].map((win, i) => (
-            <div key={i} className="win-item group flex flex-col md:flex-row md:items-center justify-between border-b border-border pb-4 hover:border-primary transition-colors">
-              <h3 className="text-2xl md:text-4xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors">{win.title}</h3>
-              <span className="font-mono text-xl md:text-2xl text-secondary mt-2 md:mt-0">{win.rank}</span>
-            </div>
-          ))}
+      <section className="wins-section py-32 w-full px-6 md:px-12 relative overflow-hidden">
+        <div className="max-w-5xl mx-auto relative">
+          {/* Arsh side profile — large decorative cutout */}
+          <img
+            src={arshSideProfile}
+            alt=""
+            className="absolute -right-16 top-0 h-full max-h-[600px] object-contain object-top opacity-20 pointer-events-none select-none"
+            style={{ mixBlendMode: 'luminosity' }}
+          />
+          {/* Pointing monkey for #1 achievement */}
+          <img
+            src={pointingMonkey}
+            alt=""
+            className="absolute -left-8 bottom-16 w-32 opacity-20 pointer-events-none select-none"
+            style={{ mixBlendMode: 'luminosity' }}
+          />
+
+          <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter mb-16">The Wins</h2>
+
+          <div className="space-y-4">
+            {[
+              { rank: "1ST", title: "IIT Roorkee National Competition" },
+              { rank: "TOP 3", title: "American Express Competition" },
+              { rank: "SELECT", title: "Amazon ML School" },
+              { rank: "TOP 25", title: "Perplexity AI Campus Partners Nationwide" },
+              { rank: "10K+", title: "Helix Event Registrations" },
+              { rank: "60%", title: "Talkeys Growth | 3000+ Users" }
+            ].map((win, i) => (
+              <div key={i} className="win-item group flex flex-col md:flex-row md:items-center justify-between border-b border-border pb-4 hover:border-primary transition-colors">
+                <h3 className="text-2xl md:text-4xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors">{win.title}</h3>
+                <span className="font-mono text-xl md:text-2xl text-secondary mt-2 md:mt-0">{win.rank}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* 7. Contact CTA */}
-      <section id="contact" className="h-screen w-full flex flex-col items-center justify-center bg-card relative px-6 text-center">
-        <h2 className="text-4xl md:text-6xl font-mono uppercase tracking-widest text-muted-foreground mb-4">Let's Build</h2>
-        <h1 className="text-[15vw] leading-none font-bold uppercase tracking-tighter text-primary mb-12 hover:scale-105 transition-transform duration-500">
+      <section id="contact" className="h-screen w-full flex flex-col items-center justify-center bg-card relative px-6 text-center overflow-hidden">
+        {/* Arsh halftone collage — left side atmospheric */}
+        <img
+          src={arshCollage}
+          alt=""
+          className="absolute left-0 bottom-0 h-[70vh] object-contain object-bottom opacity-20 pointer-events-none select-none"
+          style={{ mixBlendMode: 'luminosity' }}
+        />
+        {/* Botanical — top right */}
+        <img
+          src={botanical}
+          alt=""
+          className="absolute -top-8 -right-8 w-64 opacity-10 pointer-events-none select-none"
+          style={{ filter: 'invert(1)' }}
+        />
+
+        <h2 className="text-4xl md:text-6xl font-mono uppercase tracking-widest text-muted-foreground mb-4 relative z-10">Let's Build</h2>
+        <h1 className="text-[15vw] leading-none font-bold uppercase tracking-tighter text-primary mb-12 hover:scale-105 transition-transform duration-500 relative z-10">
           Hire Me
         </h1>
-        
-        <div className="space-y-6 font-mono text-xl md:text-2xl">
+
+        <div className="space-y-6 font-mono text-xl md:text-2xl relative z-10">
           <a href="tel:+919888230798" className="block hover:text-primary transition-colors" data-interactive="true">+91 98882 30798</a>
           <a href="mailto:achatrath_be23@thapar.edu" className="block hover:text-primary transition-colors" data-interactive="true">achatrath_be23@thapar.edu</a>
         </div>
-        
-        <div className="mt-16 flex gap-6">
+
+        <div className="mt-16 flex gap-6 relative z-10">
           <a href="mailto:achatrath_be23@thapar.edu" className="border-2 border-foreground px-8 py-4 font-mono font-bold uppercase hover:bg-foreground hover:text-background transition-colors" data-interactive="true">
             Email Me
           </a>
@@ -498,7 +638,7 @@ export default function Portfolio() {
           </a>
         </div>
 
-        <footer className="absolute bottom-8 font-mono text-sm text-muted-foreground">
+        <footer className="absolute bottom-8 font-mono text-sm text-muted-foreground z-10">
           © 2026 Arsh Chatrath — Built with intent
         </footer>
       </section>

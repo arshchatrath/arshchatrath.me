@@ -58,20 +58,34 @@ export default function Portfolio() {
     if (!containerRef.current) return;
     const ctx = gsap.context(() => {
       // 1. Hero Animations
-      const chars = document.querySelectorAll('.hero-name .char');
-      gsap.fromTo(chars, 
-        { y: '100%' },
-        { y: '0%', duration: 1, stagger: 0.08, ease: "power4.out", delay: 0.2 }
+      gsap.fromTo('.hero-stamp',
+        { x: -80, opacity: 0, rotate: -6 },
+        { x: 0, opacity: 1, rotate: -2, duration: 1, ease: "power4.out", delay: 0.2 }
       );
 
-      gsap.fromTo('.hero-tagline',
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1, delay: 1.5 }
+      gsap.fromTo('.hero-pov',
+        { x: 40, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.8, delay: 0.6 }
       );
-      
-      gsap.fromTo('.hero-sub',
+
+      gsap.fromTo('.hero-eyebrow',
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, delay: 0.9 }
+      );
+
+      gsap.fromTo('.hero-extraordinary',
+        { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
+        { clipPath: 'inset(0 0% 0 0)', duration: 1, ease: "power3.out", delay: 1.2 }
+      );
+
+      gsap.fromTo('.hero-signature',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, delay: 1.8 }
+      );
+
+      gsap.fromTo('.hero-notes',
         { opacity: 0 },
-        { opacity: 1, duration: 1, delay: 2 }
+        { opacity: 1, duration: 1.2, delay: 2.2 }
       );
 
       // Section headers reveal
@@ -248,51 +262,106 @@ export default function Portfolio() {
       </a>
 
       {/* 1. Hero */}
-      <section className="h-screen w-full flex flex-col items-center justify-center relative px-6 overflow-hidden">
-        {/* Botanical decoration top-left */}
+      <section className="h-screen w-full relative overflow-hidden flex items-center" data-testid="section-hero">
+
+        {/* Botanical — top-left, large and atmospheric */}
         <img
           src={botanical}
           alt=""
-          className="absolute -top-16 -left-16 w-80 opacity-15 pointer-events-none select-none"
-          style={{ filter: 'invert(1)' }}
+          className="absolute -top-10 -left-10 w-80 md:w-96 opacity-40 pointer-events-none select-none z-10"
+          style={{ filter: 'brightness(1.4) contrast(0.7)' }}
         />
 
-        {/* Arsh halftone mic cutout — large, right side */}
-        <img
-          src={arshMicCutout}
-          alt="Arsh Chatrath"
-          className="absolute bottom-0 right-0 h-[85vh] object-contain object-bottom opacity-60 pointer-events-none select-none"
-          style={{ mixBlendMode: 'luminosity' }}
-        />
+        {/* Butterfly top-left cluster */}
+        <img src={butterfly} alt="" className="absolute top-20 left-56 w-12 opacity-50 pointer-events-none select-none z-10 -rotate-12" />
+        <img src={butterfly} alt="" className="absolute top-10 left-72 w-8 opacity-35 pointer-events-none select-none z-10 rotate-6" />
 
-        {/* Butterfly decoration */}
-        <img
-          src={butterfly}
-          alt=""
-          className="absolute top-24 right-8 w-24 opacity-20 pointer-events-none select-none rotate-12"
-        />
+        {/* Butterfly bottom-right */}
+        <img src={butterfly} alt="" className="absolute bottom-24 right-10 w-16 opacity-45 pointer-events-none select-none z-10 rotate-45" />
 
-        <div className="text-center z-10 flex flex-col items-center relative">
-          <h1 className="hero-name text-[12vw] leading-none font-bold uppercase tracking-tighter z-20">
-            {'ARSH CHATRATH'.split('').map((char, i) => (
-              char === ' '
-              ? <span key={i} className="char-wrap inline-block w-[4vw]">&nbsp;</span>
-              : <span key={i} className="char-wrap inline-block overflow-hidden"><span className="char inline-block">{char}</span></span>
-            ))}
-          </h1>
+        {/* POV quote — top right */}
+        <p className="hero-pov absolute top-8 right-10 font-mono text-sm text-primary italic tracking-wide z-20 opacity-0">
+          POV: "If i pitched myself in shark tank"
+        </p>
 
-          <div className="hero-tagline mt-6 inline-block border-2 border-primary text-primary px-6 py-2 rounded-full font-mono text-xl uppercase tracking-widest font-semibold bg-background/50 backdrop-blur-sm">
-            Creative Builder
+        {/* Main layout: stamp photo left + headline right */}
+        <div className="relative z-20 w-full h-full flex items-center px-8 md:px-14 lg:px-20 gap-10 md:gap-16 lg:gap-24">
+
+          {/* LEFT: Stamp-framed photo */}
+          <div
+            className="hero-stamp shrink-0 opacity-0"
+            style={{ filter: 'drop-shadow(6px 16px 40px rgba(0,0,0,0.8))' }}
+          >
+            {/* Outer wrapper — creates the perforated stamp edge using mask */}
+            <div
+              className="bg-[#ede8dc] p-3 pb-7 relative"
+              style={{
+                WebkitMaskImage: `
+                  radial-gradient(circle at 50% 0,    transparent 6px, black 7px) 0    0    / 14px 14px repeat-x,
+                  radial-gradient(circle at 50% 100%, transparent 6px, black 7px) 0    100% / 14px 14px repeat-x,
+                  radial-gradient(circle at 0   50%,  transparent 6px, black 7px) 0    0    / 14px 14px repeat-y,
+                  radial-gradient(circle at 100% 50%, transparent 6px, black 7px) 100% 0    / 14px 14px repeat-y,
+                  linear-gradient(black, black) 7px 7px / calc(100% - 14px) calc(100% - 14px) no-repeat
+                `,
+                WebkitMaskComposite: 'source-over',
+                maskImage: `
+                  radial-gradient(circle at 50% 0,    transparent 6px, black 7px) 0    0    / 14px 14px repeat-x,
+                  radial-gradient(circle at 50% 100%, transparent 6px, black 7px) 0    100% / 14px 14px repeat-x,
+                  radial-gradient(circle at 0   50%,  transparent 6px, black 7px) 0    0    / 14px 14px repeat-y,
+                  radial-gradient(circle at 100% 50%, transparent 6px, black 7px) 100% 0    / 14px 14px repeat-y,
+                  linear-gradient(black, black) 7px 7px / calc(100% - 14px) calc(100% - 14px) no-repeat
+                `,
+                maskComposite: 'add',
+              }}
+            >
+              <img
+                src={arshPodium}
+                alt="Arsh Chatrath"
+                className="w-44 md:w-52 lg:w-60 aspect-[3/4] object-cover object-top grayscale block"
+              />
+              <p className="text-center font-mono text-[9px] text-[#1a1a1a]/40 mt-2 tracking-[0.25em] uppercase">
+                Arsh Chatrath
+              </p>
+            </div>
           </div>
 
-          <p className="hero-sub mt-8 text-muted-foreground font-mono text-sm tracking-widest uppercase">
-            CS Student · Product Builder · Thapar University
+          {/* RIGHT: Headline */}
+          <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
+            <p className="hero-eyebrow font-sans text-base md:text-lg lg:text-xl font-light tracking-[0.3em] uppercase text-foreground/50 mb-2 opacity-0">
+              What makes me
+            </p>
+            <h1
+              className="hero-extraordinary font-sans font-bold uppercase leading-none tracking-tight text-primary whitespace-nowrap"
+              style={{ fontSize: 'clamp(2.2rem, 5.8vw, 7rem)', clipPath: 'inset(0 100% 0 0)' }}
+            >
+              EXTRAORDINARY?
+            </h1>
+          </div>
+        </div>
+
+        {/* Handwritten notes — bottom left, decorative */}
+        <div
+          className="hero-notes absolute bottom-16 left-8 md:left-14 lg:left-20 opacity-0 pointer-events-none select-none z-20"
+          style={{ transform: 'rotate(-2deg)' }}
+        >
+          <p style={{ fontFamily: 'Caveat, cursive' }} className="text-foreground/30 text-sm leading-relaxed">
+            building products that matter<br />
+            3000+ users · 60% growth<br />
+            turning chaos into systems
           </p>
         </div>
 
-        <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-50 animate-bounce">
+        {/* Signature — bottom right */}
+        <div className="hero-signature absolute bottom-12 right-10 z-20 opacity-0">
+          <span style={{ fontFamily: 'Caveat, cursive' }} className="text-2xl md:text-3xl text-primary/80 font-semibold tracking-wide">
+            by Arsh Chatrath
+          </span>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 animate-bounce z-20">
           <span className="font-mono text-xs tracking-widest mb-2" style={{ writingMode: 'vertical-rl' }}>SCROLL</span>
-          <div className="w-px h-12 bg-gradient-to-b from-primary to-transparent" />
+          <div className="w-px h-10 bg-gradient-to-b from-primary to-transparent" />
         </div>
       </section>
 

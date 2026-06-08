@@ -2,17 +2,17 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// ── Image mapping (extracted from PDF) ──────────────────────────────────────
-import arshCrossedArm   from "@assets/extracted/img-017.png";   // Arsh_Crossed_Arm.png
-import goldenTemple     from "@assets/extracted/img-063.png";   // Amritsar_golden_temple.png
-import thaparUniversity from "@assets/extracted/img-034.jpg";   // Thapar_university_patiala.png
-import monkeyThinking   from "@assets/extracted/img-040.png";   // Monkey_thinking.png
-import monkeyRealising  from "@assets/extracted/img-045.png";   // Monkey_realising.png
-import arshTalkeys      from "@assets/extracted/img-013.jpg";   // Arsh_presenting_talkeys.png
-import arshWithMic      from "@assets/extracted/img-029.jpg";   // Arsh_with_mic.png
-import arshHalftone     from "@assets/extracted/img-037.png";   // Arsh_smiling_with_mic_in_hand.png
-import arshAudience     from "@assets/extracted/img-062.jpg";   // Arsh_with_mic_in_audience.png
-import arshThumbsUp     from "@assets/extracted/img-057.png";   // Arsh_thumbs_up.png
+// ── Images (user-provided, transparent PNGs) ────────────────────────────────
+import arshCrossedArm   from "@imgs/Arsh Crossed Arm.png";
+import goldenTemple     from "@imgs/Amritsar golden temple.png";
+import thaparUniversity from "@imgs/Thapar university patiala.png";
+import monkeyThinking   from "@imgs/Monkey thinking.png";
+import monkeyRealising  from "@imgs/Monkey realising.png";
+import arshTalkeys      from "@imgs/Arsh presenting talkeys.png";
+import arshWithMic      from "@imgs/Arsh with mic.png";
+import arshHalftone     from "@imgs/Arsh smiling with mic in hand.png";
+import arshAudience     from "@imgs/Arsh with mic in audience.png";
+import arshThumbsUp     from "@imgs/Arsh thumbs up.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -339,7 +339,7 @@ export default function Portfolio() {
               className="bg-[#f5f0e8] p-4 pb-12 shadow-2xl"
               style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))" }}
             >
-              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-cover grayscale" />
+              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-contain" />
               <p className="text-center font-mono text-[10px] text-[#0a0a0a]/50 mt-4 tracking-[0.3em] uppercase">Arsh Chatrath</p>
             </div>
           </div>
@@ -497,7 +497,7 @@ export default function Portfolio() {
                 <img
                   src={card.img}
                   alt={card.title}
-                  className="w-full h-full object-cover object-top grayscale hover:grayscale-0 transition-all duration-500"
+                  className="w-full h-full object-contain object-center"
                 />
               </div>
 
@@ -624,13 +624,13 @@ export default function Portfolio() {
           className="parallax-left absolute left-0 bottom-0 h-[70vh] opacity-60 pointer-events-none select-none"
           style={{ transform: "rotate(-4deg)", transformOrigin: "bottom left" }}
         >
-          <img src={arshAudience} alt="" className="h-full w-auto object-cover grayscale" />
+          <img src={arshAudience} alt="" className="h-full w-auto object-contain" />
         </div>
         <div
           className="parallax-right absolute right-0 bottom-0 h-[65vh] opacity-60 pointer-events-none select-none"
           style={{ transform: "rotate(4deg)", transformOrigin: "bottom right" }}
         >
-          <img src={arshThumbsUp} alt="" className="h-full w-auto object-cover grayscale" />
+          <img src={arshThumbsUp} alt="" className="h-full w-auto object-contain" />
         </div>
 
         {/* Content */}

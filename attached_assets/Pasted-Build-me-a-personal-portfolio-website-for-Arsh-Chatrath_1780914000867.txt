@@ -1,0 +1,163 @@
+Build me a personal portfolio website for Arsh Chatrath. 
+All images are in the `assets/` folder with the exact filenames listed below.
+
+OVERALL AESTHETIC:
+- Dark background (#0a0a0a), cream/off-white text (#f5f0e8), teal accent (#00B4D8)
+- Gen Z editorial magazine — scrapbook collage energy but elevated and dark
+- Noise/grain CSS texture overlay across entire page
+- GSAP + ScrollTrigger for all scroll animations
+- Google Fonts — use Playfair Display for headings + Space Grotesk for body
+- Custom cursor dot that scales up on hover
+
+---
+
+SECTION 1 — HERO
+- Full screen, pure black background, no images
+- "ARSH CHATRATH" animates in letter by letter on load (each letter staggers in with slight Y offset)
+- After name completes: "Creative Builder" fades in as subtitle
+- Then these 3 lines stagger in one by one below:
+  → I find broken user experiences and fix them systematically
+  → Product & Operations @ Talkeys — 1000+ users, 60% growth  
+  → Top 15 nationally @ Perplexity · IIT Roorkee winner · AMEX Top 3
+- Minimal animated scroll indicator at bottom ("scroll ↓" or bouncing arrow)
+- No images, pure typography energy
+
+---
+
+SECTION 2 — HELLO I'M ARSH
+Layout: two columns, left text right image
+
+LEFT SIDE:
+- Large bold "HELLO I'M ARSH" heading
+- Italic subtitle: "Creative Builder"
+- Intro paragraph: "I find broken user experiences and fix them systematically. 
+  Campus partner @Perplexity & Product Head @Talkeys — 3000+ users, 60% growth. 
+  National competition winner (IIT Roorkee, AMEX, Amazon ML). 
+  I build products that transform chaos into systems."
+- Below that, 3 journey lines that reveal on scroll with stagger:
+  Started as: "Freshman with curiosity and ambition"
+  Turned into: "A builder who ships products and leads winning teams"
+  Currently: "Creating real-world impact through technology"
+
+RIGHT SIDE:
+- Use `Arsh_Crossed_Arm.png` — it already has a polaroid frame, display it as-is, 
+  slightly rotated (-3deg), drop shadow underneath
+
+JOURNEY MAP (full width, below the two columns):
+- A simple illustrated path: LEFT landmark → RIGHT landmark connected by dashed curved arrow
+- Left: `Amritsar_golden_temple.png` with label "Amritsar" below it
+- Right: `Thapar_university_patiala.png` with label "Patiala" below it
+- Dashed animated SVG arrow curves from left image to right image (draws in on scroll)
+- Both images sized ~200px tall, displayed with slight drop shadow
+
+---
+
+SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?
+Layout: LEFT image, RIGHT text (monkey on left, questions on right)
+
+- Section title at top: "What does it take to be a great PM?" — large bold
+- Subtitle: "I asked myself:" — in teal, italic
+- LEFT: `Monkey_thinking.png` — large, ~400px tall, no border, transparent bg blends into dark page
+- RIGHT: These 5 bullet questions, each animates in on scroll one by one with stagger:
+  • How do I know I'm solving the right problem?
+  • How do I balance user needs vs. business goals vs. technical feasibility?
+  • How to make decisions when there's no clear answer?
+  • How to measure if I'm actually creating impact?
+  • How do I lead without authority when I don't manage the team?
+
+---
+
+SECTION 4 — I REALIZED...
+Layout: LEFT text, RIGHT image (FLIPPED from section 3 — monkey on right now)
+
+- Title: "I Realized..." with a dashed animated arrow →
+- LEFT: These 4 realizations animate in on scroll:
+  • You balance priorities by being ruthlessly data-driven.
+  • You make decisions by forming hypotheses and testing them quickly.
+  • You measure impact through metrics that matter, not vanity metrics.
+  • You lead by building trust, being the expert, and aligning everyone around the user.
+- RIGHT: `Monkey_realising.png` — large, same sizing as section 3, blends into dark bg
+- Bold callout below (full width, centered, large text):
+  "THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS. AND HERE'S THE PROOF..."
+
+---
+
+SECTION 5 — PROOF, NOT PROMISES
+- Large section title: "PROOF, NOT PROMISES"
+- Horizontal scroll carousel — 3 cards side by side, drag/scroll sideways on desktop too
+- Each card has: image at top, then Problem / My Role / Approach / Result
+- 3D tilt effect on hover (CSS perspective transform)
+
+CARD 1 — TALKEYS COMMUNITY PLATFORM:
+  Image: `Arsh_presenting_talkeys.png` (already has polaroid frame — use as-is)
+  Problem: Low event engagement, declining user participation
+  My Role: Product & Operations Head — owned roadmap & execution
+  Approach: User research → A/B tested 3 engagement strategies → prioritized features by data
+  Result: 60% increase in participation | Scaled to 1000+ active users
+
+CARD 2 — CAPSTONE TEAM FINDER PORTAL:
+  Image: `Arsh_with_mic.png` (stamp-framed photo — use as-is)
+  Problem: Students struggled to find capstone teammates — fragmented WhatsApp chaos
+  My Role: Product Builder — identified gap, built end-to-end solution
+  Approach: Identified pain point → built platform for project posting with tech requirements
+  Result: Transformed chaotic WhatsApp groups into centralized team formation for entire college
+
+CARD 3 — PERPLEXITY AI CAMPUS GROWTH:
+  Image: `Arsh_smiling_with_mic_in_hand.png` (halftone cutout — use as-is)
+  Problem: Drive product adoption in saturated student market
+  My Role: VIP Campus Partner — growth & user acquisition
+  Approach: Segmented target users (CS + research students) → campus activations by need
+  Result: Engaged 1500+ students | Top 15 Partners nationwide
+
+---
+
+SECTION 6 — THE X-FACTOR
+Layout: LEFT Venn diagram, RIGHT photo of Arsh
+
+- Section title: "The X-Factor" centered at top
+
+LEFT SIDE — Venn diagram built in CSS/SVG:
+  Three overlapping semi-transparent circles, each animates in on scroll one by one:
+  Circle 1 (top-left): "TECHNICAL" — teal tint
+  Circle 2 (top-right): "PRODUCT" — grey tint  
+  Circle 3 (bottom-center): "LEADERSHIP" — dark teal tint
+  Circles overlap in center
+  From center overlap: a dashed animated line shoots RIGHT toward the photo
+
+RIGHT SIDE:
+  Use `Arsh_smiling_with_mic_in_hand.png` — large (~450px tall), no additional styling needed
+  (already halftone cutout, looks very classy)
+  The dashed arrow from the Venn center should point directly at this image
+  Subtle teal glow behind the image
+
+---
+
+SECTION 7 — HIRE ME
+- Full screen dark section
+- Large centered: "HIRE ME <3" — massive display text, bold
+- Contact info centered below with spacing:
+  +91 98882 30798
+  achatrath_be23@thapar.edu
+- Pulsing teal "Let's Talk →" button below contact
+- Background layout — scatter these images around the section as collage elements:
+  `Arsh_with_mic_in_audience.png` — large, left side, slightly rotated
+  `Arsh_thumbs_up.png` — right side, slightly rotated opposite direction
+  Both at reduced opacity (0.6) so "HIRE ME" text stays dominant
+- These images should have a subtle parallax (move slower than scroll)
+
+---
+
+ANIMATIONS SUMMARY:
+- Hero: letter-by-letter name stagger, then sequential line fade-ins
+- Section 2: scroll-triggered reveal for columns + SVG arrow draws itself on scroll
+- Sections 3 & 4: monkey image scales slightly in from side, questions stagger in
+- Section 5: horizontal drag scroll, 3D card tilt on hover
+- Section 6: Venn circles draw in one by one, dashed line animates to photo
+- Section 7: parallax on background images, pulse on CTA button
+- Global: all sections use GSAP ScrollTrigger fade+translateY reveals
+
+TECH STACK:
+- Single HTML file (HTML + CSS + JS)
+- GSAP + ScrollTrigger from CDN
+- Google Fonts: Playfair Display + Space Grotesk
+- No frameworks — pure HTML/CSS/JS, deployable instantly on Replit

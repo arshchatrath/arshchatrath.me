@@ -1,716 +1,679 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import arshMicCutout from "@assets/extracted/img-037.png";
-import arshPortrait from "@assets/extracted/img-017.png";
-import arshPresenting from "@assets/extracted/img-020.png";
-import arshSideProfile from "@assets/extracted/img-057.png";
-import arshCollage from "@assets/extracted/img-062.jpg";
-import arshPodium from "@assets/extracted/img-013.jpg";
-import botanical from "@assets/extracted/img-001.png";
-import butterfly from "@assets/extracted/img-005.png";
-import stampFrame from "@assets/extracted/img-009.png";
-import magnifyingGlass from "@assets/extracted/img-030.png";
-import thinkingMonkey from "@assets/extracted/img-040.png";
-import pointingMonkey from "@assets/extracted/img-045.png";
-import laptopHands from "@assets/extracted/img-025.png";
-import tornNewspaper from "@assets/extracted/img-023.png";
-import universityBuilding from "@assets/extracted/img-034.jpg";
+// ── Image mapping (extracted from PDF) ──────────────────────────────────────
+import arshCrossedArm   from "@assets/extracted/img-017.png";   // Arsh_Crossed_Arm.png
+import goldenTemple     from "@assets/extracted/img-063.png";   // Amritsar_golden_temple.png
+import thaparUniversity from "@assets/extracted/img-034.jpg";   // Thapar_university_patiala.png
+import monkeyThinking   from "@assets/extracted/img-040.png";   // Monkey_thinking.png
+import monkeyRealising  from "@assets/extracted/img-045.png";   // Monkey_realising.png
+import arshTalkeys      from "@assets/extracted/img-013.jpg";   // Arsh_presenting_talkeys.png
+import arshWithMic      from "@assets/extracted/img-029.jpg";   // Arsh_with_mic.png
+import arshHalftone     from "@assets/extracted/img-037.png";   // Arsh_smiling_with_mic_in_hand.png
+import arshAudience     from "@assets/extracted/img-062.jpg";   // Arsh_with_mic_in_audience.png
+import arshThumbsUp     from "@assets/extracted/img-057.png";   // Arsh_thumbs_up.png
 
-// Ensure GSAP registers the plugin
 gsap.registerPlugin(ScrollTrigger);
 
+// ── Static data ──────────────────────────────────────────────────────────────
+const HERO_NAME = "ARSH CHATRATH";
+const HERO_LINES = [
+  "I find broken user experiences and fix them systematically",
+  "Product & Operations @ Talkeys — 1000+ users, 60% growth",
+  "Top 15 nationally @ Perplexity · IIT Roorkee winner · AMEX Top 3",
+];
+const PM_QUESTIONS = [
+  "How do I know I'm solving the right problem?",
+  "How do I balance user needs vs. business goals vs. technical feasibility?",
+  "How to make decisions when there's no clear answer?",
+  "How to measure if I'm actually creating impact?",
+  "How do I lead without authority when I don't manage the team?",
+];
+const REALIZATIONS = [
+  "You balance priorities by being ruthlessly data-driven.",
+  "You make decisions by forming hypotheses and testing them quickly.",
+  "You measure impact through metrics that matter, not vanity metrics.",
+  "You lead by building trust, being the expert, and aligning everyone around the user.",
+];
+const CARDS = [
+  {
+    img: arshTalkeys,
+    title: "TALKEYS COMMUNITY PLATFORM",
+    problem: "Low event engagement, declining user participation",
+    role: "Product & Operations Head — owned roadmap & execution",
+    approach: "User research → A/B tested 3 engagement strategies → prioritized features by data",
+    result: "60% increase in participation | Scaled to 1000+ active users",
+  },
+  {
+    img: arshWithMic,
+    title: "CAPSTONE TEAM FINDER PORTAL",
+    problem: "Students struggled to find capstone teammates — fragmented WhatsApp chaos",
+    role: "Product Builder — identified gap, built end-to-end solution",
+    approach: "Identified pain point → built platform for project posting with tech requirements",
+    result: "Transformed chaotic WhatsApp groups into centralized team formation",
+  },
+  {
+    img: arshHalftone,
+    title: "PERPLEXITY AI CAMPUS GROWTH",
+    problem: "Drive product adoption in saturated student market",
+    role: "VIP Campus Partner — growth & user acquisition",
+    approach: "Segmented target users (CS + research students) → campus activations by need",
+    result: "Engaged 1500+ students | Top 15 Partners nationwide",
+  },
+];
+
+// ── 3D tilt helpers ──────────────────────────────────────────────────────────
+function attachTilt(el: HTMLElement) {
+  const onMove = (e: MouseEvent) => {
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    gsap.to(el, { rotationX: -y * 14, rotationY: x * 14, transformPerspective: 900, ease: "power1.out", duration: 0.25 });
+  };
+  const onLeave = () => gsap.to(el, { rotationX: 0, rotationY: 0, duration: 0.5, ease: "power3.out" });
+  el.addEventListener("mousemove", onMove as EventListener);
+  el.addEventListener("mouseleave", onLeave);
+  return () => {
+    el.removeEventListener("mousemove", onMove as EventListener);
+    el.removeEventListener("mouseleave", onLeave);
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const cursorRef = useRef<HTMLDivElement>(null);
-  
-  const [cursorPos, setCursorPos] = useState({ x: -100, y: -100 });
-  const [isHovering, setIsHovering] = useState(false);
+  const cursorRef    = useRef<HTMLDivElement>(null);
 
+  // Custom cursor
   useEffect(() => {
-    // Custom cursor logic
-    const moveCursor = (e: MouseEvent) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
+    const move = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        gsap.to(cursorRef.current, { x: e.clientX, y: e.clientY, duration: 0.12, ease: "power2.out" });
+      }
     };
-
-    const handleHoverStart = () => setIsHovering(true);
-    const handleHoverEnd = () => setIsHovering(false);
-
-    window.addEventListener("mousemove", moveCursor);
-
-    const interactiveElements = document.querySelectorAll('a, button, [data-interactive="true"]');
-    interactiveElements.forEach(el => {
-      el.addEventListener('mouseenter', handleHoverStart);
-      el.addEventListener('mouseleave', handleHoverEnd);
+    const grow = () => cursorRef.current && gsap.to(cursorRef.current, { scale: 2.5, duration: 0.2 });
+    const shrink = () => cursorRef.current && gsap.to(cursorRef.current, { scale: 1, duration: 0.2 });
+    window.addEventListener("mousemove", move);
+    document.querySelectorAll("a,button,[data-hover]").forEach(el => {
+      el.addEventListener("mouseenter", grow);
+      el.addEventListener("mouseleave", shrink);
     });
-
-    return () => {
-      window.removeEventListener("mousemove", moveCursor);
-      interactiveElements.forEach(el => {
-        el.removeEventListener('mouseenter', handleHoverStart);
-        el.removeEventListener('mouseleave', handleHoverEnd);
-      });
-    };
+    return () => window.removeEventListener("mousemove", move);
   }, []);
 
+  // All GSAP animations
   useEffect(() => {
     if (!containerRef.current) return;
     const ctx = gsap.context(() => {
-      // 1. Hero Animations
-      gsap.fromTo('.hero-stamp',
-        { x: -80, opacity: 0, rotate: -6 },
-        { x: 0, opacity: 1, rotate: -2, duration: 1, ease: "power4.out", delay: 0.2 }
-      );
 
-      gsap.fromTo('.hero-pov',
-        { x: 40, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.8, delay: 0.6 }
+      // ── SECTION 1: Hero ───────────────────────────────────────────────────
+      // Letter-by-letter name stagger
+      const chars = document.querySelectorAll<HTMLElement>(".hero-char");
+      gsap.fromTo(chars,
+        { y: "110%", opacity: 0 },
+        { y: "0%", opacity: 1, stagger: 0.045, duration: 0.7, ease: "power3.out", delay: 0.2 }
       );
-
-      gsap.fromTo('.hero-eyebrow',
-        { y: 24, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7, delay: 0.9 }
+      gsap.fromTo(".hero-subtitle",
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.8, delay: 1.4 }
       );
-
-      gsap.fromTo('.hero-extraordinary',
-        { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-        { clipPath: 'inset(0 0% 0 0)', duration: 1, ease: "power3.out", delay: 1.2 }
-      );
-
-      gsap.fromTo('.hero-signature',
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, delay: 1.8 }
-      );
-
-      gsap.fromTo('.hero-notes',
-        { opacity: 0 },
-        { opacity: 1, duration: 1.2, delay: 2.2 }
-      );
-
-      // Section headers reveal
-      const headers = document.querySelectorAll('.section-header');
-      headers.forEach(header => {
-        gsap.fromTo(header,
-          { clipPath: 'inset(100% 0 0 0)' },
-          { 
-            clipPath: 'inset(0% 0 0 0)', 
-            ease: "power3.out", 
-            scrollTrigger: {
-              trigger: header,
-              start: "top 80%",
-              toggleActions: "play none none none"
-            }
-          }
+      HERO_LINES.forEach((_, i) => {
+        gsap.fromTo(`.hero-line-${i}`,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, duration: 0.6, delay: 2 + i * 0.25 }
         );
       });
 
-      // About section bullets
-      const bullets = document.querySelectorAll('.about-bullet');
-      gsap.fromTo(bullets,
-        { opacity: 0, x: -20 },
-        { 
-          opacity: 1, 
-          x: 0, 
-          stagger: 0.1, 
-          scrollTrigger: {
-            trigger: '.about-section',
-            start: "top 70%",
-          }
-        }
+      // ── SECTION 2: Hello I'm Arsh ─────────────────────────────────────────
+      gsap.fromTo(".about-left",
+        { opacity: 0, x: -50 },
+        { opacity: 1, x: 0, duration: 0.9, scrollTrigger: { trigger: ".about-section", start: "top 70%" } }
       );
-
-      // Philosophy quotes
-      const quotes = document.querySelectorAll('.quote-card');
-      gsap.fromTo(quotes,
-        { opacity: 0, y: 50, rotation: -2 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          rotation: (i) => i % 2 === 0 ? 1 : -1,
-          stagger: 0.2, 
-          scrollTrigger: {
-            trigger: '.philosophy-section',
-            start: "top 70%",
-          }
-        }
+      gsap.fromTo(".about-right",
+        { opacity: 0, x: 50 },
+        { opacity: 1, x: 0, duration: 0.9, scrollTrigger: { trigger: ".about-section", start: "top 70%" } }
       );
-
-      const realizations = document.querySelectorAll('.realization-card');
-      gsap.fromTo(realizations,
-        { opacity: 0, x: -20 },
-        { 
-          opacity: 1, 
-          x: 0, 
-          stagger: 0.1, 
-          scrollTrigger: {
-            trigger: '.realizations-wrapper',
-            start: "top 70%",
-          }
-        }
-      );
-
-      // Case Studies Horizontal Scroll
-      const caseSection = document.querySelector('.case-section');
-      const caseWrapper = document.querySelector('.case-wrapper');
-      
-      if (caseSection && caseWrapper) {
-        // Calculate total scroll amount needed
-        const scrollAmount = caseWrapper.scrollWidth - window.innerWidth + 80; // 80 is roughly padding
-        
-        gsap.to(caseWrapper, {
-          x: -scrollAmount,
-          ease: "none",
-          scrollTrigger: {
-            trigger: caseSection,
-            start: "top top",
-            end: `+=${scrollAmount}`,
-            pin: true,
-            scrub: 1,
-            invalidateOnRefresh: true
-          }
+      document.querySelectorAll(".journey-line").forEach((el, i) => {
+        gsap.fromTo(el,
+          { opacity: 0, x: -30 },
+          { opacity: 1, x: 0, duration: 0.6, delay: i * 0.15,
+            scrollTrigger: { trigger: ".journey-lines", start: "top 80%" } }
+        );
+      });
+      // SVG draw-on-scroll
+      const path = document.querySelector<SVGPathElement>(".journey-path");
+      if (path) {
+        const len = path.getTotalLength();
+        gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+        gsap.to(path, {
+          strokeDashoffset: 0, ease: "none",
+          scrollTrigger: { trigger: ".journey-map", start: "top 75%", end: "bottom 60%", scrub: 1 }
         });
       }
 
-      // X-Factor Venn Diagram
-      const circles = document.querySelectorAll('.venn-circle');
-      gsap.fromTo(circles,
-        { scale: 0, opacity: 0 },
-        { 
-          scale: 1, 
-          opacity: 0.35, 
-          stagger: 0.3, 
-          ease: "back.out(1.7)",
-          scrollTrigger: {
-            trigger: '.venn-section',
-            start: "top 60%",
-          }
-        }
+      // ── SECTION 3: PM Questions ───────────────────────────────────────────
+      gsap.fromTo(".monkey-left",
+        { opacity: 0, x: -60, scale: 0.9 },
+        { opacity: 1, x: 0, scale: 1, duration: 1,
+          scrollTrigger: { trigger: ".pm-section", start: "top 70%" } }
+      );
+      document.querySelectorAll(".pm-question").forEach((el, i) => {
+        gsap.fromTo(el,
+          { opacity: 0, x: 30 },
+          { opacity: 1, x: 0, duration: 0.55, delay: i * 0.12,
+            scrollTrigger: { trigger: ".pm-section", start: "top 70%" } }
+        );
+      });
+
+      // ── SECTION 4: Realizations ───────────────────────────────────────────
+      gsap.fromTo(".monkey-right",
+        { opacity: 0, x: 60, scale: 0.9 },
+        { opacity: 1, x: 0, scale: 1, duration: 1,
+          scrollTrigger: { trigger: ".realize-section", start: "top 70%" } }
+      );
+      document.querySelectorAll(".realization").forEach((el, i) => {
+        gsap.fromTo(el,
+          { opacity: 0, x: -30 },
+          { opacity: 1, x: 0, duration: 0.55, delay: i * 0.12,
+            scrollTrigger: { trigger: ".realize-section", start: "top 70%" } }
+        );
+      });
+      gsap.fromTo(".proof-callout",
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.8,
+          scrollTrigger: { trigger: ".proof-callout", start: "top 80%" } }
       );
 
-      gsap.fromTo('.venn-label',
-        { opacity: 0, y: 10 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          stagger: 0.2, 
-          delay: 0.5,
-          scrollTrigger: {
-            trigger: '.venn-section',
-            start: "top 60%",
-          }
-        }
-      );
+      // ── SECTION 5: Cards ─────────────────────────────────────────────────
+      const cardEls = document.querySelectorAll<HTMLElement>(".case-card");
+      const cleanups = Array.from(cardEls).map(el => attachTilt(el));
+      return () => cleanups.forEach(fn => fn());
 
-      // Achievements
-      const wins = document.querySelectorAll('.win-item');
-      gsap.fromTo(wins,
-        { opacity: 0, x: -50 },
-        { 
-          opacity: 1, 
-          x: 0, 
-          stagger: 0.1, 
-          scrollTrigger: {
-            trigger: '.wins-section',
-            start: "top 70%",
-          }
-        }
-      );
-
+      // ── SECTION 6: Venn diagram ───────────────────────────────────────────
+      // (handled separately below — GSAP context returns early from cleanup)
     }, containerRef);
+
+    // Venn circles (outside ctx so cleanup is separate)
+    const vennTl = gsap.timeline({
+      scrollTrigger: { trigger: ".venn-section", start: "top 65%" }
+    });
+    vennTl
+      .fromTo(".venn-c1", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" })
+      .fromTo(".venn-c2", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" }, "-=0.35")
+      .fromTo(".venn-c3", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" }, "-=0.35");
+
+    const arrowPath = document.querySelector<SVGPathElement>(".venn-arrow");
+    if (arrowPath) {
+      const len = arrowPath.getTotalLength();
+      gsap.set(arrowPath, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.to(arrowPath, {
+        strokeDashoffset: 0, duration: 1.2, ease: "power2.out",
+        scrollTrigger: { trigger: ".venn-section", start: "top 55%" }
+      });
+    }
+
+    // ── SECTION 7: Hire Me parallax ───────────────────────────────────────
+    gsap.to(".parallax-left",  { y: -70, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+    gsap.to(".parallax-right", { y:  70, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.5 } });
+
+    // Generic section fade-up
+    document.querySelectorAll(".fade-up").forEach(el => {
+      gsap.fromTo(el,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.75,
+          scrollTrigger: { trigger: el, start: "top 82%" } }
+      );
+    });
 
     return () => ctx.revert();
   }, []);
 
-  // Tilt effect for cards
-  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    const rotateX = ((y - centerY) / centerY) * -10;
-    const rotateY = ((x - centerX) / centerX) * 10;
-    
-    card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  };
-
-  const handleCardMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = e.currentTarget;
-    card.style.transform = `rotateX(0deg) rotateY(0deg)`;
-  };
-
   return (
-    <div ref={containerRef} className="relative w-full bg-background text-foreground min-h-screen">
-      {/* Custom Cursor */}
-      <div 
+    <div ref={containerRef} className="bg-[#0a0a0a] text-[#f5f0e8] min-h-screen relative overflow-x-hidden" style={{ cursor: "none" }}>
+
+      {/* ── Custom cursor ─────────────────────────────────────────────────── */}
+      <div
         ref={cursorRef}
-        className={`cursor ${isHovering ? 'cursor-hover' : ''}`}
-        style={{ left: `${cursorPos.x}px`, top: `${cursorPos.y}px` }}
+        className="fixed top-0 left-0 w-3 h-3 rounded-full bg-[#00B4D8] pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 mix-blend-difference"
       />
 
-      {/* Floating CTA */}
-      <a 
-        href="#contact" 
-        className="fixed bottom-8 right-8 z-50 bg-primary text-primary-foreground font-mono font-bold px-6 py-3 rounded-full hover:scale-105 transition-transform"
-        data-interactive="true"
+      {/* ── Noise grain overlay ────────────────────────────────────────────── */}
+      <div
+        className="fixed inset-0 pointer-events-none z-[9998]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          opacity: 0.045,
+        }}
+      />
+
+      {/* ── Floating HIRE ME button ────────────────────────────────────────── */}
+      <a
+        href="#hire"
+        data-hover
+        className="fixed bottom-8 right-8 z-50 bg-[#00B4D8] text-[#0a0a0a] font-bold text-sm tracking-widest uppercase px-5 py-3 rounded-full hover:scale-110 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.4)]"
       >
         HIRE ME
       </a>
 
-      {/* 1. Hero */}
-      <section className="h-screen w-full relative overflow-hidden flex items-center" data-testid="section-hero">
-
-        {/* Botanical — top-left, large and atmospheric */}
-        <img
-          src={botanical}
-          alt=""
-          className="absolute -top-10 -left-10 w-80 md:w-96 opacity-40 pointer-events-none select-none z-10"
-          style={{ filter: 'brightness(1.4) contrast(0.7)' }}
-        />
-
-        {/* Butterfly top-left cluster */}
-        <img src={butterfly} alt="" className="absolute top-20 left-56 w-12 opacity-50 pointer-events-none select-none z-10 -rotate-12" />
-        <img src={butterfly} alt="" className="absolute top-10 left-72 w-8 opacity-35 pointer-events-none select-none z-10 rotate-6" />
-
-        {/* Butterfly bottom-right */}
-        <img src={butterfly} alt="" className="absolute bottom-24 right-10 w-16 opacity-45 pointer-events-none select-none z-10 rotate-45" />
-
-        {/* POV quote — top right */}
-        <p className="hero-pov absolute top-8 right-10 font-mono text-sm text-primary italic tracking-wide z-20 opacity-0">
-          POV: "If i pitched myself in shark tank"
-        </p>
-
-        {/* Main layout: stamp photo left + headline right */}
-        <div className="relative z-20 w-full h-full flex items-center px-8 md:px-14 lg:px-20 gap-10 md:gap-16 lg:gap-24">
-
-          {/* LEFT: Stamp-framed photo */}
-          <div
-            className="hero-stamp shrink-0 opacity-0"
-            style={{ filter: 'drop-shadow(6px 16px 40px rgba(0,0,0,0.8))' }}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 1 — HERO                                                    */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="h-screen flex flex-col items-center justify-center relative px-6 overflow-hidden">
+        {/* Name */}
+        <div className="overflow-hidden mb-6">
+          <h1
+            className="flex flex-wrap justify-center"
+            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(3rem, 10vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
           >
-            {/* Outer wrapper — creates the perforated stamp edge using mask */}
-            <div
-              className="bg-[#ede8dc] p-3 pb-7 relative"
-              style={{
-                WebkitMaskImage: `
-                  radial-gradient(circle at 50% 0,    transparent 6px, black 7px) 0    0    / 14px 14px repeat-x,
-                  radial-gradient(circle at 50% 100%, transparent 6px, black 7px) 0    100% / 14px 14px repeat-x,
-                  radial-gradient(circle at 0   50%,  transparent 6px, black 7px) 0    0    / 14px 14px repeat-y,
-                  radial-gradient(circle at 100% 50%, transparent 6px, black 7px) 100% 0    / 14px 14px repeat-y,
-                  linear-gradient(black, black) 7px 7px / calc(100% - 14px) calc(100% - 14px) no-repeat
-                `,
-                WebkitMaskComposite: 'source-over',
-                maskImage: `
-                  radial-gradient(circle at 50% 0,    transparent 6px, black 7px) 0    0    / 14px 14px repeat-x,
-                  radial-gradient(circle at 50% 100%, transparent 6px, black 7px) 0    100% / 14px 14px repeat-x,
-                  radial-gradient(circle at 0   50%,  transparent 6px, black 7px) 0    0    / 14px 14px repeat-y,
-                  radial-gradient(circle at 100% 50%, transparent 6px, black 7px) 100% 0    / 14px 14px repeat-y,
-                  linear-gradient(black, black) 7px 7px / calc(100% - 14px) calc(100% - 14px) no-repeat
-                `,
-                maskComposite: 'add',
-              }}
-            >
-              <img
-                src={arshPodium}
-                alt="Arsh Chatrath"
-                className="w-44 md:w-52 lg:w-60 aspect-[3/4] object-cover object-top grayscale block"
-              />
-              <p className="text-center font-mono text-[9px] text-[#1a1a1a]/40 mt-2 tracking-[0.25em] uppercase">
-                Arsh Chatrath
-              </p>
-            </div>
-          </div>
-
-          {/* RIGHT: Headline */}
-          <div className="flex-1 flex flex-col justify-center min-w-0 overflow-hidden">
-            <p className="hero-eyebrow font-sans text-base md:text-lg lg:text-xl font-light tracking-[0.3em] uppercase text-foreground/50 mb-2 opacity-0">
-              What makes me
-            </p>
-            <h1
-              className="hero-extraordinary font-sans font-bold uppercase leading-none tracking-tight text-primary whitespace-nowrap"
-              style={{ fontSize: 'clamp(2.2rem, 5.8vw, 7rem)', clipPath: 'inset(0 100% 0 0)' }}
-            >
-              EXTRAORDINARY?
-            </h1>
-          </div>
+            {HERO_NAME.split("").map((ch, i) =>
+              ch === " "
+                ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
+                : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
+            )}
+          </h1>
         </div>
 
-        {/* Handwritten notes — bottom left, decorative */}
+        {/* Subtitle */}
         <div
-          className="hero-notes absolute bottom-16 left-8 md:left-14 lg:left-20 opacity-0 pointer-events-none select-none z-20"
-          style={{ transform: 'rotate(-2deg)' }}
+          className="hero-subtitle text-[#00B4D8] font-mono text-xl md:text-2xl tracking-[0.3em] uppercase mb-10 opacity-0"
         >
-          <p style={{ fontFamily: 'Caveat, cursive' }} className="text-foreground/30 text-sm leading-relaxed">
-            building products that matter<br />
-            3000+ users · 60% growth<br />
-            turning chaos into systems
-          </p>
+          Creative Builder
         </div>
 
-        {/* Signature — bottom right */}
-        <div className="hero-signature absolute bottom-12 right-10 z-20 opacity-0">
-          <span style={{ fontFamily: 'Caveat, cursive' }} className="text-2xl md:text-3xl text-primary/80 font-semibold tracking-wide">
-            by Arsh Chatrath
-          </span>
+        {/* 3 lines */}
+        <div className="flex flex-col items-center gap-3 text-center max-w-2xl">
+          {HERO_LINES.map((line, i) => (
+            <p
+              key={i}
+              className={`hero-line-${i} opacity-0 text-[#f5f0e8]/60 font-light text-sm md:text-base tracking-wide`}
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              {line}
+            </p>
+          ))}
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center opacity-40 animate-bounce z-20">
-          <span className="font-mono text-xs tracking-widest mb-2" style={{ writingMode: 'vertical-rl' }}>SCROLL</span>
-          <div className="w-px h-10 bg-gradient-to-b from-primary to-transparent" />
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
+          <span className="font-mono text-xs tracking-widest" style={{ writingMode: "vertical-rl" }}>scroll</span>
+          <div className="w-px h-10 bg-gradient-to-b from-[#00B4D8] to-transparent" />
         </div>
       </section>
 
-      {/* 2. About */}
-      <section className="about-section min-h-screen w-full py-24 px-6 md:px-12 max-w-7xl mx-auto flex flex-col justify-center">
-        <h2 className="section-header text-6xl md:text-8xl font-bold uppercase mb-16 tracking-tighter">Hello /<br/>I'm /<br/>Arsh</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div className="space-y-12">
-            <div className="inline-block bg-primary text-primary-foreground px-4 py-1 font-mono text-sm uppercase transform -rotate-2">
-              POV: If I pitched myself in Shark Tank
-            </div>
-            
-            <ul className="space-y-6 font-mono text-lg text-muted-foreground">
-              <li className="about-bullet flex gap-4">
-                <span className="text-primary">→</span>
-                <span>I find broken user experiences and fix them systematically</span>
-              </li>
-              <li className="about-bullet flex gap-4">
-                <span className="text-primary">→</span>
-                <span>Campus partner @perplexity & @Talkeys — 3000+ users, 60% growth</span>
-              </li>
-              <li className="about-bullet flex gap-4">
-                <span className="text-primary">→</span>
-                <span>National competition winner — IIT Roorkee, AMEX, Amazon ML, TIET</span>
-              </li>
-              <li className="about-bullet flex gap-4">
-                <span className="text-primary">→</span>
-                <span>Built products that transformed chaos into systems</span>
-              </li>
-            </ul>
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 2 — HELLO I'M ARSH                                          */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="about-section py-24 px-6 md:px-16 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          {/* LEFT */}
+          <div className="about-left opacity-0">
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
+              HELLO<br />I'M ARSH
+            </h2>
+            <p className="text-[#00B4D8] italic mt-3 mb-6 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Creative Builder
+            </p>
+            <p className="text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              I find broken user experiences and fix them systematically. Campus partner @Perplexity & Product Head @Talkeys — 3000+ users, 60% growth. National competition winner (IIT Roorkee, AMEX, Amazon ML). I build products that transform chaos into systems.
+            </p>
 
-            <div className="about-bullet font-mono text-sm border-l-2 border-secondary pl-4 py-2">
-              <span className="opacity-50">Amritsar</span> → <span className="opacity-75">Patiala</span> → <span className="text-primary font-bold">Currently building at Thapar</span>
-            </div>
-          </div>
-          
-          <div className="relative flex flex-col items-center gap-8">
-            {/* Main portrait in stamp frame */}
-            <div className="relative group">
-              <img
-                src={stampFrame}
-                alt=""
-                className="absolute inset-0 w-full h-full object-fill pointer-events-none z-10 scale-110"
-                style={{ filter: 'invert(1) brightness(0.15)' }}
-              />
-              <div className="relative w-72 h-80 mx-auto overflow-hidden bg-muted transform -rotate-2 transition-transform group-hover:rotate-0 duration-500">
-                <img
-                  src={arshPortrait}
-                  alt="Arsh Chatrath"
-                  className="w-full h-full object-cover object-top grayscale"
-                />
-              </div>
-              <p className="text-center font-mono text-xs mt-3 tracking-widest opacity-50">ARSH CHATRATH — BUILDER</p>
-            </div>
-
-            {/* University building */}
-            <div className="relative w-full max-w-xs">
-              <img
-                src={universityBuilding}
-                alt="Thapar University"
-                className="w-full grayscale opacity-50 rounded"
-              />
-              <span className="absolute bottom-2 right-2 font-mono text-xs bg-background/80 px-2 py-1 text-muted-foreground">THAPAR UNIVERSITY, PATIALA</span>
-            </div>
-
-            {/* Butterfly decoration */}
-            <img src={butterfly} alt="" className="absolute -bottom-8 -right-8 w-20 opacity-30 pointer-events-none rotate-45" />
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Philosophy */}
-      <section className="philosophy-section w-full py-32 px-6 md:px-12 bg-card relative overflow-hidden">
-        {/* Torn newspaper background decoration */}
-        <img
-          src={tornNewspaper}
-          alt=""
-          className="absolute top-8 right-0 w-96 opacity-10 pointer-events-none select-none"
-          style={{ mixBlendMode: 'luminosity' }}
-        />
-        {/* Thinking monkey — sits near the questions */}
-        <img
-          src={thinkingMonkey}
-          alt=""
-          className="absolute bottom-48 right-8 w-48 opacity-25 pointer-events-none select-none"
-          style={{ mixBlendMode: 'luminosity' }}
-        />
-
-        <div className="max-w-7xl mx-auto relative">
-          <h2 className="section-header text-5xl md:text-7xl font-bold uppercase mb-24 max-w-4xl tracking-tighter leading-tight">
-            What does it take to be a <span className="text-primary">great PM?</span>
-          </h2>
-
-          {/* Magnifying glass illustration */}
-          <img
-            src={magnifyingGlass}
-            alt=""
-            className="absolute top-0 right-0 w-64 opacity-30 pointer-events-none select-none hidden lg:block"
-            style={{ mixBlendMode: 'luminosity' }}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-32">
-            {[
-              "How do I know I'm solving the right problem?",
-              "How do I balance user needs vs. business goals vs. technical feasibility?",
-              "How to make decisions when there's no clear answer?",
-              "How to measure if I'm actually creating impact?",
-              "How do I lead without authority when I don't manage the team?"
-            ].map((q, i) => (
-              <div key={i} className="quote-card bg-background border border-border p-8 shadow-xl">
-                <p className="font-mono text-lg">{q}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="realizations-wrapper relative">
-            <div className="flex items-center gap-6 mb-16">
-              <h3 className="text-3xl font-bold uppercase">I Realized...</h3>
-              <div className="h-px flex-1 bg-border"></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Journey lines */}
+            <div className="journey-lines flex flex-col gap-4">
               {[
-                "You balance priorities by being ruthlessly data-driven.",
-                "You make decisions by forming hypotheses and testing them quickly.",
-                "You measure impact through metrics that matter, not vanity metrics.",
-                "You lead by building trust, being the expert, and aligning everyone around the user."
-              ].map((r, i) => (
-                <div key={i} className="realization-card border-l-4 border-primary pl-6 py-2">
-                  <p className="font-sans text-xl md:text-2xl leading-relaxed text-muted-foreground">{r}</p>
+                ["Started as:", "Freshman with curiosity and ambition"],
+                ["Turned into:", "A builder who ships products and leads winning teams"],
+                ["Currently:", "Creating real-world impact through technology"],
+              ].map(([label, text]) => (
+                <div key={label} className="journey-line flex gap-3 items-start">
+                  <span className="text-[#00B4D8] font-mono text-xs shrink-0 mt-1 uppercase tracking-wider">{label}</span>
+                  <span className="text-[#f5f0e8]/80" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{text}</span>
                 </div>
               ))}
             </div>
+          </div>
 
-            <div className="mt-32 border-y border-border py-16">
-              <h4 className="text-4xl md:text-6xl font-bold text-center tracking-tighter uppercase">
-                These weren't just realizations.<br/>
-                <span className="text-secondary">These were battle-tested lessons.</span>
-              </h4>
+          {/* RIGHT — Polaroid photo */}
+          <div className="about-right opacity-0 flex justify-center">
+            <div
+              className="bg-[#f5f0e8] p-4 pb-12 shadow-2xl"
+              style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))" }}
+            >
+              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-cover grayscale" />
+              <p className="text-center font-mono text-[10px] text-[#0a0a0a]/50 mt-4 tracking-[0.3em] uppercase">Arsh Chatrath</p>
             </div>
+          </div>
+        </div>
+
+        {/* Journey map */}
+        <div className="journey-map mt-24 flex items-end justify-between gap-8 max-w-3xl mx-auto relative">
+          {/* Amritsar */}
+          <div className="flex flex-col items-center gap-3 fade-up">
+            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-40 w-40 object-contain drop-shadow-xl" />
+            <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
+          </div>
+
+          {/* Animated SVG curved arrow */}
+          <div className="flex-1 relative h-24">
+            <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 80" preserveAspectRatio="none">
+              <path
+                className="journey-path"
+                d="M 0 70 C 80 70 100 10 150 10 C 200 10 220 70 300 70"
+                fill="none"
+                stroke="#00B4D8"
+                strokeWidth="2"
+                strokeDasharray="8 5"
+                strokeLinecap="round"
+              />
+              <polygon points="295,65 310,70 295,75" fill="#00B4D8" />
+            </svg>
+          </div>
+
+          {/* Thapar */}
+          <div className="flex flex-col items-center gap-3 fade-up">
+            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-40 w-40 object-contain drop-shadow-xl" />
+            <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
           </div>
         </div>
       </section>
 
-      {/* 4. Case Studies */}
-      <section className="case-section h-screen w-full flex flex-col justify-center bg-background overflow-hidden relative">
-        {/* Laptop hands decoration */}
-        <img
-          src={laptopHands}
-          alt=""
-          className="absolute bottom-0 left-0 w-64 opacity-10 pointer-events-none select-none"
-          style={{ mixBlendMode: 'luminosity' }}
-        />
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?                    */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="pm-section py-24 px-6 md:px-16 bg-[#0d0d0d]">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-16 fade-up">
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              What does it take to be a great PM?
+            </h2>
+            <p className="text-[#00B4D8] italic text-lg mt-2" style={{ fontFamily: "'Playfair Display', serif" }}>I asked myself:</p>
+          </div>
 
-        <div className="px-6 md:px-12 mb-12 shrink-0">
-          <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter">Proof, Not Promises</h2>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* LEFT — monkey */}
+            <div className="monkey-left opacity-0 flex justify-center">
+              <img
+                src={monkeyThinking}
+                alt="Thinking"
+                className="h-80 md:h-96 object-contain"
+                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }}
+              />
+            </div>
+
+            {/* RIGHT — questions */}
+            <ul className="flex flex-col gap-5">
+              {PM_QUESTIONS.map((q, i) => (
+                <li
+                  key={i}
+                  className="pm-question opacity-0 flex gap-4 items-start"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  <span className="text-[#00B4D8] text-xl shrink-0">•</span>
+                  <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{q}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 4 — I REALIZED…                                             */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="realize-section py-24 px-6 md:px-16">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-16 fade-up flex items-center gap-6">
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              I Realized…
+            </h2>
+            <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
+              <path d="M 0 10 L 48 10" stroke="#00B4D8" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" />
+              <polygon points="46,5 60,10 46,15" fill="#00B4D8" />
+            </svg>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* LEFT — realizations */}
+            <ul className="flex flex-col gap-6">
+              {REALIZATIONS.map((r, i) => (
+                <li
+                  key={i}
+                  className="realization opacity-0 flex gap-4 items-start"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  <span className="text-[#00B4D8] font-bold text-lg shrink-0">→</span>
+                  <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{r}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* RIGHT — monkey */}
+            <div className="monkey-right opacity-0 flex justify-center">
+              <img
+                src={monkeyRealising}
+                alt="Realising"
+                className="h-80 md:h-96 object-contain"
+                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }}
+              />
+            </div>
+          </div>
+
+          {/* Bold callout */}
+          <p
+            className="proof-callout opacity-0 mt-24 text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}
+          >
+            THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
+            AND HERE'S THE PROOF…
+          </p>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="py-24 bg-[#0d0d0d]">
+        <div className="px-6 md:px-16 max-w-7xl mx-auto mb-12 fade-up">
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(2.5rem, 6vw, 5.5rem)", letterSpacing: "-0.02em" }}>
+            PROOF,<br />NOT PROMISES
+          </h2>
         </div>
 
-        <div className="case-wrapper flex gap-8 px-6 md:px-12 w-max items-center">
-          {[
-            {
-              id: "01",
-              title: "TALKEYS COMMUNITY PLATFORM",
-              company: "Talkeys",
-              role: "Product & Operations Head",
-              problem: "Low event engagement, declining user participation",
-              approach: "User research, A/B tested 3 engagement strategies, prioritized features based on data",
-              result: "60% increase in participation | Scaled to 1000+ active users",
-              img: arshPresenting,
-              imgAlt: "Arsh presenting Talkeys at BizQuiz"
-            },
-            {
-              id: "02",
-              title: "CAPSTONE TEAM FINDER PORTAL",
-              company: "Independent",
-              role: "Product Builder",
-              problem: "Students relied on fragmented hostel groups, couldn't reach whole college",
-              approach: "Identified pain point, built platform for posting projects with tech requirements",
-              result: "Transformed WhatsApp chaos into centralized, systematic team formation",
-              img: arshPodium,
-              imgAlt: "Arsh at podium"
-            },
-            {
-              id: "03",
-              title: "PERPLEXITY AI CAMPUS GROWTH",
-              company: "Perplexity AI",
-              role: "VIP Campus Partner",
-              problem: "Drive product adoption in saturated student market",
-              approach: "Targeted CS students and research-focused users, designed campus activations",
-              result: "Engaged 1500+ students | Top 25 Partners nationwide",
-              img: null,
-              imgAlt: ""
-            }
-          ].map((study) => (
+        {/* Horizontal scroll carousel */}
+        <div
+          className="flex gap-6 overflow-x-auto px-6 md:px-16 pb-8"
+          style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}
+        >
+          {CARDS.map((card) => (
             <div
-              key={study.id}
-              className="perspective-container shrink-0 w-[85vw] md:w-[680px] h-[65vh] max-h-[640px]"
-              data-interactive="true"
+              key={card.title}
+              className="case-card shrink-0 w-[85vw] md:w-[42vw] lg:w-[32vw] bg-[#111] border border-[#222] rounded-sm overflow-hidden"
+              style={{ scrollSnapAlign: "start", transformStyle: "preserve-3d", willChange: "transform" }}
             >
-              <div
-                className="tilt-card w-full h-full bg-card border border-border flex flex-col relative overflow-hidden group"
-                onMouseMove={handleCardMouseMove}
-                onMouseLeave={handleCardMouseLeave}
-              >
-                {/* Card image strip */}
-                {study.img && (
-                  <div className="h-40 w-full overflow-hidden shrink-0 relative">
-                    <img
-                      src={study.img}
-                      alt={study.imgAlt}
-                      className="w-full h-full object-cover object-center grayscale opacity-60 group-hover:opacity-80 transition-opacity duration-500 scale-105 group-hover:scale-100 transition-transform"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
-                  </div>
-                )}
+              {/* Card image */}
+              <div className="h-56 overflow-hidden bg-[#0a0a0a] flex items-center justify-center">
+                <img
+                  src={card.img}
+                  alt={card.title}
+                  className="w-full h-full object-cover object-top grayscale hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
 
-                <div className={`flex flex-col flex-1 p-8 md:p-10 ${!study.img ? 'pt-8' : ''}`}>
-                  <div className="absolute top-0 right-0 p-6 text-8xl font-bold text-muted opacity-20 group-hover:text-primary group-hover:opacity-10 transition-colors pointer-events-none">
-                    {study.id}
+              {/* Card content */}
+              <div className="p-6 flex flex-col gap-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <h3 className="text-[#00B4D8] font-bold text-sm tracking-widest uppercase">{card.title}</h3>
+                {[
+                  ["Problem", card.problem],
+                  ["My Role", card.role],
+                  ["Approach", card.approach],
+                  ["Result", card.result],
+                ].map(([label, text]) => (
+                  <div key={label}>
+                    <span className="text-[#f5f0e8]/40 font-mono text-[10px] uppercase tracking-widest block mb-1">{label}</span>
+                    <p className="text-[#f5f0e8]/80 text-sm leading-relaxed">{text}</p>
                   </div>
-
-                  <div className="mb-6">
-                    <span className="inline-block px-3 py-1 border border-border text-xs font-mono uppercase tracking-wider mb-3 rounded-full bg-background">
-                      {study.company}
-                    </span>
-                    <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight">{study.title}</h3>
-                    <p className="text-secondary font-mono text-sm mt-2">{study.role}</p>
-                  </div>
-
-                  <div className="flex-1 flex flex-col justify-center space-y-4">
-                    <div>
-                      <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Problem</h4>
-                      <p className="text-base leading-relaxed">{study.problem}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Approach</h4>
-                      <p className="text-base leading-relaxed">{study.approach}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-border">
-                    <h4 className="font-mono text-xs text-primary uppercase tracking-widest mb-2">Result</h4>
-                    <p className="text-lg font-bold">{study.result}</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 5. X-Factor */}
-      <section className="venn-section py-32 w-full px-6 md:px-12 bg-card min-h-screen flex flex-col items-center justify-center">
-        <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter mb-24 text-center">The X-Factor</h2>
-        
-        <div className="relative w-full max-w-[600px] aspect-square mx-auto flex items-center justify-center">
-          {/* Circles */}
-          <div className="venn-circle absolute top-[15%] left-[50%] -translate-x-1/2 w-[60%] aspect-square rounded-full mix-blend-screen" style={{ backgroundColor: '#7B2FBE' }}></div>
-          <div className="venn-circle absolute bottom-[20%] left-[20%] w-[60%] aspect-square rounded-full mix-blend-screen" style={{ backgroundColor: '#00B4D8' }}></div>
-          <div className="venn-circle absolute bottom-[20%] right-[20%] w-[60%] aspect-square rounded-full mix-blend-screen" style={{ backgroundColor: '#F59E0B' }}></div>
-          
-          {/* Labels */}
-          <div className="venn-label absolute top-[5%] left-[50%] -translate-x-1/2 font-mono text-xl md:text-2xl font-bold tracking-widest text-[#7B2FBE] bg-background/80 px-2">TECHNICAL</div>
-          <div className="venn-label absolute bottom-[10%] left-[10%] font-mono text-xl md:text-2xl font-bold tracking-widest text-[#00B4D8] bg-background/80 px-2">PRODUCT</div>
-          <div className="venn-label absolute bottom-[10%] right-[10%] font-mono text-xl md:text-2xl font-bold tracking-widest text-[#F59E0B] bg-background/80 px-2">LEADERSHIP</div>
-          
-          <div className="venn-label absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 text-4xl md:text-6xl font-bold tracking-tighter z-10 drop-shadow-[0_0_15px_rgba(0,0,0,1)]">ARSH</div>
-        </div>
-      </section>
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 6 — THE X-FACTOR                                            */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section className="venn-section py-24 px-6 md:px-16">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-center mb-16 fade-up" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+            The X-Factor
+          </h2>
 
-      {/* 6. Achievements */}
-      <section className="wins-section py-32 w-full px-6 md:px-12 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto relative">
-          {/* Arsh side profile — large decorative cutout */}
-          <img
-            src={arshSideProfile}
-            alt=""
-            className="absolute -right-16 top-0 h-full max-h-[600px] object-contain object-top opacity-20 pointer-events-none select-none"
-            style={{ mixBlendMode: 'luminosity' }}
-          />
-          {/* Pointing monkey for #1 achievement */}
-          <img
-            src={pointingMonkey}
-            alt=""
-            className="absolute -left-8 bottom-16 w-32 opacity-20 pointer-events-none select-none"
-            style={{ mixBlendMode: 'luminosity' }}
-          />
-
-          <h2 className="section-header text-6xl md:text-8xl font-bold uppercase tracking-tighter mb-16">The Wins</h2>
-
-          <div className="space-y-4">
-            {[
-              { rank: "1ST", title: "IIT Roorkee National Competition" },
-              { rank: "TOP 3", title: "American Express Competition" },
-              { rank: "SELECT", title: "Amazon ML School" },
-              { rank: "TOP 25", title: "Perplexity AI Campus Partners Nationwide" },
-              { rank: "10K+", title: "Helix Event Registrations" },
-              { rank: "60%", title: "Talkeys Growth | 3000+ Users" }
-            ].map((win, i) => (
-              <div key={i} className="win-item group flex flex-col md:flex-row md:items-center justify-between border-b border-border pb-4 hover:border-primary transition-colors">
-                <h3 className="text-2xl md:text-4xl font-bold uppercase tracking-tight group-hover:text-primary transition-colors">{win.title}</h3>
-                <span className="font-mono text-xl md:text-2xl text-secondary mt-2 md:mt-0">{win.rank}</span>
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-0">
+            {/* LEFT — Venn diagram */}
+            <div className="relative w-80 h-72 shrink-0">
+              {/* Circle 1: Technical — top left */}
+              <div
+                className="venn-c1 absolute w-52 h-52 rounded-full flex items-center justify-center"
+                style={{
+                  top: 0, left: 0,
+                  background: "rgba(0,180,216,0.15)",
+                  border: "1.5px solid rgba(0,180,216,0.5)",
+                  transform: "scale(0)",
+                }}
+              >
+                <span className="font-bold text-[#00B4D8] text-sm tracking-widest uppercase -translate-x-4 -translate-y-4">Technical</span>
               </div>
-            ))}
+
+              {/* Circle 2: Product — top right */}
+              <div
+                className="venn-c2 absolute w-52 h-52 rounded-full flex items-center justify-center"
+                style={{
+                  top: 0, right: 0,
+                  background: "rgba(150,150,160,0.12)",
+                  border: "1.5px solid rgba(180,180,190,0.4)",
+                  transform: "scale(0)",
+                }}
+              >
+                <span className="font-bold text-[#f5f0e8]/70 text-sm tracking-widest uppercase translate-x-4 -translate-y-4">Product</span>
+              </div>
+
+              {/* Circle 3: Leadership — bottom center */}
+              <div
+                className="venn-c3 absolute w-52 h-52 rounded-full flex items-center justify-center"
+                style={{
+                  bottom: 0, left: "50%", transform: "translateX(-50%) scale(0)",
+                  background: "rgba(0,100,120,0.2)",
+                  border: "1.5px solid rgba(0,150,170,0.45)",
+                }}
+              >
+                <span className="font-bold text-[#00B4D8]/80 text-sm tracking-widest uppercase translate-y-6">Leadership</span>
+              </div>
+
+              {/* Center label */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <span className="font-bold text-[#f5f0e8] text-xs tracking-widest uppercase bg-[#0a0a0a]/80 px-2 py-1 rounded">ME</span>
+              </div>
+            </div>
+
+            {/* Animated dashed arrow + photo */}
+            <div className="flex-1 flex items-center relative">
+              {/* Arrow SVG */}
+              <svg
+                className="absolute left-0 top-1/2 -translate-y-1/2"
+                width="120" height="20" viewBox="0 0 120 20"
+                style={{ overflow: "visible" }}
+              >
+                <path
+                  className="venn-arrow"
+                  d="M 0 10 L 100 10"
+                  fill="none"
+                  stroke="#00B4D8"
+                  strokeWidth="2"
+                  strokeDasharray="8 5"
+                  strokeLinecap="round"
+                />
+                <polygon points="98,5 115,10 98,15" fill="#00B4D8" />
+              </svg>
+
+              {/* Photo */}
+              <div className="ml-32 flex justify-center relative">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(0,180,216,0.15) 0%, transparent 70%)", transform: "scale(1.4)" }}
+                />
+                <img
+                  src={arshHalftone}
+                  alt="Arsh Chatrath"
+                  className="h-80 md:h-96 object-contain relative z-10"
+                  style={{ filter: "drop-shadow(0 0 30px rgba(0,180,216,0.2))" }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 7. Contact CTA */}
-      <section id="contact" className="h-screen w-full flex flex-col items-center justify-center bg-card relative px-6 text-center overflow-hidden">
-        {/* Arsh halftone collage — left side atmospheric */}
-        <img
-          src={arshCollage}
-          alt=""
-          className="absolute left-0 bottom-0 h-[70vh] object-contain object-bottom opacity-20 pointer-events-none select-none"
-          style={{ mixBlendMode: 'luminosity' }}
-        />
-        {/* Botanical — top right */}
-        <img
-          src={botanical}
-          alt=""
-          className="absolute -top-8 -right-8 w-64 opacity-10 pointer-events-none select-none"
-          style={{ filter: 'invert(1)' }}
-        />
-
-        <h2 className="text-4xl md:text-6xl font-mono uppercase tracking-widest text-muted-foreground mb-4 relative z-10">Let's Build</h2>
-        <h1 className="text-[15vw] leading-none font-bold uppercase tracking-tighter text-primary mb-12 hover:scale-105 transition-transform duration-500 relative z-10">
-          Hire Me
-        </h1>
-
-        <div className="space-y-6 font-mono text-xl md:text-2xl relative z-10">
-          <a href="tel:+919888230798" className="block hover:text-primary transition-colors" data-interactive="true">+91 98882 30798</a>
-          <a href="mailto:achatrath_be23@thapar.edu" className="block hover:text-primary transition-colors" data-interactive="true">achatrath_be23@thapar.edu</a>
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 7 — HIRE ME                                                 */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section id="hire" className="hire-section min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#0a0a0a] py-32">
+        {/* Collage images */}
+        <div
+          className="parallax-left absolute left-0 bottom-0 h-[70vh] opacity-60 pointer-events-none select-none"
+          style={{ transform: "rotate(-4deg)", transformOrigin: "bottom left" }}
+        >
+          <img src={arshAudience} alt="" className="h-full w-auto object-cover grayscale" />
+        </div>
+        <div
+          className="parallax-right absolute right-0 bottom-0 h-[65vh] opacity-60 pointer-events-none select-none"
+          style={{ transform: "rotate(4deg)", transformOrigin: "bottom right" }}
+        >
+          <img src={arshThumbsUp} alt="" className="h-full w-auto object-cover grayscale" />
         </div>
 
-        <div className="mt-16 flex gap-6 relative z-10">
-          <a href="mailto:achatrath_be23@thapar.edu" className="border-2 border-foreground px-8 py-4 font-mono font-bold uppercase hover:bg-foreground hover:text-background transition-colors" data-interactive="true">
-            Email Me
-          </a>
-          <a href="tel:+919888230798" className="bg-primary text-primary-foreground px-8 py-4 font-mono font-bold uppercase hover:bg-primary/80 transition-colors" data-interactive="true">
-            Call Me
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center text-center px-6">
+          <h2
+            className="fade-up"
+            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(4rem, 14vw, 13rem)", lineHeight: 1, letterSpacing: "-0.04em" }}
+          >
+            HIRE ME&nbsp;
+            <span className="text-[#00B4D8]">&lt;3</span>
+          </h2>
+
+          <div className="mt-12 flex flex-col gap-3 fade-up" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <a href="tel:+919888230798" data-hover className="text-[#f5f0e8]/70 text-lg hover:text-[#00B4D8] transition-colors">
+              +91 98882 30798
+            </a>
+            <a href="mailto:achatrath_be23@thapar.edu" data-hover className="text-[#f5f0e8]/70 text-lg hover:text-[#00B4D8] transition-colors">
+              achatrath_be23@thapar.edu
+            </a>
+          </div>
+
+          <a
+            href="mailto:achatrath_be23@thapar.edu"
+            data-hover
+            className="mt-10 fade-up inline-flex items-center gap-2 bg-[#00B4D8] text-[#0a0a0a] font-bold text-base uppercase tracking-widest px-8 py-4 rounded-full hover:scale-105 transition-transform duration-200"
+            style={{
+              animation: "pulse-cta 2.5s ease-in-out infinite",
+              boxShadow: "0 0 30px rgba(0,180,216,0.35)",
+            }}
+          >
+            Let's Talk →
           </a>
         </div>
-
-        <footer className="absolute bottom-8 font-mono text-sm text-muted-foreground z-10">
-          © 2026 Arsh Chatrath — Built with intent
-        </footer>
       </section>
+
+      <style>{`
+        @keyframes pulse-cta {
+          0%, 100% { box-shadow: 0 0 30px rgba(0,180,216,0.35); }
+          50%       { box-shadow: 0 0 50px rgba(0,180,216,0.65); }
+        }
+        ::-webkit-scrollbar { height: 4px; background: #111; }
+        ::-webkit-scrollbar-thumb { background: #00B4D8; border-radius: 2px; }
+      `}</style>
     </div>
   );
 }

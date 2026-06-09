@@ -345,29 +345,33 @@ export default function Portfolio() {
         <div className="journey-map mt-24 flex items-end justify-between gap-8 max-w-3xl mx-auto relative">
           {/* Amritsar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-40 w-40 object-contain drop-shadow-xl" />
+            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-56 w-56 object-contain drop-shadow-xl" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
           </div>
 
           {/* Animated SVG curved arrow */}
-          <div className="flex-1 relative h-24">
-            <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 80" preserveAspectRatio="none">
+          <div className="flex-1 relative h-32">
+            <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
+              <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#00B4D8" />
+                </marker>
+              </defs>
               <path
                 className="journey-path"
-                d="M 0 70 C 80 70 100 10 150 10 C 200 10 220 70 300 70"
+                d="M 10 78 C 60 78 90 12 150 12 C 210 12 240 78 292 78"
                 fill="none"
                 stroke="#00B4D8"
-                strokeWidth="2"
-                strokeDasharray="8 5"
+                strokeWidth="2.5"
                 strokeLinecap="round"
+                markerEnd="url(#arrowhead)"
               />
-              <polygon points="295,65 310,70 295,75" fill="#00B4D8" />
             </svg>
           </div>
 
           {/* Thapar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-40 w-40 object-contain drop-shadow-xl" />
+            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-56 w-56 object-contain drop-shadow-xl" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
           </div>
         </div>

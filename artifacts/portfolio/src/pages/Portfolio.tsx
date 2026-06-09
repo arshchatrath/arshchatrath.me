@@ -398,8 +398,8 @@ export default function Portfolio() {
             {/* Name */}
             <div className="overflow-hidden mb-6">
               <h1
-                className="flex flex-wrap justify-center md:justify-start"
-                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(2.6rem, 8vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
+                className="flex flex-nowrap justify-center md:justify-start whitespace-nowrap"
+                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 6vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
               >
                 {HERO_NAME.split("").map((ch, i) =>
                   ch === " "

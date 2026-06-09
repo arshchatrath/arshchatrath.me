@@ -194,14 +194,14 @@ export default function Portfolio() {
       // (handled separately below — GSAP context returns early from cleanup)
     }, containerRef);
 
-    // Venn circles (outside ctx so cleanup is separate)
+    // Venn circles — animate SVG r attribute from 0 to full radius
     const vennTl = gsap.timeline({
       scrollTrigger: { trigger: ".venn-section", start: "top 65%" }
     });
     vennTl
-      .fromTo(".venn-c1", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" })
-      .fromTo(".venn-c2", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" }, "-=0.35")
-      .fromTo(".venn-c3", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.7, ease: "back.out(1.5)" }, "-=0.35");
+      .fromTo(".venn-c1", { attr: { r: 0 }, opacity: 0 }, { attr: { r: 118 }, opacity: 1, duration: 0.8, ease: "power3.out" })
+      .fromTo(".venn-c2", { attr: { r: 0 }, opacity: 0 }, { attr: { r: 118 }, opacity: 1, duration: 0.8, ease: "power3.out" }, "-=0.5")
+      .fromTo(".venn-c3", { attr: { r: 0 }, opacity: 0 }, { attr: { r: 118 }, opacity: 1, duration: 0.8, ease: "power3.out" }, "-=0.5");
 
     const arrowPath = document.querySelector<SVGPathElement>(".venn-arrow");
     if (arrowPath) {
@@ -333,14 +333,10 @@ export default function Portfolio() {
             </div>
           </div>
 
-          {/* RIGHT — Polaroid photo */}
+          {/* RIGHT — Photo (transparent bg, no wrapper) */}
           <div className="about-right opacity-0 flex justify-center">
-            <div
-              className="bg-[#f5f0e8] p-4 pb-12 shadow-2xl"
-              style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.6))" }}
-            >
+            <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
               <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-contain" />
-              <p className="text-center font-mono text-[10px] text-[#0a0a0a]/50 mt-4 tracking-[0.3em] uppercase">Arsh Chatrath</p>
             </div>
           </div>
         </div>
@@ -524,91 +520,117 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 6 — THE X-FACTOR                                            */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="venn-section py-24 px-6 md:px-16">
+      <section className="venn-section py-24 px-6 md:px-16 bg-[#0d0d0d] overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-center mb-16 fade-up" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
-            The X-Factor
-          </h2>
 
-          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-0">
-            {/* LEFT — Venn diagram */}
-            <div className="relative w-80 h-72 shrink-0">
-              {/* Circle 1: Technical — top left */}
-              <div
-                className="venn-c1 absolute w-52 h-52 rounded-full flex items-center justify-center"
-                style={{
-                  top: 0, left: 0,
-                  background: "rgba(0,180,216,0.15)",
-                  border: "1.5px solid rgba(0,180,216,0.5)",
-                  transform: "scale(0)",
-                }}
-              >
-                <span className="font-bold text-[#00B4D8] text-sm tracking-widest uppercase -translate-x-4 -translate-y-4">Technical</span>
-              </div>
+          {/* Header */}
+          <div className="text-center mb-16 fade-up">
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3">What sets me apart</p>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              The X-Factor
+            </h2>
+            <p className="text-[#f5f0e8]/40 mt-3 text-sm tracking-wider" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              I sit at the intersection of three rare skillsets
+            </p>
+          </div>
 
-              {/* Circle 2: Product — top right */}
-              <div
-                className="venn-c2 absolute w-52 h-52 rounded-full flex items-center justify-center"
-                style={{
-                  top: 0, right: 0,
-                  background: "rgba(150,150,160,0.12)",
-                  border: "1.5px solid rgba(180,180,190,0.4)",
-                  transform: "scale(0)",
-                }}
-              >
-                <span className="font-bold text-[#f5f0e8]/70 text-sm tracking-widest uppercase translate-x-4 -translate-y-4">Product</span>
-              </div>
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-4">
 
-              {/* Circle 3: Leadership — bottom center */}
-              <div
-                className="venn-c3 absolute w-52 h-52 rounded-full flex items-center justify-center"
-                style={{
-                  bottom: 0, left: "50%", transform: "translateX(-50%) scale(0)",
-                  background: "rgba(0,100,120,0.2)",
-                  border: "1.5px solid rgba(0,150,170,0.45)",
-                }}
-              >
-                <span className="font-bold text-[#00B4D8]/80 text-sm tracking-widest uppercase translate-y-6">Leadership</span>
-              </div>
+            {/* LEFT — SVG Venn diagram */}
+            <div className="w-full lg:w-[52%] flex justify-center items-center">
+              <svg viewBox="0 0 420 400" className="w-full max-w-md" style={{ overflow: "visible" }}>
+                <defs>
+                  <radialGradient id="vg1" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#00B4D8" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#00B4D8" stopOpacity="0.04" />
+                  </radialGradient>
+                  <radialGradient id="vg2" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#a0a0b8" stopOpacity="0.22" />
+                    <stop offset="100%" stopColor="#a0a0b8" stopOpacity="0.03" />
+                  </radialGradient>
+                  <radialGradient id="vg3" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#008fa8" stopOpacity="0.30" />
+                    <stop offset="100%" stopColor="#008fa8" stopOpacity="0.04" />
+                  </radialGradient>
+                </defs>
 
-              {/* Center label */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <span className="font-bold text-[#f5f0e8] text-xs tracking-widest uppercase bg-[#0a0a0a]/80 px-2 py-1 rounded">ME</span>
-              </div>
+                {/* TECHNICAL — top-left */}
+                <circle className="venn-c1" cx="155" cy="150" r="118"
+                  fill="url(#vg1)" stroke="rgba(0,180,216,0.65)" strokeWidth="1.5" />
+
+                {/* PRODUCT — top-right */}
+                <circle className="venn-c2" cx="265" cy="150" r="118"
+                  fill="url(#vg2)" stroke="rgba(160,160,185,0.5)" strokeWidth="1.5" />
+
+                {/* LEADERSHIP — bottom-center */}
+                <circle className="venn-c3" cx="210" cy="238" r="118"
+                  fill="url(#vg3)" stroke="rgba(0,155,178,0.6)" strokeWidth="1.5" />
+
+                {/* Center glow dot */}
+                <circle cx="210" cy="183" r="6" fill="#00B4D8" opacity="0.9" />
+                <circle cx="210" cy="183" r="18" fill="#00B4D8" opacity="0.06" />
+
+                {/* X-FACTOR center label */}
+                <text x="210" y="172" textAnchor="middle"
+                  fill="rgba(245,240,232,0.55)" fontSize="9"
+                  fontFamily="'DM Mono', monospace" letterSpacing="3">
+                  X-FACTOR
+                </text>
+
+                {/* Circle labels — outside */}
+                <text x="80" y="52" textAnchor="middle"
+                  fill="#00B4D8" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
+                  fontWeight="700" letterSpacing="3">TECHNICAL</text>
+                <line x1="80" y1="58" x2="120" y2="88" stroke="rgba(0,180,216,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+
+                <text x="340" y="52" textAnchor="middle"
+                  fill="rgba(200,200,220,0.8)" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
+                  fontWeight="700" letterSpacing="3">PRODUCT</text>
+                <line x1="340" y1="58" x2="300" y2="88" stroke="rgba(160,160,185,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+
+                <text x="210" y="393" textAnchor="middle"
+                  fill="rgba(0,180,216,0.8)" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
+                  fontWeight="700" letterSpacing="3">LEADERSHIP</text>
+                <line x1="210" y1="385" x2="210" y2="360" stroke="rgba(0,155,178,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+              </svg>
             </div>
 
-            {/* Animated dashed arrow + photo */}
-            <div className="flex-1 flex items-center relative">
-              {/* Arrow SVG */}
-              <svg
-                className="absolute left-0 top-1/2 -translate-y-1/2"
-                width="120" height="20" viewBox="0 0 120 20"
-                style={{ overflow: "visible" }}
-              >
-                <path
-                  className="venn-arrow"
-                  d="M 0 10 L 100 10"
-                  fill="none"
-                  stroke="#00B4D8"
-                  strokeWidth="2"
-                  strokeDasharray="8 5"
-                  strokeLinecap="round"
-                />
-                <polygon points="98,5 115,10 98,15" fill="#00B4D8" />
-              </svg>
+            {/* RIGHT — Photo + trait cards */}
+            <div className="w-full lg:w-[48%] flex flex-col items-center gap-8">
+
+              {/* Dashed arrow from Venn → photo (desktop only) */}
+              <div className="hidden lg:flex items-center gap-0 self-start mb-[-2rem] ml-[-3rem]">
+                <svg width="80" height="20" viewBox="0 0 80 20" style={{ overflow: "visible" }}>
+                  <path className="venn-arrow" d="M 0 10 L 65 10" fill="none"
+                    stroke="#00B4D8" strokeWidth="2" strokeDasharray="7 5" strokeLinecap="round" />
+                  <polygon points="62,5 80,10 62,15" fill="#00B4D8" />
+                </svg>
+              </div>
 
               {/* Photo */}
-              <div className="ml-32 flex justify-center relative">
-                <div
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: "radial-gradient(circle, rgba(0,180,216,0.15) 0%, transparent 70%)", transform: "scale(1.4)" }}
-                />
+              <div className="relative">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none"
+                  style={{ background: "radial-gradient(circle, rgba(0,180,216,0.10) 0%, transparent 70%)" }} />
                 <img
                   src={arshHalftone}
                   alt="Arsh Chatrath"
-                  className="h-80 md:h-96 object-contain relative z-10"
-                  style={{ filter: "drop-shadow(0 0 30px rgba(0,180,216,0.2))" }}
+                  className="h-72 md:h-80 lg:h-[26rem] object-contain relative z-10"
+                  style={{ filter: "drop-shadow(0 0 50px rgba(0,180,216,0.18))" }}
                 />
+              </div>
+
+              {/* 3 trait cards */}
+              <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
+                {[
+                  { label: "Technical", color: "#00B4D8", desc: "Full-stack + systems thinking" },
+                  { label: "Product",   color: "rgba(200,200,215,0.85)", desc: "User-first, data-driven" },
+                  { label: "Leader",    color: "rgba(0,180,216,0.75)", desc: "Aligns teams, ships fast" },
+                ].map(({ label, color, desc }) => (
+                  <div key={label} className="border border-white/8 rounded p-3 bg-white/[0.03]">
+                    <div className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
+                    <div className="text-[#f5f0e8]/50 text-[10px] leading-snug" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{desc}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

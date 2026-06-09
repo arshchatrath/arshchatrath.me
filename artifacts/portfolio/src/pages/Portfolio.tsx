@@ -189,6 +189,12 @@ export default function Portfolio() {
     });
 
     // ── SECTION 1: Hero ─────────────────────────────────────────────────────
+    // Hero image slides in from right
+    gsap.fromTo(".hero-img",
+      { opacity: 0, x: 60 },
+      { opacity: 1, x: 0, duration: 0.9, ease: "power3.out", delay: 0.8 }
+    );
+
     const chars = document.querySelectorAll<HTMLElement>(".hero-char");
     gsap.fromTo(chars,
       { y: "110%", opacity: 0 },
@@ -382,41 +388,54 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="h-screen flex flex-col items-center justify-center relative px-6 overflow-hidden">
+      <section className="h-screen flex items-center justify-center relative px-6 md:px-16 overflow-hidden">
         {/* Animated teal gradient noise BG */}
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
 
-        <div ref={heroBlockRef} className="flex flex-col items-center">
-          {/* Name */}
-          <div className="overflow-hidden mb-6">
-            <h1
-              className="flex flex-wrap justify-center"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(3rem, 10vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
-            >
-              {HERO_NAME.split("").map((ch, i) =>
-                ch === " "
-                  ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
-                  : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
-              )}
-            </h1>
-          </div>
-
-          {/* Subtitle */}
-          <div className="hero-subtitle text-[#00B4D8] font-mono text-xl md:text-2xl tracking-[0.3em] uppercase mb-10 opacity-0">
-            Creative Builder
-          </div>
-
-          {/* 3 lines with hover underline */}
-          <div className="flex flex-col items-center gap-3 text-center max-w-2xl">
-            {HERO_LINES.map((line, i) => (
-              <p
-                key={i}
-                className={`hero-line-${i} opacity-0 text-[#f5f0e8]/60 font-light text-sm md:text-base tracking-wide hero-bullet`}
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-7xl mx-auto gap-6 md:gap-12">
+          {/* LEFT — text */}
+          <div ref={heroBlockRef} className="flex flex-col items-center md:items-start text-center md:text-left flex-1">
+            {/* Name */}
+            <div className="overflow-hidden mb-6">
+              <h1
+                className="flex flex-wrap justify-center md:justify-start"
+                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(2.6rem, 8vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
               >
-                {line}
-              </p>
-            ))}
+                {HERO_NAME.split("").map((ch, i) =>
+                  ch === " "
+                    ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
+                    : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
+                )}
+              </h1>
+            </div>
+
+            {/* Subtitle */}
+            <div className="hero-subtitle text-[#00B4D8] font-mono text-lg md:text-2xl tracking-[0.3em] uppercase mb-8 opacity-0">
+              Creative Builder
+            </div>
+
+            {/* 3 lines with hover underline */}
+            <div className="flex flex-col items-center md:items-start gap-3 text-center md:text-left max-w-xl">
+              {HERO_LINES.map((line, i) => (
+                <p
+                  key={i}
+                  className={`hero-line-${i} opacity-0 text-[#f5f0e8]/60 font-light text-sm md:text-base tracking-wide hero-bullet`}
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT — Arsh with mic image */}
+          <div className="hero-img opacity-0 flex-shrink-0 flex items-end justify-center">
+            <img
+              src={arshWithMic}
+              alt="Arsh Chatrath"
+              className="h-[50vh] md:h-[70vh] object-contain object-bottom"
+              style={{ maxHeight: "70vh" }}
+            />
           </div>
         </div>
 
@@ -492,7 +511,7 @@ export default function Portfolio() {
               </defs>
               <path
                 className="journey-path"
-                d="M 10 78 C 60 78 90 12 150 12 C 210 12 240 78 292 78"
+                d="M 10 78 Q 150 44 292 78"
                 fill="none"
                 stroke="#00B4D8"
                 strokeWidth="2.5"
@@ -626,8 +645,11 @@ export default function Portfolio() {
               className="case-card shrink-0 w-[85vw] md:w-[42vw] lg:w-[32vw] bg-[#111] border border-[#222] rounded-sm overflow-hidden transition-colors duration-300"
               style={{ scrollSnapAlign: "start", transformStyle: "preserve-3d", willChange: "transform" }}
             >
-              <div className="card-img-wrap h-56 overflow-hidden bg-[#0a0a0a] flex items-center justify-center">
-                <img src={card.img} alt={card.title} className="w-full h-full object-contain object-center card-img-inner transition-transform duration-500" />
+              <div
+                className="card-img-wrap flex items-center justify-center"
+                style={{ height: 300, background: "#1a1a1a", border: "1.5px dashed rgba(0,180,216,0.55)" }}
+              >
+                <span className="text-[#00B4D8] font-mono text-sm tracking-[0.2em] uppercase">Banner Coming Soon</span>
               </div>
               <div className="p-6 flex flex-col gap-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 <h3 className="text-[#00B4D8] font-bold text-sm tracking-widest uppercase">{card.title}</h3>
@@ -735,19 +757,25 @@ export default function Portfolio() {
                   fill="rgba(0,180,216,0.8)" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
                   fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default" }}>LEADERSHIP</text>
                 <line x1="210" y1="385" x2="210" y2="360" stroke="rgba(0,155,178,0.3)" strokeWidth="1" strokeDasharray="3 3" />
+
+                {/* Arrow from centroid → photo (centroid ≈ average of 3 circle centers) */}
+                <defs>
+                  <marker id="venn-ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00B4D8" />
+                  </marker>
+                </defs>
+                <line
+                  className="venn-arrow"
+                  x1="215" y1="179" x2="520" y2="179"
+                  stroke="#00B4D8" strokeWidth="2"
+                  strokeDasharray="7 5" strokeLinecap="round"
+                  markerEnd="url(#venn-ah)"
+                />
               </svg>
             </div>
 
             {/* RIGHT — Photo + trait cards */}
             <div className="w-full lg:w-[48%] flex flex-col items-center gap-8">
-
-              <div className="hidden lg:flex items-center gap-0 self-start mb-[-2rem] ml-[-3rem]">
-                <svg width="80" height="20" viewBox="0 0 80 20" style={{ overflow: "visible" }}>
-                  <path className="venn-arrow" d="M 0 10 L 65 10" fill="none"
-                    stroke="#00B4D8" strokeWidth="2" strokeDasharray="7 5" strokeLinecap="round" />
-                  <polygon points="62,5 80,10 62,15" fill="#00B4D8" />
-                </svg>
-              </div>
 
               {/* Photo with pulsing shadow */}
               <div className="relative">
@@ -784,18 +812,16 @@ export default function Portfolio() {
       {/* SECTION 7 — HIRE ME                                                 */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="hire" className="hire-section min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#0a0a0a] py-32">
-        {/* Collage images */}
-        <div className="parallax-left absolute left-0 bottom-0 h-[70vh] opacity-60 pointer-events-none select-none"
-          style={{ transform: "rotate(-4deg)", transformOrigin: "bottom left" }}>
-          <img src={arshAudience} alt="" className="h-full w-auto object-contain" />
+        {/* Collage images — anchored to bottom, hidden on mobile */}
+        <div className="parallax-left hidden md:block absolute bottom-0 left-0 h-[350px] pointer-events-none select-none">
+          <img src={arshAudience} alt="" className="h-full w-auto object-contain object-bottom" />
         </div>
-        <div className="parallax-right absolute right-0 bottom-0 h-[65vh] opacity-60 pointer-events-none select-none"
-          style={{ transform: "rotate(4deg)", transformOrigin: "bottom right" }}>
-          <img src={arshThumbsUp} alt="" className="h-full w-auto object-contain" />
+        <div className="parallax-right hidden md:block absolute bottom-0 right-0 h-[350px] pointer-events-none select-none">
+          <img src={arshThumbsUp} alt="" className="h-full w-auto object-contain object-bottom" />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center text-center px-6">
+        {/* Content — padded so text stays above the 350px images */}
+        <div className="relative z-10 flex flex-col items-center text-center px-6 mb-0 md:mb-[200px]">
           <h2
             className="overflow-visible"
             style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(4rem, 14vw, 13rem)", lineHeight: 1, letterSpacing: "-0.04em", perspective: "1200px" }}

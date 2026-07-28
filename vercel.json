@@ -9,14 +9,8 @@
   },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/resume",
-      "has": [
-        {
-          "type": "host",
-          "value": "resume.mydomain.com"
-        }
-      ]
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

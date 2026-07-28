@@ -9,10 +9,15 @@ import Resume from "@/pages/Resume";
 const queryClient = new QueryClient();
 
 function Router() {
+  const isResumeHost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "resume.mydomain.com" ||
+      window.location.hostname.startsWith("resume."));
+
   return (
     <Switch>
       <Route path="/resume" component={Resume} />
-      <Route path="/" component={Portfolio} />
+      <Route path="/" component={isResumeHost ? Resume : Portfolio} />
       <Route component={NotFound} />
     </Switch>
   );

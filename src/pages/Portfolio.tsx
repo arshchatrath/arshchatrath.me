@@ -4,19 +4,18 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 
 // ── Images (user-provided, transparent PNGs) ────────────────────────────────
-import arshCrossedArm   from "@imgs/Arsh Crossed Arm.png";
-import goldenTemple     from "@imgs/Amritsar golden temple.png";
-import thaparUniversity from "@imgs/Thapar university patiala.png";
-import monkeyThinking   from "@imgs/Monkey thinking.png";
-import monkeyRealising  from "@imgs/Monkey realising.png";
-import arshTalkeys      from "@imgs/Arsh presenting talkeys.png";
-import arshWithMic      from "@imgs/Arsh with mic.png";
-import arshHalftone     from "@imgs/Arsh smiling with mic in hand.png";
-import arshAudience     from "@imgs/Arsh with mic in audience.png";
-import arshThumbsUp     from "@imgs/Arsh thumbs up.png";
-import banner1          from "@imgs/1.png";
-import banner2          from "@imgs/2.png";
-import banner3          from "@imgs/3.png";
+import arshCrossedArm   from "@imgs/Arsh Crossed Arm.webp";
+import goldenTemple     from "@imgs/Amritsar golden temple.webp";
+import thaparUniversity from "@imgs/Thapar university patiala.webp";
+import monkeyThinking   from "@imgs/Monkey thinking.webp";
+import monkeyRealising  from "@imgs/Monkey realising.webp";
+import arshWithMic      from "@imgs/Arsh with mic.webp";
+import arshHalftone     from "@imgs/Arsh smiling with mic in hand.webp";
+import arshAudience     from "@imgs/Arsh with mic in audience.webp";
+import arshThumbsUp     from "@imgs/Arsh thumbs up.webp";
+import banner1          from "@imgs/1.webp";
+import banner2          from "@imgs/2.webp";
+import banner3          from "@imgs/3.webp";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -114,14 +113,17 @@ export default function Portfolio() {
   const progressRef   = useRef<HTMLDivElement>(null);
   const overlayRef    = useRef<HTMLDivElement>(null);
   const heroBlockRef  = useRef<HTMLDivElement>(null);
+  const lenisRef      = useRef<Lenis | null>(null);
 
   // ── Lenis smooth scroll ───────────────────────────────────────────────────
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
+    lenisRef.current = lenis;
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
     return () => {
       lenis.destroy();
+      lenisRef.current = null;
       gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
@@ -397,14 +399,32 @@ export default function Portfolio() {
         }}
       />
 
-      {/* ── Floating HIRE ME button ──────────────────────────────────────── */}
-      <a
-        href="mailto:achatrath_be23@thapar.edu"
-        data-hover
-        className="fixed bottom-8 right-8 z-50 bg-[#00B4D8] text-[#0a0a0a] font-bold text-sm tracking-widest uppercase px-5 py-3 rounded-full hover:scale-110 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.4)]"
-      >
-        HIRE ME
-      </a>
+      {/* ── Navbar ─────────────────────────────────────────────────────── */}
+      <nav className="fixed top-0 left-0 w-full z-40 flex items-center justify-between px-6 md:px-16 py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5">
+        <span
+          className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/80"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          Arsh Chatrath
+        </span>
+        <div className="flex items-center gap-5 md:gap-8">
+          <button
+            type="button"
+            data-hover
+            onClick={() => lenisRef.current?.scrollTo("#hire")}
+            className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
+          >
+            Contact
+          </button>
+          <a
+            href="/figma"
+            data-hover
+            className="font-mono text-xs tracking-[0.3em] uppercase text-[#0a0a0a] bg-[#00B4D8] px-4 py-2 rounded-full hover:scale-105 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.25)]"
+          >
+            Figma Portfolio
+          </a>
+        </div>
+      </nav>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
@@ -456,6 +476,8 @@ export default function Portfolio() {
               alt="Arsh Chatrath"
               className="h-[50vh] md:h-[70vh] object-contain object-bottom"
               style={{ maxHeight: "70vh" }}
+              fetchPriority="high"
+              decoding="async"
             />
           </div>
         </div>
@@ -509,7 +531,7 @@ export default function Portfolio() {
           {/* RIGHT — Photo */}
           <div className="about-right opacity-0 flex justify-center">
             <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
-              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-contain" />
+              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
@@ -518,7 +540,7 @@ export default function Portfolio() {
         <div className="journey-map mt-24 flex items-end justify-between gap-8 max-w-3xl mx-auto relative">
           {/* Amritsar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-56 w-56 object-contain drop-shadow-xl" />
+            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-56 w-56 object-contain drop-shadow-xl" loading="lazy" decoding="async" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
           </div>
 
@@ -545,7 +567,7 @@ export default function Portfolio() {
 
           {/* Thapar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-56 w-56 object-contain drop-shadow-xl" />
+            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-56 w-56 object-contain drop-shadow-xl" loading="lazy" decoding="async" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
           </div>
         </div>
@@ -570,7 +592,7 @@ export default function Portfolio() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="monkey-left opacity-0 flex justify-center">
               <img src={monkeyThinking} alt="Thinking" className="h-80 md:h-96 object-contain"
-                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} />
+                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
 
             <ul className="flex flex-col gap-5">
@@ -618,7 +640,7 @@ export default function Portfolio() {
 
             <div className="monkey-right opacity-0 flex justify-center">
               <img src={monkeyRealising} alt="Realising" className="h-80 md:h-96 object-contain"
-                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} />
+                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
           </div>
 
@@ -670,7 +692,7 @@ export default function Portfolio() {
                 className="card-img-wrap overflow-hidden flex items-center justify-center"
                 style={{ height: 120, background: "#1a1a1a" }}
               >
-                <img src={card.img} alt={card.title} className="w-full h-full object-contain" />
+                <img src={card.img} alt={card.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
               </div>
               <div className="p-4 flex flex-col gap-2.5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 <h3 className="text-[#00B4D8] font-bold text-xs tracking-widest uppercase">{card.title}</h3>
@@ -806,6 +828,8 @@ export default function Portfolio() {
                   src={arshHalftone}
                   alt="Arsh Chatrath"
                   className="h-72 md:h-80 lg:h-[26rem] object-contain relative z-10 venn-photo"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
 
@@ -837,7 +861,7 @@ export default function Portfolio() {
           
           {/* LEFT — Arsh with mic in audience */}
           <div className="parallax-left hidden md:flex justify-end select-none h-[300px] pointer-events-none">
-            <img src={arshAudience} alt="Arsh with mic in audience" className="h-full w-auto object-contain" />
+            <img src={arshAudience} alt="Arsh with mic in audience" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
           {/* CENTER — content */}
@@ -871,7 +895,7 @@ export default function Portfolio() {
 
           {/* RIGHT — Arsh thumbs up */}
           <div className="parallax-right hidden md:flex justify-start select-none h-[300px] pointer-events-none">
-            <img src={arshThumbsUp} alt="Arsh thumbs up" className="h-full w-auto object-contain" />
+            <img src={arshThumbsUp} alt="Arsh thumbs up" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
         </div>

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Portfolio from "@/pages/Portfolio";
 import Resume from "@/pages/Resume";
+import Figma from "@/pages/Figma";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/resume" component={Resume} />
+      <Route path="/figma" component={Figma} />
       <Route path="/" component={isResumeHost ? Resume : Portfolio} />
       <Route component={NotFound} />
     </Switch>

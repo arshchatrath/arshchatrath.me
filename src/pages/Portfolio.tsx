@@ -933,10 +933,14 @@ export default function Portfolio() {
               </h2>
             </div>
             <p className="text-[#00B4D8] italic mt-3 mb-6 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Creative Builder
+              Thapar Institute, Patiala
             </p>
             <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              I find broken user experiences and fix them systematically. Campus partner @Perplexity & Product Head @Talkeys — 3000+ users, 60% growth. National competition winner (IIT Roorkee, AMEX, Amazon ML). I build products that transform chaos into systems.
+              Most of what I have built started as something that annoyed me. A community
+              nobody was showing up to. A capstone scramble spread across WhatsApp groups.
+              A job hunt eating an hour every morning. I research it, test it, measure it,
+              and ship — then I do it again. National competition winner at IIT Roorkee,
+              AMEX and Amazon ML.
             </p>
 
             {/* Journey lines */}

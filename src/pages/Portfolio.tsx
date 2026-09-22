@@ -1,7 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { SplitText } from "gsap/SplitText";
+import { usePageMeta } from "@/lib/page-meta";
+import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/motion";
+import { fieldState } from "@/gl/AmbientField";
+import Preloader from "@/components/Preloader";
+import AsciiMorph from "@/components/AsciiMorph";
+import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
 
 // ── Images (user-provided, transparent PNGs) ────────────────────────────────
 import arshCrossedArm   from "@imgs/Arsh Crossed Arm.webp";
@@ -17,7 +25,7 @@ import banner1          from "@imgs/1.webp";
 import banner2          from "@imgs/2.webp";
 import banner3          from "@imgs/3.webp";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
@@ -66,6 +74,37 @@ const CARDS = [
   },
 ];
 
+// Answers double as FAQPage structured data — keep them factual.
+const FAQS = [
+  {
+    q: "What kind of roles are you looking for?",
+    a: "Product and growth internships. I'm most useful where a product has real users, messy feedback and no one has decided what to build next.",
+  },
+  {
+    q: "What have you actually shipped?",
+    a: "The Talkeys community platform (scaled to 1000+ active users, 60% lift in participation), a capstone team-finder portal that replaced fragmented WhatsApp groups, and campus growth for Perplexity AI reaching 1500+ students.",
+  },
+  {
+    q: "Are you technical?",
+    a: "Yes — I build full-stack, so I scope with engineers instead of throwing specs over the wall. That's the overlap the X-Factor section describes: technical, product and leadership.",
+  },
+  {
+    q: "Where are you based?",
+    a: "Patiala, Punjab — I'm at Thapar Institute of Engineering and Technology. I'm from Amritsar originally.",
+  },
+  {
+    q: "What's the fastest way to reach you?",
+    a: "Email: achatrath_be23@thapar.edu. Phone works too, and my full resume is one click away.",
+  },
+];
+
+const NAV_LINKS = [
+  { href: "#about", label: "About" },
+  { href: "#work", label: "Work" },
+  { href: "#faq", label: "FAQ" },
+  { href: "#hire", label: "Contact" },
+];
+
 // Venn circle circumference for r=118
 const VENN_CIRC = 741.4;
 
@@ -90,6 +129,98 @@ function attachTilt(el: HTMLElement) {
   };
 }
 
+// ── FAQ card ─────────────────────────────────────────────────────────────────
+// Native <details> can't animate its own height, so this holds the open state
+// and lets GSAP tween height:auto. The spotlight follows the pointer.
+function FaqBoard() {
+  const [active, setActive] = useState(0);
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  // Spotlight follows the pointer across whichever card it is over.
+  const trackPointer = (e: ReactMouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
+
+  return (
+    <div className="faq-board flex flex-col md:flex-row gap-2.5 h-[clamp(24rem,56vh,30rem)] md:h-[clamp(16rem,42vh,20rem)]">
+      {FAQS.map(({ q, a }, i) => {
+        const open = i === active;
+        return (
+          <button
+            key={q}
+            type="button"
+            data-hover
+            aria-expanded={open}
+            onClick={() => setActive(i)}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            onMouseMove={trackPointer}
+            style={{ flexGrow: open ? 4.2 : hovered === i ? 1.3 : 1 }}
+            className={`faq-card opacity-0 relative basis-0 min-w-0 min-h-0 overflow-hidden rounded-lg border text-left ${
+              open
+                ? "border-[#00B4D8]/45 bg-[#00B4D8]/[0.06]"
+                : "border-white/10 bg-white/[0.02] hover:border-[#00B4D8]/30"
+            }`}
+          >
+            <span className="faq-spot" aria-hidden="true" />
+
+            {/* Oversized index sitting in the open card's empty space */}
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute -bottom-10 right-1 select-none leading-none transition-opacity duration-700 ${
+                open ? "opacity-100 delay-200" : "opacity-0"
+              }`}
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontWeight: 900,
+                fontSize: "13rem",
+                color: "rgba(0,180,216,0.07)",
+              }}
+            >
+              {i + 1}
+            </span>
+
+            {/* Index — always visible, anchors the card while it resizes */}
+            <span
+              className={`absolute top-4 left-4 z-10 font-mono text-[10px] tracking-[0.25em] transition-colors duration-500 ${
+                open ? "text-[#00B4D8]" : "text-[#f5f0e8]/35"
+              }`}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+
+            {/* Collapsed label — vertical on desktop, a normal row on mobile */}
+            <span
+              className={`absolute inset-0 z-10 flex items-end p-4 pt-12 transition-opacity duration-300 ${
+                open ? "opacity-0" : "opacity-100 delay-200"
+              }`}
+              aria-hidden={open}
+            >
+              <span className="text-[#f5f0e8]/80 text-xs md:text-sm font-medium leading-snug md:mx-auto md:[writing-mode:vertical-rl]">
+                {q}
+              </span>
+            </span>
+
+            {/* Expanded panel — fixed width so the text doesn't reflow mid-animation */}
+            <span
+              className={`absolute left-0 inset-y-0 z-10 flex w-[86vw] md:w-[min(32rem,40vw)] flex-col justify-center gap-3 px-5 pt-12 pb-5 transition-[opacity,transform] duration-500 ${
+                open ? "opacity-100 translate-y-0 delay-200" : "opacity-0 translate-y-4 pointer-events-none"
+              }`}
+              aria-hidden={!open}
+            >
+              <span className="text-[#f5f0e8] text-lg md:text-2xl font-semibold leading-snug">{q}</span>
+              <span className="h-px w-10 bg-[#00B4D8]/50" aria-hidden="true" />
+              <span className="text-[#f5f0e8]/65 text-sm md:text-base leading-relaxed">{a}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Section divider ──────────────────────────────────────────────────────────
 function SectionDivider() {
   return (
@@ -109,71 +240,101 @@ function SectionDivider() {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const containerRef  = useRef<HTMLDivElement>(null);
-  const cursorRef     = useRef<HTMLDivElement>(null);
   const progressRef   = useRef<HTMLDivElement>(null);
-  const overlayRef    = useRef<HTMLDivElement>(null);
   const heroBlockRef  = useRef<HTMLDivElement>(null);
   const lenisRef      = useRef<Lenis | null>(null);
+  const [intro, setIntro] = useState(false);
+  const skewables = useRef<HTMLElement[]>([]);
+
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  usePageMeta(
+    "Arsh Chatrath — Product Builder & Campus Partner @Perplexity",
+    "Product Builder. Campus Partner @Perplexity, Product & Operations Head @Talkeys (1000+ users, 60% growth). IIT Roorkee winner. Looking for product & growth internships.",
+    "/",
+  );
+
+  // The page reveal is gated on the preloader finishing. If that timeline ever
+  // stalls, every `.opacity-0` element would stay hidden forever — so force the
+  // gate open after a beat no matter what.
+  useEffect(() => {
+    const t = setTimeout(() => setIntro(true), 4500);
+    return () => clearTimeout(t);
+  }, []);
 
   // ── Lenis smooth scroll ───────────────────────────────────────────────────
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
     lenisRef.current = lenis;
-    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    // Lenis moves the page on its own clock. Without this line ScrollTrigger
+    // only hears native scroll events, so scrubbed/pinned effects never track
+    // the real position — they look like they simply don't run.
+    lenis.on("scroll", ScrollTrigger.update);
+    const raf = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
     return () => {
+      gsap.ticker.remove(raf);
+      lenis.off("scroll", ScrollTrigger.update);
       lenis.destroy();
       lenisRef.current = null;
-      gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
 
-  // ── Preloader ─────────────────────────────────────────────────────────────
+  // ── Scroll progress + the global order/velocity signal ────────────────────
+  // uOrder is the spine of the whole site: 0 at the top, 1 at the bottom. The
+  // ambient field reads it and resolves from turbulent to laminar as you read.
   useEffect(() => {
-    if (!overlayRef.current) return;
-    gsap.to(overlayRef.current, { opacity: 0, duration: 1.2, delay: 0.1, ease: "power2.out",
-      onComplete: () => { if (overlayRef.current) overlayRef.current.style.display = "none"; }
-    });
-  }, []);
+    if (progressRef.current) {
+      gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
+    }
 
-  // ── Custom cursor with lerp + invert ─────────────────────────────────────
-  useEffect(() => {
-    const cur = cursorRef.current;
-    if (!cur) return;
-    let mx = 0, my = 0;
-    const move = (e: MouseEvent) => { mx = e.clientX; my = e.clientY; };
-    const grow = () => gsap.to(cur, { width: 40, height: 40, duration: 0.25, ease: "power2.out" });
-    const shrink = () => gsap.to(cur, { width: 12, height: 12, duration: 0.25, ease: "power2.out" });
-    const ticker = () => { gsap.to(cur, { x: mx, y: my, duration: 0.55, ease: "power3.out", overwrite: "auto" }); };
-    window.addEventListener("mousemove", move);
-    gsap.ticker.add(ticker);
-    document.querySelectorAll("a, button, [data-hover]").forEach(el => {
-      el.addEventListener("mouseenter", grow);
-      el.addEventListener("mouseleave", shrink);
-    });
-    return () => {
-      window.removeEventListener("mousemove", move);
-      gsap.ticker.remove(ticker);
-    };
-  }, []);
-
-  // ── Scroll progress bar ───────────────────────────────────────────────────
-  useEffect(() => {
-    if (!progressRef.current) return;
-    gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
-    ScrollTrigger.create({
+    const st = ScrollTrigger.create({
       trigger: document.documentElement,
       start: "top top",
       end: "bottom bottom",
       onUpdate: (self) => {
         if (progressRef.current) gsap.set(progressRef.current, { scaleX: self.progress });
+        fieldState.order = self.progress;
+        // Normalised, clamped scroll velocity — drives the field, the marquee
+        // and the global skew.
+        const v = gsap.utils.clamp(-1, 1, self.getVelocity() / 2600);
+        fieldState.velocity = v;
+        if (skewables.current.length) {
+          gsap.to(skewables.current, {
+            skewY: v * 2.2,
+            duration: 0.5,
+            ease: EASE.out,
+            overwrite: "auto",
+          });
+        }
       },
     });
+    return () => st.kill();
   }, []);
 
   // ── All GSAP animations ───────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
+    if (!intro) return; // hold everything until the preloader hands over
+
+    // Sections that lean with scroll velocity. Cheap, and it's what makes the
+    // page feel like it has mass rather than snapping between states.
+    skewables.current = gsap.utils.toArray<HTMLElement>(".skewable");
+
+    // Reduced motion: reveal everything at rest instead of animating it in.
+    // Without this, every `.opacity-0` element stays invisible forever.
+    if (prefersReducedMotion()) {
+      gsap.set(".opacity-0, .hire-w0, .hire-w1, .hire-w2", { opacity: 1 });
+      gsap.set(".venn-c1, .venn-c2, .venn-c3", { opacity: 1, attr: { strokeDashoffset: 0 } });
+      gsap.set(".div-line", { attr: { strokeDashoffset: 0 } });
+      // The case cards are normally reachable by the pinned horizontal scrub.
+      const cards = document.querySelector<HTMLElement>(".cards-scroll");
+      if (cards) cards.style.overflowX = "auto";
+      return;
+    }
 
     // ── Section divider draw-in ─────────────────────────────────────────────
     document.querySelectorAll(".div-line").forEach(el => {
@@ -184,13 +345,48 @@ export default function Portfolio() {
       );
     });
 
-    // ── Section heading clip reveals ────────────────────────────────────────
-    document.querySelectorAll(".reveal-heading").forEach(el => {
-      gsap.fromTo(el,
-        { y: 70, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, ease: "power3.out",
-          scrollTrigger: { trigger: el.closest(".reveal-wrap") ?? el, start: "top 85%" } }
-      );
+    // ── Section headings: masked per-line reveal ────────────────────────────
+    // SplitText with autoSplit re-splits on resize, so lines stay correct when
+    // the layout reflows. This replaces the old whole-block fade.
+    const splits: SplitText[] = [];
+    document.querySelectorAll<HTMLElement>(".reveal-heading").forEach(el => {
+      const split = SplitText.create(el, {
+        type: "lines",
+        mask: "lines",
+        linesClass: "reveal-line",
+        autoSplit: true,
+        onSplit(self) {
+          return gsap.from(self.lines, {
+            yPercent: 115,
+            rotate: 2,
+            duration: DUR.slow,
+            ease: EASE.out,
+            stagger: STAGGER.base,
+            scrollTrigger: { trigger: el.closest(".reveal-wrap") ?? el, start: "top 85%" },
+          });
+        },
+      });
+      splits.push(split);
+    });
+
+    // Body copy gets the same grammar, one notch quieter.
+    document.querySelectorAll<HTMLElement>(".reveal-copy").forEach(el => {
+      const split = SplitText.create(el, {
+        type: "lines",
+        mask: "lines",
+        autoSplit: true,
+        onSplit(self) {
+          return gsap.from(self.lines, {
+            yPercent: 100,
+            opacity: 0,
+            duration: DUR.base,
+            ease: EASE.out,
+            stagger: STAGGER.tight,
+            scrollTrigger: { trigger: el, start: "top 88%" },
+          });
+        },
+      });
+      splits.push(split);
     });
 
     // ── SECTION 1: Hero ─────────────────────────────────────────────────────
@@ -253,6 +449,36 @@ export default function Portfolio() {
       el.addEventListener("mouseenter", () => gsap.to(el, { x: 8, duration: 0.2, ease: "power2.out" }));
       el.addEventListener("mouseleave", () => gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }));
     });
+
+    // ── TRANSITION: questions dissolve, realizations wipe in ────────────────
+    // Deliberately no pin and no sticky. This only reads where the two real
+    // sections are and paints two overlays that already sit inside them, so
+    // there is nothing to mis-measure and nothing extra to scroll through.
+    const pmScrim   = document.querySelector<HTMLElement>(".pm-scrim");
+    const rzCurtain = document.querySelector<HTMLElement>(".rz-curtain");
+    const rzSeam    = document.querySelector<HTMLElement>(".rz-seam");
+
+    const transitionST = ScrollTrigger.create({
+      trigger: ".realize-section",
+      start: "top bottom",
+      end: "top 35%",
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        const p = self.progress;
+        // the questions sink into the dark behind you
+        if (pmScrim) gsap.set(pmScrim, { opacity: p * 0.92 });
+        // the answers are uncovered from the top down
+        if (rzCurtain) gsap.set(rzCurtain, { scaleY: 1 - p });
+        // a light seam rides the moving edge of the wipe
+        if (rzSeam) {
+          gsap.set(rzSeam, {
+            top: `${p * 100}%`,
+            opacity: p > 0.02 && p < 0.98 ? 1 : 0,
+          });
+        }
+      },
+    });
+
 
     // ── SECTION 4: Realizations ─────────────────────────────────────────────
     gsap.fromTo(".monkey-right",
@@ -335,30 +561,145 @@ export default function Portfolio() {
     gsap.to(".parallax-left",  { y: -130, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2 } });
     gsap.to(".parallax-right", { y:  130, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2 } });
 
-    // Typewriter contact details on section enter
-    const typewriter = (selector: string, extraDelay = 0) => {
-      const el = document.querySelector<HTMLElement>(selector);
-      if (!el) return;
-      const full = el.textContent || "";
-      el.textContent = "";
-      gsap.delayedCall(0, () => {
-        ScrollTrigger.create({
-          trigger: ".hire-section", start: "top 60%", once: true,
-          onEnter: () => {
-            let idx = 0;
-            const step = () => {
-              if (!el) return;
-              el.textContent = full.slice(0, idx + 1);
-              idx++;
-              if (idx < full.length) setTimeout(step, 40);
-            };
-            setTimeout(step, extraDelay);
-          }
+    // Contact details fade in. (They used to type out character by character,
+    // which meant the phone and email were absent from the DOM until scrolled to.)
+    gsap.fromTo([".contact-phone", ".contact-email"],
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.15,
+        scrollTrigger: { trigger: ".hire-section", start: "top 60%" } }
+    );
+
+    // ── Chapter readout in the nav ──────────────────────────────────────────
+    const chapters: Array<[string, string]> = [
+      [".hero-section", "intro"],
+      [".about-section", "about"],
+      [".pm-section", "questions"],
+      [".ascii-stage", "the turn"],
+      [".realize-section", "lessons"],
+      [".proof-section", "work"],
+      [".venn-section", "x-factor"],
+      [".faq-section", "faq"],
+      [".hire-section", "contact"],
+    ];
+    const chapterEl = document.querySelector<HTMLElement>(".nav-chapter");
+    chapters.forEach(([sel, label], i) => {
+      const el = document.querySelector(sel);
+      if (!el || !chapterEl) return;
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 55%",
+        end: "bottom 55%",
+        onToggle: (self) => {
+          if (!self.isActive) return;
+          chapterEl.textContent = `${String(i + 1).padStart(2, "0")} / ${String(
+            chapters.length,
+          ).padStart(2, "0")} — ${label}`;
+        },
+      });
+    });
+
+    // ── Marquee driven by scroll velocity ───────────────────────────────────
+    // A constant-speed marquee reads as dead. This one accelerates with the
+    // scroll and reverses when you scroll back up.
+    const tickers: Array<() => void> = [];
+    const track = document.querySelector<HTMLElement>(".ticker-track");
+    if (track) {
+      track.style.animation = "none";
+      const half = track.scrollWidth / 2 || 1;
+      const wrap = gsap.utils.wrap(-half, 0);
+      let x = 0;
+      const marquee = () => {
+        const v = fieldState.velocity;
+        const dir = v < -0.02 ? 1 : -1;
+        x += dir * (0.5 + Math.abs(v) * 16);
+        gsap.set(track, { x: wrap(x) });
+      };
+      gsap.ticker.add(marquee);
+      tickers.push(marquee);
+    }
+
+    // ── Case cards take focus as they pass the centre ───────────────────────
+    const caseCards = gsap.utils.toArray<HTMLElement>(".case-card");
+    if (caseCards.length) {
+      const focus = () => {
+        const mid = window.innerWidth / 2;
+        caseCards.forEach((card) => {
+          const r = card.getBoundingClientRect();
+          if (r.right < 0 || r.left > window.innerWidth) return;
+          const d = Math.abs(r.left + r.width / 2 - mid) / (window.innerWidth * 0.6);
+          const k = gsap.utils.clamp(0, 1, 1 - d);
+          gsap.set(card, { opacity: 0.4 + k * 0.6, scale: 0.94 + k * 0.06 });
+        });
+      };
+      gsap.ticker.add(focus);
+      tickers.push(focus);
+    }
+
+    // ── Journey path drawn on scroll, with a travelling marker ──────────────
+    const path = document.querySelector<SVGPathElement>(".journey-path");
+    const marker = document.querySelector<SVGCircleElement>(".journey-dot");
+    if (path) {
+      path.style.animation = "none";
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.to(path, {
+        strokeDashoffset: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".journey-map",
+          start: "top 85%",
+          end: "bottom 60%",
+          scrub: 0.8,
+          onUpdate: (self) => {
+            if (!marker) return;
+            const pt = path.getPointAtLength(len * self.progress);
+            gsap.set(marker, { attr: { cx: pt.x, cy: pt.y }, opacity: self.progress > 0.02 ? 1 : 0 });
+          },
+        },
+      });
+    }
+
+    // ── Venn: parallax to pointer, isolate a lobe on hover ──────────────────
+    const vennSvg = document.querySelector<SVGSVGElement>(".venn-svg");
+    if (vennSvg) {
+      const circles = [".venn-c1", ".venn-c2", ".venn-c3"].map((sel) =>
+        vennSvg.querySelector<SVGCircleElement>(sel),
+      );
+      const onVennMove = (e: MouseEvent) => {
+        const r = vennSvg.getBoundingClientRect();
+        const dx = (e.clientX - r.left) / r.width - 0.5;
+        const dy = (e.clientY - r.top) / r.height - 0.5;
+        circles.forEach((c, i) => {
+          if (!c) return;
+          const depth = 8 + i * 5;
+          gsap.to(c, { x: dx * depth, y: dy * depth, duration: 0.7, ease: EASE.out, overwrite: "auto" });
+        });
+      };
+      const onVennLeave = () => {
+        circles.forEach((c) => c && gsap.to(c, { x: 0, y: 0, duration: 0.9, ease: EASE.out }));
+      };
+      vennSvg.addEventListener("mousemove", onVennMove);
+      vennSvg.addEventListener("mouseleave", onVennLeave);
+
+      vennSvg.querySelectorAll<SVGTextElement>(".venn-label").forEach((labelEl, i) => {
+        labelEl.addEventListener("mouseenter", () => {
+          circles.forEach((c, j) => c && gsap.to(c, { opacity: j === i ? 1 : 0.25, duration: 0.3 }));
+        });
+        labelEl.addEventListener("mouseleave", () => {
+          circles.forEach((c) => c && gsap.to(c, { opacity: 1, duration: 0.4 }));
         });
       });
-    };
-    typewriter(".contact-phone", 0);
-    typewriter(".contact-email", 600);
+    }
+
+    // ── FAQ cards: deal in left to right ────────────────────────────────────
+    gsap.fromTo(".faq-card",
+      { opacity: 0, x: 80, rotateY: -28, transformPerspective: 1000, transformOrigin: "left center" },
+      { opacity: 1, x: 0, rotateY: 0, duration: 0.75, ease: "power3.out",
+        stagger: { each: 0.11, from: "start" },
+        // drop the inline transform afterwards so the CSS hover lift can apply
+        clearProps: "transform",
+        scrollTrigger: { trigger: ".faq-section", start: "top 75%" } }
+    );
 
     // ── Generic fade-up ─────────────────────────────────────────────────────
     document.querySelectorAll(".fade-up").forEach(el => {
@@ -368,60 +709,79 @@ export default function Portfolio() {
       );
     });
 
+    // Images and webfonts land after this effect runs and shift every trigger's
+    // start/end. Without a refresh the scrubbed sections can sit at the wrong
+    // progress — which looks exactly like "the animation isn't running".
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener("load", refresh);
+    if (document.fonts?.ready) document.fonts.ready.then(refresh);
+
     return () => {
+      window.removeEventListener("load", refresh);
+      splits.forEach(sp => sp.revert());
+      tickers.forEach(fn => gsap.ticker.remove(fn));
       cardCleanups.forEach(fn => fn());
-      if (cardsPinTween && cardsPinTween.scrollTrigger) cardsPinTween.scrollTrigger.kill();
+      cardsPinTween?.scrollTrigger?.kill();
+      transitionST.kill();
     };
-  }, []);
+  }, [intro]);
 
   return (
-    <div ref={containerRef} className="bg-[#0a0a0a] text-[#f5f0e8] min-h-screen relative overflow-x-hidden" style={{ cursor: "none" }}>
+    <>
+      {!intro && <Preloader onDone={() => setIntro(true)} />}
 
-      {/* ── Page-load overlay ────────────────────────────────────────────── */}
-      <div ref={overlayRef} className="fixed inset-0 bg-[#0a0a0a] z-[99999] pointer-events-none" />
-
-      {/* ── Scroll progress bar ──────────────────────────────────────────── */}
-      <div ref={progressRef} className="fixed top-0 left-0 w-full h-[2px] bg-[#00B4D8] z-[9997] origin-left pointer-events-none" />
-
-      {/* ── Custom cursor ────────────────────────────────────────────────── */}
       <div
-        ref={cursorRef}
-        className="fixed top-0 left-0 rounded-full bg-[#00B4D8] pointer-events-none z-[9999] mix-blend-difference"
-        style={{ width: 12, height: 12, transform: "translate(-50%, -50%)" }}
-      />
-
-      {/* ── Noise grain overlay ──────────────────────────────────────────── */}
-      <div
-        className="fixed inset-0 pointer-events-none z-[9998]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          opacity: 0.04,
-        }}
-      />
+        ref={containerRef}
+        className="text-[#f5f0e8] min-h-screen relative overflow-x-clip"
+      >
+        {/* Scroll progress */}
+        <div ref={progressRef} className="fixed top-0 left-0 w-full h-[2px] bg-[#00B4D8] z-[9997] origin-left pointer-events-none" />
 
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 w-full z-40 flex items-center justify-between px-6 md:px-16 py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5">
-        <span
-          className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/80"
+      <nav
+        aria-label="Primary"
+        className="fixed top-0 left-0 w-full z-40 flex items-center justify-between px-6 md:px-16 py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5"
+      >
+        <a
+          href="#top"
+          data-hover
+          onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(0); }}
+          className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/80 hover:text-[#00B4D8] transition-colors"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
           Arsh Chatrath
+        </a>
+        <span className="nav-chapter hidden lg:block font-mono text-[10px] tracking-[0.3em] uppercase text-[#f5f0e8]/35">
+          01 / 09 &mdash; intro
         </span>
-        <div className="flex items-center gap-5 md:gap-8">
-          <button
-            type="button"
+        <div className="flex items-center gap-4 md:gap-7">
+          {NAV_LINKS.map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              data-hover
+              onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(href); }}
+              className="hidden sm:inline font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
+            >
+              {label}
+            </a>
+          ))}
+          <a
+            href="/resume"
             data-hover
-            onClick={() => lenisRef.current?.scrollTo("#hire")}
+            data-cursor="OPEN"
             className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
           >
-            Contact
-          </button>
+            Resume
+          </a>
           <a
             href="/figma"
             data-hover
+            data-magnetic
+            data-cursor="OPEN"
             className="font-mono text-xs tracking-[0.3em] uppercase text-[#0a0a0a] bg-[#00B4D8] px-4 py-2 rounded-full hover:scale-105 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.25)]"
           >
-            Figma Portfolio
+            Figma
           </a>
         </div>
       </nav>
@@ -429,7 +789,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="h-screen flex items-center justify-center relative px-6 md:px-16 overflow-hidden">
+      <section className="hero-section h-screen flex items-center justify-center relative px-6 md:px-16 overflow-hidden">
         {/* Animated teal gradient noise BG */}
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
 
@@ -467,6 +827,28 @@ export default function Portfolio() {
                 </p>
               ))}
             </div>
+
+            {/* Primary CTA — above the fold */}
+            <div className="hero-cta flex flex-wrap items-center justify-center md:justify-start gap-3 mt-8"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <a
+                href="#hire"
+                data-hover
+                onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire"); }}
+                data-magnetic
+                className="lets-talk-btn inline-flex items-center gap-2 text-[#0a0a0a] font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full"
+                style={{ background: "#00B4D8", boxShadow: "0 0 30px rgba(0,180,216,0.35)" }}
+              >
+                Hire me <span aria-hidden="true">→</span>
+              </a>
+              <a
+                href="/resume"
+                data-hover
+                className="inline-flex items-center gap-2 border border-white/20 text-[#f5f0e8]/85 font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full hover:border-[#00B4D8] hover:text-[#00B4D8] transition-colors"
+              >
+                View resume
+              </a>
+            </div>
           </div>
 
           {/* RIGHT — Arsh with mic image */}
@@ -494,7 +876,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 2 — HELLO I'M ARSH                                          */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="about-section py-24 px-6 md:px-16 max-w-7xl mx-auto">
+      <section id="about" className="about-section skewable py-24 px-6 md:px-16 max-w-7xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           {/* LEFT */}
           <div className="about-left opacity-0">
@@ -506,7 +888,7 @@ export default function Portfolio() {
             <p className="text-[#00B4D8] italic mt-3 mb-6 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
               Creative Builder
             </p>
-            <p className="text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               I find broken user experiences and fix them systematically. Campus partner @Perplexity & Product Head @Talkeys — 3000+ users, 60% growth. National competition winner (IIT Roorkee, AMEX, Amazon ML). I build products that transform chaos into systems.
             </p>
 
@@ -562,6 +944,8 @@ export default function Portfolio() {
                 strokeLinecap="round"
                 markerEnd="url(#arrowhead)"
               />
+              <circle className="journey-dot" r="4" fill="#00B4D8" opacity="0"
+                style={{ filter: "drop-shadow(0 0 6px rgba(0,180,216,0.9))" }} />
             </svg>
           </div>
 
@@ -578,7 +962,9 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="pm-section py-24 px-6 md:px-16 bg-[#0d0d0d]">
+      <section className="pm-section skewable relative overflow-hidden py-24 px-6 md:px-16 bg-[#0d0d0d]/80">
+        {/* darkens as you leave the questions behind */}
+        <div className="pm-scrim pointer-events-none absolute inset-0 z-20 bg-[#0a0a0a] opacity-0" />
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
             <div className="reveal-wrap overflow-hidden">
@@ -591,7 +977,7 @@ export default function Portfolio() {
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="monkey-left opacity-0 flex justify-center">
-              <img src={monkeyThinking} alt="Thinking" className="h-80 md:h-96 object-contain"
+              <img src={monkeyThinking} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
                 style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
 
@@ -608,12 +994,36 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <SectionDivider />
+
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ASCII MORPH - the thinking monkey erodes into noise and re-forms */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <AsciiMorph
+        from={monkeyThinking}
+        to={monkeyRealising}
+        className="ascii-stage h-[70vh] md:h-[86vh] px-4"
+      />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 4 — I REALIZED…                                             */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="realize-section py-24 px-6 md:px-16">
+      <section className="realize-section skewable relative overflow-hidden py-24 px-6 md:px-16">
+        {/* curtain retracts downward to uncover the answers; resting state is
+            fully retracted, so if the scroll driver never runs you just see the
+            section normally rather than a blank panel */}
+        <div
+          className="rz-curtain pointer-events-none absolute inset-0 z-20 origin-bottom bg-[#0d0d0d]"
+          style={{ transform: "scaleY(0)" }}
+        />
+        <div
+          className="rz-seam pointer-events-none absolute left-0 right-0 z-30 h-px opacity-0"
+          style={{
+            top: "0%",
+            background: "linear-gradient(90deg, transparent, #00B4D8 35%, #ffffff 50%, #00B4D8 65%, transparent)",
+            boxShadow: "0 0 26px 5px rgba(0,180,216,0.55)",
+          }}
+        />
         <div className="max-w-7xl mx-auto">
           <div className="mb-16 flex items-center gap-6">
             <div className="reveal-wrap overflow-hidden">
@@ -639,7 +1049,7 @@ export default function Portfolio() {
             </ul>
 
             <div className="monkey-right opacity-0 flex justify-center">
-              <img src={monkeyRealising} alt="Realising" className="h-80 md:h-96 object-contain"
+              <img src={monkeyRealising} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
                 style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
           </div>
@@ -657,7 +1067,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="proof-section h-screen flex flex-col justify-center bg-[#0d0d0d] overflow-hidden relative py-8">
+      <section id="work" className="proof-section h-screen flex flex-col justify-center bg-[#0d0d0d]/80 overflow-hidden relative py-8">
         <div className="px-6 md:px-16 max-w-7xl mx-auto w-full mb-4">
           <div className="reveal-wrap overflow-hidden">
             <h2 className="reveal-heading whitespace-nowrap text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
@@ -679,36 +1089,55 @@ export default function Portfolio() {
 
         {/* Horizontal scroll container */}
         <div
+          data-cursor="DRAG"
           className="cards-scroll flex gap-6 px-6 md:px-16 pb-4 w-full select-none"
           style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", willChange: "transform" }}
         >
-          {CARDS.map((card) => (
-            <div
+          {CARDS.map((card, i) => (
+            <article
               key={card.title}
-              className="case-card shrink-0 w-[85vw] md:w-[42vw] lg:w-[32vw] bg-[#111] border border-[#222] rounded-sm overflow-hidden transition-colors duration-300"
+              className="case-card group relative shrink-0 w-[85vw] md:w-[42vw] lg:w-[32vw] rounded-lg border border-white/10 bg-gradient-to-b from-[#151515] to-[#0e0e0e] overflow-hidden transition-colors duration-300"
               style={{ transformStyle: "preserve-3d", willChange: "transform" }}
             >
+              {/* Banner - height locked at 120px, the art is cut for it */}
               <div
-                className="card-img-wrap overflow-hidden flex items-center justify-center"
+                className="card-img-wrap relative overflow-hidden flex items-center justify-center"
                 style={{ height: 120, background: "#1a1a1a" }}
               >
                 <img src={card.img} alt={card.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
+                <span className="absolute top-2 right-3 font-mono text-[9px] tracking-[0.25em] text-[#f5f0e8]/35">
+                  {String(i + 1).padStart(2, "0")}/{String(CARDS.length).padStart(2, "0")}
+                </span>
               </div>
-              <div className="p-4 flex flex-col gap-2.5" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                <h3 className="text-[#00B4D8] font-bold text-xs tracking-widest uppercase">{card.title}</h3>
-                {[
-                  ["Problem", card.problem],
-                  ["My Role", card.role],
-                  ["Approach", card.approach],
-                  ["Result", card.result],
-                ].map(([label, text]) => (
-                  <div key={label}>
-                    <span className="text-[#f5f0e8]/40 font-mono text-[9px] uppercase tracking-widest block mb-0">{label}</span>
-                    <p className="text-[#f5f0e8]/80 text-[11px] leading-tight">{text}</p>
-                  </div>
-                ))}
+
+              {/* Hairline that draws across on hover */}
+              <span className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[#00B4D8] via-[#00B4D8]/40 to-transparent transition-transform duration-500 ease-out group-hover:scale-x-100" />
+
+              <div className="p-4 flex flex-col gap-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <h3 className="text-[#f5f0e8] font-bold text-sm tracking-wide leading-tight">
+                  {card.title}
+                </h3>
+
+                <div className="flex flex-col gap-2.5">
+                  {[
+                    ["Problem", card.problem],
+                    ["My Role", card.role],
+                    ["Approach", card.approach],
+                  ].map(([label, text]) => (
+                    <div key={label} className="border-l border-white/10 pl-3 transition-colors duration-300 group-hover:border-[#00B4D8]/40">
+                      <span className="text-[#f5f0e8]/35 font-mono text-[9px] uppercase tracking-[0.2em] block">{label}</span>
+                      <p className="text-[#f5f0e8]/75 text-[11px] leading-snug mt-0.5">{text}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Result gets its own weight - it is the point of the card */}
+                <div className="rounded-md border border-[#00B4D8]/25 bg-[#00B4D8]/[0.07] px-3 py-2">
+                  <span className="text-[#00B4D8]/70 font-mono text-[9px] uppercase tracking-[0.2em] block">Result</span>
+                  <p className="text-[#f5f0e8] text-[11px] font-semibold leading-snug mt-0.5">{card.result}</p>
+                </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
@@ -718,7 +1147,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 6 — THE X-FACTOR                                            */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="venn-section py-24 px-6 md:px-16 bg-[#0d0d0d] overflow-hidden">
+      <section id="xfactor" className="venn-section skewable py-24 px-6 md:px-16 bg-[#0d0d0d]/75 overflow-hidden">
         <div className="max-w-7xl mx-auto">
 
           <div className="text-center mb-16">
@@ -737,7 +1166,7 @@ export default function Portfolio() {
 
             {/* LEFT — SVG Venn diagram */}
             <div className="w-full lg:w-[52%] flex justify-center items-center">
-              <svg viewBox="0 0 420 400" className="w-full max-w-md" style={{ overflow: "visible" }}>
+              <svg viewBox="0 0 420 400" className="venn-svg w-full max-w-md" style={{ overflow: "visible" }}>
                 <defs>
                   <radialGradient id="vg1" cx="50%" cy="50%" r="50%">
                     <stop offset="0%" stopColor="#00B4D8" stopOpacity="0.28" />
@@ -854,14 +1283,69 @@ export default function Portfolio() {
       <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 7 — HIRE ME                                                 */}
+      {/* SECTION 7 - FAQ */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="hire" className="hire-section min-h-[60vh] flex items-center justify-center relative overflow-hidden bg-[#0a0a0a] py-24">
+      <section id="faq" className="faq-section skewable py-16 md:py-24 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-16">
+          <div className="text-center mb-12">
+            <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">Before you ask</p>
+            <div className="reveal-wrap overflow-hidden">
+              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+                Questions I get a lot
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 md:px-16" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+          <FaqBoard />
+        </div>
+
+        {/* FAQ rich result - mirrors the visible answers above */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: FAQS.map(({ q, a }) => ({
+                "@type": "Question",
+                name: q,
+                acceptedAnswer: { "@type": "Answer", text: a },
+              })),
+            }),
+          }}
+        />
+      </section>
+
+      <SectionDivider />
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 8 — HIRE ME                                                 */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      <section id="hire" className="hire-section min-h-[60vh] flex items-center justify-center relative overflow-hidden bg-[#0a0a0a]/70 py-24">
+        {/* Animated gradient wash behind the sign-off */}
+        <AnimatedGradientBackground
+          Breathing={!reduceMotion}
+          startingGap={125}
+          breathingRange={9}
+          animationSpeed={0.02}
+          gradientColors={[
+            "#0a0a0a",
+            "#08222a",
+            "#0d4a5a",
+            "#00849e",
+            "#00B4D8",
+            "#5fd8ef",
+            "#0a0a0a",
+          ]}
+          gradientStops={[35, 52, 64, 74, 84, 92, 100]}
+        />
         <div className="w-full max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 items-center gap-12 relative z-10">
           
           {/* LEFT — Arsh with mic in audience */}
           <div className="parallax-left hidden md:flex justify-end select-none h-[300px] pointer-events-none">
-            <img src={arshAudience} alt="Arsh with mic in audience" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
+            <img src={arshAudience} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
           {/* CENTER — content */}
@@ -884,6 +1368,7 @@ export default function Portfolio() {
             <a
               href="mailto:achatrath_be23@thapar.edu"
               data-hover
+              data-magnetic
               className="lets-talk-btn mt-8 inline-flex items-center gap-2 text-[#0a0a0a] font-bold text-base uppercase tracking-widest px-8 py-4 rounded-full relative overflow-hidden group"
               style={{ background: "#00B4D8", boxShadow: "0 0 30px rgba(0,180,216,0.35)" }}
             >
@@ -895,7 +1380,7 @@ export default function Portfolio() {
 
           {/* RIGHT — Arsh thumbs up */}
           <div className="parallax-right hidden md:flex justify-start select-none h-[300px] pointer-events-none">
-            <img src={arshThumbsUp} alt="Arsh thumbs up" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
+            <img src={arshThumbsUp} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
         </div>
@@ -974,7 +1459,70 @@ export default function Portfolio() {
           0%, 100% { box-shadow: 0 0 30px rgba(0,180,216,0.35); }
           50%       { box-shadow: 0 0 50px rgba(0,180,216,0.65); }
         }
+
+        /* FAQ board — one screen, cards expand instead of scrolling */
+        .faq-card {
+          flex-basis: 0;
+          transition:
+            flex-grow 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.4s ease,
+            background-color 0.4s ease;
+        }
+        .faq-card:focus-visible {
+          outline: 2px solid #00B4D8;
+          outline-offset: 2px;
+        }
+        /* Spotlight that follows the pointer across the card */
+        .faq-spot {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.35s ease;
+          background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%),
+                      rgba(0,180,216,0.13), transparent 68%);
+        }
+        .faq-card:hover .faq-spot { opacity: 1; }
+
+        /* Teal edge marking the open card */
+        .faq-card::after {
+          content: "";
+          position: absolute;
+          left: 0; top: 0; bottom: 0;
+          width: 2px;
+          background: linear-gradient(to bottom, #00B4D8, rgba(0,180,216,0.12));
+          transform: scaleY(0);
+          transform-origin: top center;
+          transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .faq-card[aria-expanded="true"]::after,
+        .faq-card:hover::after { transform: scaleY(1); }
+
+        @media (prefers-reduced-motion: reduce) {
+          .faq-card, .faq-card span, .faq-card::after { transition: none !important; }
+        }
+
+        /* ASCII morph stage */
+        .ascii-stage .ascii-pre {
+          font-family: 'DM Mono', ui-monospace, monospace;
+          font-size: clamp(4px, 0.92vw, 11px);
+          line-height: 0.58em;
+          letter-spacing: 0.02em;
+          color: rgba(0, 180, 216, 0.9);
+        }
+
+        /* Section-to-section transition overlays */
+        .rz-curtain, .pm-scrim { will-change: transform, opacity; }
+
+        /* Respect the OS reduced-motion setting */
+        @media (prefers-reduced-motion: reduce) {
+          .hero-glow-bg, .journey-path, .ticker-track, .venn-photo {
+            animation: none !important;
+          }
+          * { scroll-behavior: auto !important; }
+        }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }

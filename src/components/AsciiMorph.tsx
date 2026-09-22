@@ -46,9 +46,12 @@ function sampleImage(
   for (let i = 0; i < out.length; i++) {
     const o = i * 4;
     const alpha = data[o + 3] / 255;
-    // Transparent PNG/WebP subjects: treat alpha as presence.
-    const lum = (0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2]) * alpha;
-    out[i] = lum;
+    const lum =
+      (0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2]) / 255;
+    // These are dark cutouts on transparency. Weighting by luminance alone put
+    // most of the subject at the empty end of the ramp and the silhouette
+    // vanished, so alpha carries the shape and luminance only modulates detail.
+    out[i] = Math.round(255 * alpha * (0.34 + 0.66 * Math.pow(lum, 0.75)));
   }
   return out;
 }
@@ -82,7 +85,12 @@ export default function AsciiMorph({
       const thresholds = thresholdsRef.current;
 
       // 0 -> 0.5 erode into noise, 0.5 -> 1 resolve into the second image.
-      const chaos = 1 - Math.abs(p - 0.5) * 2; // 0 at the ends, 1 in the middle
+      // The linear version never let a clean image show: by the time the stage
+      // was on screen it was already mostly noise. Hold the image clean for the
+      // first and last ~22% of the range, then erode.
+      const dist = Math.abs(p - 0.5) * 2; // 0 at centre, 1 at the ends
+      const t = Math.min(1, Math.max(0, (dist - 0.12) / (0.55 - 0.12)));
+      const chaos = 1 - t * t * (3 - 2 * t);
       const showB = p > 0.5;
       const src = showB ? b : a;
 
@@ -124,18 +132,22 @@ export default function AsciiMorph({
       if (!el) return;
 
       // Measure one character to derive the grid from the real font metrics.
+      const cs = getComputedStyle(el);
       const probe = document.createElement("span");
       probe.textContent = "M";
       probe.style.cssText =
         "position:absolute;visibility:hidden;font-family:'DM Mono',monospace;";
-      probe.style.fontSize = getComputedStyle(el).fontSize;
+      probe.style.fontSize = cs.fontSize;
       el.appendChild(probe);
       const charW = probe.getBoundingClientRect().width || 8;
       probe.remove();
 
-      const lineH = charW / 0.55; // monospace cells are taller than they are wide
-      const cols = Math.max(24, Math.min(160, Math.floor(el.clientWidth / charW)));
-      const rows = Math.max(16, Math.min(80, Math.floor(el.clientHeight / lineH)));
+      // Read the real line box rather than assuming a natural monospace aspect:
+      // the stylesheet sets line-height to 0.58em, so deriving it from the glyph
+      // width undercounted the rows and left the bottom third of the stage black.
+      const lineH = parseFloat(cs.lineHeight) || charW / 0.55;
+      const cols = Math.max(24, Math.min(190, Math.floor(el.clientWidth / charW)));
+      const rows = Math.max(16, Math.min(170, Math.round(el.clientHeight / lineH)));
 
       const load = (src: string) =>
         new Promise<HTMLImageElement>((resolve, reject) => {
@@ -159,7 +171,7 @@ export default function AsciiMorph({
         for (let i = 0; i < th.length; i++) {
           // Bias thresholds by row so the erosion sweeps rather than fizzes.
           const y = Math.floor(i / cols) / rows;
-          th[i] = Math.random() * 0.72 + y * 0.2;
+          th[i] = Math.random() * 0.8 + y * 0.2;
         }
         thresholdsRef.current = th;
 
@@ -168,10 +180,13 @@ export default function AsciiMorph({
           return;
         }
 
+        // The stage holds with CSS sticky, so progress runs while it fills the
+        // screen. Tied to enter->exit instead, peak noise landed when the stage
+        // was centred and the clean images played out off-screen — backwards.
         st = ScrollTrigger.create({
           trigger: section,
-          start: "top bottom",
-          end: "bottom top",
+          start: "top top",
+          end: "bottom bottom",
           scrub: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => render(self.progress),
@@ -197,15 +212,13 @@ export default function AsciiMorph({
   }, [from, to]);
 
   return (
-    <div
-      ref={sectionRef}
-      aria-hidden="true"
-      className={`ascii-morph relative flex items-center justify-center overflow-hidden ${className}`}
-    >
-      <pre
-        ref={preRef}
-        className="ascii-pre m-0 h-full w-full select-none whitespace-pre text-center"
-      />
+    <div ref={sectionRef} aria-hidden="true" className={`ascii-morph relative ${className}`}>
+      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
+        <pre
+          ref={preRef}
+          className="ascii-pre m-0 h-[86vh] w-full select-none whitespace-pre text-center"
+        />
+      </div>
     </div>
   );
 }

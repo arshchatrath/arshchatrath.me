@@ -1002,7 +1002,7 @@ export default function Portfolio() {
       <AsciiMorph
         from={monkeyThinking}
         to={monkeyRealising}
-        className="ascii-stage h-[70vh] md:h-[86vh] px-4"
+        className="ascii-stage h-[240vh] px-4"
       />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
@@ -1351,8 +1351,8 @@ export default function Portfolio() {
           {/* CENTER — content */}
           <div className="col-span-1 md:col-span-2 flex flex-col items-center text-center">
             <h2
-              className="overflow-visible"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(3rem, 8vw, 7.5rem)", lineHeight: 1.1, letterSpacing: "-0.04em", perspective: "1200px" }}
+              className="overflow-visible whitespace-nowrap"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(2.5rem, 7vw, 7rem)", lineHeight: 1.1, letterSpacing: "-0.04em", perspective: "1200px" }}
             >
               <span className="hire-w0 inline-block mr-[0.2em]" style={{ opacity: 0 }}>HIRE</span>
               <span className="hire-w1 inline-block mr-[0.2em]" style={{ opacity: 0 }}>ME</span>

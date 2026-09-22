@@ -962,9 +962,9 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="pm-section skewable relative overflow-hidden py-24 px-6 md:px-16 bg-[#0d0d0d]/80">
+      <section className="pm-section skewable relative overflow-hidden py-24 px-6 md:px-16">
         {/* darkens as you leave the questions behind */}
-        <div className="pm-scrim pointer-events-none absolute inset-0 z-20 bg-[#0a0a0a] opacity-0" />
+        <div className="pm-scrim pointer-events-none absolute inset-0 z-20 bg-[#050505] opacity-0" />
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
             <div className="reveal-wrap overflow-hidden">
@@ -1013,7 +1013,7 @@ export default function Portfolio() {
             fully retracted, so if the scroll driver never runs you just see the
             section normally rather than a blank panel */}
         <div
-          className="rz-curtain pointer-events-none absolute inset-0 z-20 origin-bottom bg-[#0d0d0d]"
+          className="rz-curtain pointer-events-none absolute inset-0 z-20 origin-bottom bg-[#070707]"
           style={{ transform: "scaleY(0)" }}
         />
         <div
@@ -1067,7 +1067,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="work" className="proof-section h-screen flex flex-col justify-center bg-[#0d0d0d]/80 overflow-hidden relative py-8">
+      <section id="work" className="proof-section h-screen flex flex-col justify-center overflow-hidden relative pt-28 pb-10">
         <div className="px-6 md:px-16 max-w-7xl mx-auto w-full mb-4">
           <div className="reveal-wrap overflow-hidden">
             <h2 className="reveal-heading whitespace-nowrap text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
@@ -1096,7 +1096,7 @@ export default function Portfolio() {
           {CARDS.map((card, i) => (
             <article
               key={card.title}
-              className="case-card group relative shrink-0 w-[85vw] md:w-[42vw] lg:w-[32vw] rounded-lg border border-white/10 bg-gradient-to-b from-[#151515] to-[#0e0e0e] overflow-hidden transition-colors duration-300"
+              className="case-card group relative shrink-0 w-[86vw] md:w-[46vw] lg:w-[34vw] rounded-xl border border-white/12 bg-gradient-to-b from-[#181818] to-[#101010] overflow-hidden transition-colors duration-300 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.9)]"
               style={{ transformStyle: "preserve-3d", willChange: "transform" }}
             >
               {/* Banner - height locked at 120px, the art is cut for it */}
@@ -1113,28 +1113,28 @@ export default function Portfolio() {
               {/* Hairline that draws across on hover */}
               <span className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[#00B4D8] via-[#00B4D8]/40 to-transparent transition-transform duration-500 ease-out group-hover:scale-x-100" />
 
-              <div className="p-4 flex flex-col gap-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                <h3 className="text-[#f5f0e8] font-bold text-sm tracking-wide leading-tight">
+              <div className="p-5 flex flex-col gap-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <h3 className="text-[#f5f0e8] font-bold text-base md:text-lg tracking-tight leading-snug">
                   {card.title}
                 </h3>
 
-                <div className="flex flex-col gap-2.5">
+                <div className="flex flex-col gap-3.5">
                   {[
                     ["Problem", card.problem],
                     ["My Role", card.role],
                     ["Approach", card.approach],
                   ].map(([label, text]) => (
                     <div key={label} className="border-l border-white/10 pl-3 transition-colors duration-300 group-hover:border-[#00B4D8]/40">
-                      <span className="text-[#f5f0e8]/35 font-mono text-[9px] uppercase tracking-[0.2em] block">{label}</span>
-                      <p className="text-[#f5f0e8]/75 text-[11px] leading-snug mt-0.5">{text}</p>
+                      <span className="text-[#00B4D8]/70 font-mono text-[10px] uppercase tracking-[0.2em] block">{label}</span>
+                      <p className="text-[#f5f0e8]/85 text-[13px] leading-relaxed mt-1">{text}</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Result gets its own weight - it is the point of the card */}
                 <div className="rounded-md border border-[#00B4D8]/25 bg-[#00B4D8]/[0.07] px-3 py-2">
-                  <span className="text-[#00B4D8]/70 font-mono text-[9px] uppercase tracking-[0.2em] block">Result</span>
-                  <p className="text-[#f5f0e8] text-[11px] font-semibold leading-snug mt-0.5">{card.result}</p>
+                  <span className="text-[#00B4D8] font-mono text-[10px] uppercase tracking-[0.2em] block">Result</span>
+                  <p className="text-[#f5f0e8] text-[13px] font-semibold leading-relaxed mt-1">{card.result}</p>
                 </div>
               </div>
             </article>
@@ -1147,7 +1147,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 6 — THE X-FACTOR                                            */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="xfactor" className="venn-section skewable py-24 px-6 md:px-16 bg-[#0d0d0d]/75 overflow-hidden">
+      <section id="xfactor" className="venn-section skewable py-24 px-6 md:px-16 overflow-hidden">
         <div className="max-w-7xl mx-auto">
 
           <div className="text-center mb-16">
@@ -1323,7 +1323,7 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 8 — HIRE ME                                                 */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="hire" className="hire-section min-h-[60vh] flex items-center justify-center relative overflow-hidden bg-[#0a0a0a]/70 py-24">
+      <section id="hire" className="hire-section min-h-[60vh] flex items-center justify-center relative overflow-hidden py-24">
         {/* Animated gradient wash behind the sign-off */}
         <AnimatedGradientBackground
           Breathing={!reduceMotion}

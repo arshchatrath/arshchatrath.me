@@ -99,9 +99,11 @@ const FRAG = /* glsl */ `
     vec3 deep = vec3(0.039, 0.039, 0.039);
     vec3 teal = vec3(0.0, 0.706, 0.847);
 
-    vec3 col = mix(deep, teal, pow(n, 2.2) * mix(0.40, 0.24, uOrder));
-    col += teal * pointer * 0.20;
-    col += teal * abs(uVelocity) * 0.05;
+    // Sections no longer carry their own background tints — the page is one
+    // continuous field — so this has to stay dark enough to read type over.
+    vec3 col = mix(deep, teal, pow(n, 2.6) * mix(0.30, 0.17, uOrder));
+    col += teal * pointer * 0.16;
+    col += teal * abs(uVelocity) * 0.04;
 
     // Grain lives here now, so the page doesn't need DOM noise overlays.
     float g = hash(uv * uResolution + fract(uTime));
@@ -109,7 +111,7 @@ const FRAG = /* glsl */ `
 
     // Vignette keeps the middle of the page readable.
     float vig = length((uv - 0.5) * vec2(aspect.x, 1.0));
-    col *= 1.0 - 0.55 * vig * vig;
+    col *= 1.0 - 0.62 * vig * vig;
 
     gl_FragColor = vec4(col * uIntensity, 1.0);
   }

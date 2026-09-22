@@ -6,6 +6,7 @@ import Figma from "@/pages/Figma";
 import AmbientField from "@/gl/AmbientField";
 import Cursor from "@/components/Cursor";
 import RouteTransition from "@/components/RouteTransition";
+import Neko from "@/components/Neko";
 
 function Router() {
   // resume.<domain> serves the resume as its own landing page.
@@ -31,6 +32,7 @@ export default function App() {
       <div className="relative z-10">
         <Router />
       </div>
+      <Neko />
       <Cursor />
       <RouteTransition />
     </WouterRouter>

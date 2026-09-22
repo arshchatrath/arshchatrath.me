@@ -47,32 +47,113 @@ const REALIZATIONS = [
   "You measure impact through metrics that matter, not vanity metrics.",
   "You lead by building trust, being the expert, and aligning everyone around the user.",
 ];
-const CARDS = [
+type Project = {
+  index: string;
+  category: "PRODUCT" | "AI / ML" | "AUTOMATION";
+  title: string;
+  problem: string;
+  role: string;
+  approach: string;
+  result: string;
+  stack: string[];
+  img?: string;
+  /** Monospace schematic for projects that have no banner artwork. */
+  flow?: string[];
+  links?: { label: string; href: string }[];
+};
+
+const PROJECTS: Project[] = [
   {
+    index: "01",
+    category: "PRODUCT",
     img: banner1,
-    title: "TALKEYS COMMUNITY PLATFORM",
+    title: "Talkeys Community Platform",
     problem: "Low event engagement, declining user participation",
     role: "Product & Operations Head — owned roadmap & execution",
-    approach: "User research → A/B tested 3 engagement strategies → prioritized features by data",
-    result: "60% increase in participation | Scaled to 1000+ active users",
+    approach: "User research → A/B tested 3 engagement strategies → prioritised features by data",
+    result: "60% increase in participation · scaled to 1000+ active users",
+    stack: ["Product", "A/B testing", "Ops"],
   },
   {
+    index: "02",
+    category: "PRODUCT",
     img: banner2,
-    title: "CAPSTONE TEAM FINDER PORTAL",
+    title: "Capstone Team Finder Portal",
     problem: "Students struggled to find capstone teammates — fragmented WhatsApp chaos",
-    role: "Product Builder — identified gap, built end-to-end solution",
-    approach: "Identified pain point → built platform for project posting with tech requirements",
-    result: "Transformed chaotic WhatsApp groups into centralized team formation",
+    role: "Product Builder — identified the gap, built end to end",
+    approach: "Found the pain point → built a platform for posting projects with tech requirements",
+    result: "Turned scattered WhatsApp groups into one place teams actually form",
+    stack: ["Full-stack", "Product"],
   },
   {
+    index: "03",
+    category: "PRODUCT",
     img: banner3,
-    title: "PERPLEXITY AI CAMPUS GROWTH",
-    problem: "Drive product adoption in saturated student market",
+    title: "Perplexity AI Campus Growth",
+    problem: "Drive product adoption in a saturated student market",
     role: "VIP Campus Partner — growth & user acquisition",
-    approach: "Segmented target users (CS + research students) → campus activations by need",
-    result: "Engaged 1500+ students | Top 15 Partners nationwide",
+    approach: "Segmented target users (CS + research students) → ran campus activations by need",
+    result: "Engaged 1500+ students · Top 15 Campus Partners nationwide",
+    stack: ["Growth", "GTM", "Community"],
+  },
+  {
+    index: "04",
+    category: "AI / ML",
+    title: "SafeSpace AI",
+    flow: ["ESP32 WEARABLE", "VOICE", "DASS-21", "→ LATE FUSION →", "XAI EXPLANATION"],
+    problem: "Stress detection is either self-reported and unreliable, or a model nobody can question",
+    role: "Built end to end — wearable firmware, ML stack and API",
+    approach: "Fused ECG/EDA/EMG/temp biosignals, voice and the DASS-21 survey by late fusion, with SHAP and LIME explaining every prediction in plain language",
+    result: "88.3% accuracy / 0.97 AUC on WESAD physiological data; fusion lifted reliability on medium stress",
+    stack: ["Python", "FastAPI", "TensorFlow", "ESP32", "SHAP / LIME"],
+    links: [
+      { label: "Live", href: "https://safespaceai.vercel.app" },
+      { label: "Code", href: "https://github.com/arshchatrath/SafeSpace" },
+    ],
+  },
+  {
+    index: "05",
+    category: "AI / ML",
+    title: "Two-Hand Gesture Mouse",
+    flow: ["WEBCAM", "MEDIAPIPE", "→ 2-HAND STATE →", "SYSTEM CURSOR"],
+    problem: "Hands-free cursor control almost always stops at a browser demo",
+    role: "Solo build — computer vision, input layer and UI",
+    approach: "Two-hand MediaPipe tracking: left hand open drives the cursor, a fist switches to scroll, pinching thumb+index or thumb+middle fires left and right click",
+    result: "Controls Windows system-wide — over Chrome, VS Code, Figma, Explorer. Losing tracking never emits a stray input",
+    stack: ["Python", "MediaPipe", "OpenCV"],
+    links: [{ label: "Code", href: "https://github.com/arshchatrath/gestured-mouse" }],
+  },
+  {
+    index: "06",
+    category: "AUTOMATION",
+    title: "AI Job Search Agent",
+    flow: ["SERPAPI JOBS", "BATCH x5", "→ LLM SCORE 1-10 →", "DAILY DIGEST"],
+    problem: "Finding the few listings worth applying to means scrolling job boards every day",
+    role: "Solo build — workflow design and prompt engineering",
+    approach: "An n8n workflow pulls listings, batches them five at a time and has a model score each 1–10 against a target profile with a one-line reason; anything under 7 is dropped",
+    result: "One daily email of only the listings worth applying to. AI is used for the single judgment step; everything else stays rule-based",
+    stack: ["n8n", "SerpApi", "Groq", "Gmail"],
+    links: [{ label: "Workflow", href: "https://github.com/arshchatrath/n8n" }],
+  },
+  {
+    index: "07",
+    category: "AUTOMATION",
+    title: "Daily LeetCode Agent",
+    flow: ["DAILY + TOPIC", "LLM SOLUTION", "→ SUBMIT / JUDGE →", "SELF-CORRECT x5"],
+    problem: "Daily practice dies the moment the streak breaks",
+    role: "Solo build — agent loop, API client and tracking",
+    approach: "Fetches the daily challenge plus one problem from a rotating topic list, generates a solution, submits it, then feeds the judge's failure detail back and retries up to five times",
+    result: "Runs unattended once a day and tracks streak, success rate and average attempts to accept",
+    stack: ["Python", "Claude Code CLI"],
+    links: [{ label: "Code", href: "https://github.com/arshchatrath/leetcode-agent" }],
   },
 ];
+
+const CATEGORIES = [
+  { name: "PRODUCT", blurb: "Shipped to real users" },
+  { name: "AI / ML", blurb: "Models that explain themselves" },
+  { name: "AUTOMATION", blurb: "Work that runs without me" },
+] as const;
 
 // Answers double as FAQPage structured data — keep them factual.
 const FAQS = [
@@ -107,27 +188,6 @@ const NAV_LINKS = [
 
 // Venn circle circumference for r=118
 const VENN_CIRC = 741.4;
-
-// ── 3D tilt helpers ──────────────────────────────────────────────────────────
-function attachTilt(el: HTMLElement) {
-  const onMove = (e: MouseEvent) => {
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    gsap.to(el, { rotationX: -y * 10, rotationY: x * 10, transformPerspective: 900, ease: "power1.out", duration: 0.25 });
-    el.style.borderColor = "rgba(0,180,216,0.5)";
-  };
-  const onLeave = () => {
-    gsap.to(el, { rotationX: 0, rotationY: 0, duration: 0.5, ease: "power3.out" });
-    el.style.borderColor = "";
-  };
-  el.addEventListener("mousemove", onMove as EventListener);
-  el.addEventListener("mouseleave", onLeave);
-  return () => {
-    el.removeEventListener("mousemove", onMove as EventListener);
-    el.removeEventListener("mouseleave", onLeave);
-  };
-}
 
 // ── FAQ card ─────────────────────────────────────────────────────────────────
 // Native <details> can't animate its own height, so this holds the open state
@@ -330,9 +390,6 @@ export default function Portfolio() {
       gsap.set(".opacity-0, .hire-w0, .hire-w1, .hire-w2", { opacity: 1 });
       gsap.set(".venn-c1, .venn-c2, .venn-c3", { opacity: 1, attr: { strokeDashoffset: 0 } });
       gsap.set(".div-line", { attr: { strokeDashoffset: 0 } });
-      // The case cards are normally reachable by the pinned horizontal scrub.
-      const cards = document.querySelector<HTMLElement>(".cards-scroll");
-      if (cards) cards.style.overflowX = "auto";
       return;
     }
 
@@ -500,30 +557,39 @@ export default function Portfolio() {
       { opacity: 1, y: 0, duration: 0.8, scrollTrigger: { trigger: ".proof-callout", start: "top 80%" } }
     );
 
-    // ── SECTION 5: Horizontal Pin Scroll for Cards ─────────────────────────
-    const cardsContainer = document.querySelector<HTMLElement>(".cards-scroll");
-    let cardsPinTween: gsap.core.Tween | null = null;
-    if (cardsContainer) {
-      cardsPinTween = gsap.to(cardsContainer, {
-        x: () => -(cardsContainer.scrollWidth - window.innerWidth + (window.innerWidth > 768 ? 120 : 48)),
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".proof-section",
-          pin: true,
-          start: "top top",
-          end: () => `+=${cardsContainer.scrollWidth - window.innerWidth + (window.innerWidth > 768 ? 120 : 48)}`,
-          scrub: 1,
-          invalidateOnRefresh: true,
-        }
+    // ── SECTION 5: the work deck ────────────────────────────────────────────
+    // Panels are stacked with CSS sticky; this only reveals them and keeps the
+    // category rail in step with whichever discipline you're reading.
+    gsap.utils.toArray<HTMLElement>(".work-card").forEach((card) => {
+      gsap.fromTo(card,
+        { opacity: 0, y: 60, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: DUR.base, ease: EASE.out,
+          scrollTrigger: { trigger: card, start: "top 92%" } }
+      );
+    });
+
+    const railItems = gsap.utils.toArray<HTMLElement>(".cat-item");
+    const setActiveCat = (cat: string | null) => {
+      railItems.forEach((item) => {
+        const on = item.dataset.cat === cat;
+        item.querySelector(".cat-dot")?.classList.toggle("bg-[#00B4D8]", on);
+        item.querySelector(".cat-dot")?.classList.toggle("bg-[#00B4D8]/30", !on);
+        const name = item.querySelector(".cat-name");
+        name?.classList.toggle("text-[#00B4D8]", on);
+        name?.classList.toggle("text-[#f5f0e8]/40", !on);
+        item.querySelector(".cat-blurb")?.classList.toggle("text-[#f5f0e8]/55", on);
+        item.querySelector(".cat-blurb")?.classList.toggle("text-[#f5f0e8]/25", !on);
       });
-    }
+    };
+    gsap.utils.toArray<HTMLElement>(".work-card").forEach((card) => {
+      ScrollTrigger.create({
+        trigger: card,
+        start: "top 60%",
+        end: "bottom 40%",
+        onToggle: (self) => { if (self.isActive) setActiveCat(card.dataset.cat ?? null); },
+      });
+    });
 
-    gsap.fromTo(".case-card",
-      { opacity: 0, y: 40 },
-      { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, scrollTrigger: { trigger: ".proof-section", start: "top 80%" } }
-    );
-
-    const cardCleanups = Array.from(document.querySelectorAll<HTMLElement>(".case-card")).map(el => attachTilt(el));
 
     // ── SECTION 6: Venn diagram ─────────────────────────────────────────────
     const vennTl = gsap.timeline({ scrollTrigger: { trigger: ".venn-section", start: "top 65%" } });
@@ -576,7 +642,7 @@ export default function Portfolio() {
       [".pm-section", "questions"],
       [".ascii-stage", "the turn"],
       [".realize-section", "lessons"],
-      [".proof-section", "work"],
+      [".work-section", "work"],
       [".venn-section", "x-factor"],
       [".faq-section", "faq"],
       [".hire-section", "contact"],
@@ -616,23 +682,6 @@ export default function Portfolio() {
       };
       gsap.ticker.add(marquee);
       tickers.push(marquee);
-    }
-
-    // ── Case cards take focus as they pass the centre ───────────────────────
-    const caseCards = gsap.utils.toArray<HTMLElement>(".case-card");
-    if (caseCards.length) {
-      const focus = () => {
-        const mid = window.innerWidth / 2;
-        caseCards.forEach((card) => {
-          const r = card.getBoundingClientRect();
-          if (r.right < 0 || r.left > window.innerWidth) return;
-          const d = Math.abs(r.left + r.width / 2 - mid) / (window.innerWidth * 0.6);
-          const k = gsap.utils.clamp(0, 1, 1 - d);
-          gsap.set(card, { opacity: 0.4 + k * 0.6, scale: 0.94 + k * 0.06 });
-        });
-      };
-      gsap.ticker.add(focus);
-      tickers.push(focus);
     }
 
     // ── Journey path drawn on scroll, with a travelling marker ──────────────
@@ -720,8 +769,6 @@ export default function Portfolio() {
       window.removeEventListener("load", refresh);
       splits.forEach(sp => sp.revert());
       tickers.forEach(fn => gsap.ticker.remove(fn));
-      cardCleanups.forEach(fn => fn());
-      cardsPinTween?.scrollTrigger?.kill();
       transitionST.kill();
     };
   }, [intro]);
@@ -1067,78 +1114,146 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="work" className="proof-section h-screen flex flex-col justify-center overflow-hidden relative pt-28 pb-10">
-        <div className="px-6 md:px-16 max-w-7xl mx-auto w-full mb-4">
+      <section id="work" className="work-section relative px-6 md:px-16 pt-28 pb-24">
+        <div className="max-w-7xl mx-auto w-full">
           <div className="reveal-wrap overflow-hidden">
-            <h2 className="reveal-heading whitespace-nowrap text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
+            <h2 className="reveal-heading text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
               PROOF, NOT JUST PROMISES
             </h2>
           </div>
         </div>
 
-        {/* Marquee ticker */}
-        <div className="overflow-hidden py-1.5 border-y border-[#00B4D8]/20 mb-4 w-full">
+        {/* Marquee */}
+        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden border-y border-[#00B4D8]/20 py-1.5 mt-8">
           <div className="ticker-track flex gap-12 whitespace-nowrap">
-            {Array.from({ length: 6 }).map((_, i) => (
+            {Array.from({ length: 8 }).map((_, i) => (
               <span key={i} className="text-[#00B4D8] font-mono text-xs tracking-[0.35em] uppercase shrink-0">
-                PROOF NOT JUST PROMISES ·
+                SEVEN PROJECTS · THREE DISCIPLINES ·
               </span>
             ))}
           </div>
         </div>
 
-        {/* Horizontal scroll container */}
-        <div
-          data-cursor="DRAG"
-          className="cards-scroll flex gap-6 px-6 md:px-16 pb-4 w-full select-none"
-          style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch", willChange: "transform" }}
-        >
-          {CARDS.map((card, i) => (
-            <article
-              key={card.title}
-              className="case-card group relative shrink-0 w-[86vw] md:w-[46vw] lg:w-[34vw] rounded-xl border border-white/12 bg-gradient-to-b from-[#181818] to-[#101010] overflow-hidden transition-colors duration-300 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.9)]"
-              style={{ transformStyle: "preserve-3d", willChange: "transform" }}
-            >
-              {/* Banner - height locked at 120px, the art is cut for it */}
-              <div
-                className="card-img-wrap relative overflow-hidden flex items-center justify-center"
-                style={{ height: 120, background: "#1a1a1a" }}
-              >
-                <img src={card.img} alt={card.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
-                <span className="absolute top-2 right-3 font-mono text-[9px] tracking-[0.25em] text-[#f5f0e8]/35">
-                  {String(i + 1).padStart(2, "0")}/{String(CARDS.length).padStart(2, "0")}
-                </span>
-              </div>
-
-              {/* Hairline that draws across on hover */}
-              <span className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[#00B4D8] via-[#00B4D8]/40 to-transparent transition-transform duration-500 ease-out group-hover:scale-x-100" />
-
-              <div className="p-5 flex flex-col gap-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                <h3 className="text-[#f5f0e8] font-bold text-base md:text-lg tracking-tight leading-snug">
-                  {card.title}
-                </h3>
-
-                <div className="flex flex-col gap-3.5">
-                  {[
-                    ["Problem", card.problem],
-                    ["My Role", card.role],
-                    ["Approach", card.approach],
-                  ].map(([label, text]) => (
-                    <div key={label} className="border-l border-white/10 pl-3 transition-colors duration-300 group-hover:border-[#00B4D8]/40">
-                      <span className="text-[#00B4D8]/70 font-mono text-[10px] uppercase tracking-[0.2em] block">{label}</span>
-                      <p className="text-[#f5f0e8]/85 text-[13px] leading-relaxed mt-1">{text}</p>
+        <div className="max-w-7xl mx-auto w-full mt-14 grid lg:grid-cols-[190px_minmax(0,1fr)] gap-10">
+          {/* Category rail — tracks which discipline you are reading */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-32 flex flex-col gap-7" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {CATEGORIES.map((c) => {
+                const count = PROJECTS.filter((x) => x.category === c.name).length;
+                return (
+                  <div key={c.name} className="cat-item" data-cat={c.name}>
+                    <div className="flex items-baseline gap-2">
+                      <span className="cat-dot h-1.5 w-1.5 rounded-full bg-[#00B4D8]/30 transition-colors" />
+                      <span className="cat-name font-mono text-[11px] uppercase tracking-[0.22em] text-[#f5f0e8]/40 transition-colors">
+                        {c.name}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#f5f0e8]/25">{String(count).padStart(2, "0")}</span>
                     </div>
-                  ))}
+                    <p className="cat-blurb mt-1 pl-3.5 text-[11px] leading-snug text-[#f5f0e8]/25 transition-colors">
+                      {c.blurb}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+
+          {/* The pile: each panel sticks a little lower than the last, so they
+              stack into an ordered deck instead of scrolling past. */}
+          <div className="flex flex-col gap-8">
+            {PROJECTS.map((proj, i) => (
+              <article
+                key={proj.index}
+                data-cat={proj.category}
+                className="work-card group opacity-0 sticky rounded-2xl border border-white/12 bg-[#0b0b0b] overflow-hidden shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.9),0_30px_80px_-40px_rgba(0,0,0,1)]"
+                style={{ top: "calc(7.5rem + " + i * 10 + "px)" }}
+              >
+                {/* Media strip — banner art stays at its designed 120px */}
+                <div className="relative flex items-center justify-center overflow-hidden border-b border-white/8" style={{ height: 120, background: "#161616" }}>
+                  {proj.img ? (
+                    <img src={proj.img} alt={proj.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-6 text-center">
+                      {proj.flow?.map((f) => (
+                        <span
+                          key={f}
+                          className={
+                            "font-mono text-[10px] md:text-xs tracking-[0.25em] " +
+                            (f.startsWith("→") ? "text-[#00B4D8]" : "text-[#f5f0e8]/45")
+                          }
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <span className="absolute top-3 right-4 font-mono text-[10px] tracking-[0.25em] text-[#f5f0e8]/30">
+                    {proj.index} / 07
+                  </span>
                 </div>
 
-                {/* Result gets its own weight - it is the point of the card */}
-                <div className="rounded-md border border-[#00B4D8]/25 bg-[#00B4D8]/[0.07] px-3 py-2">
-                  <span className="text-[#00B4D8] font-mono text-[10px] uppercase tracking-[0.2em] block">Result</span>
-                  <p className="text-[#f5f0e8] text-[13px] font-semibold leading-relaxed mt-1">{card.result}</p>
+                <span className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[#00B4D8] via-[#00B4D8]/40 to-transparent transition-transform duration-500 ease-out group-hover:scale-x-100" />
+
+                <div className="p-6 md:p-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#00B4D8]">
+                      {proj.category}
+                    </span>
+                    {proj.links && (
+                      <div className="flex gap-4">
+                        {proj.links.map((l) => (
+                          <a
+                            key={l.href}
+                            href={l.href}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            data-hover
+                            data-cursor="OPEN"
+                            className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#f5f0e8]/55 underline-offset-4 transition-colors hover:text-[#00B4D8] hover:underline"
+                          >
+                            {l.label} ↗
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <h3 className="mt-3 text-[#f5f0e8] font-bold leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.4rem, 2.6vw, 2.1rem)" }}>
+                    {proj.title}
+                  </h3>
+
+                  <div className="mt-6 grid gap-6 md:grid-cols-2">
+                    <dl className="flex flex-col gap-4">
+                      {[
+                        ["Problem", proj.problem],
+                        ["My Role", proj.role],
+                        ["Approach", proj.approach],
+                      ].map(([label, text]) => (
+                        <div key={label} className="border-l border-white/12 pl-4">
+                          <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00B4D8]/70">{label}</dt>
+                          <dd className="mt-1 text-[13px] leading-relaxed text-[#f5f0e8]/85">{text}</dd>
+                        </div>
+                      ))}
+                    </dl>
+
+                    <div className="flex flex-col gap-4">
+                      <div className="rounded-lg border border-[#00B4D8]/25 bg-[#00B4D8]/[0.07] px-4 py-3">
+                        <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-[#00B4D8]">Result</span>
+                        <p className="mt-1 text-[14px] font-semibold leading-relaxed text-[#f5f0e8]">{proj.result}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {proj.stack.map((t) => (
+                          <span key={t} className="rounded-full border border-white/12 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-[#f5f0e8]/50">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

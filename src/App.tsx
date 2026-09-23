@@ -1,19 +1,18 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Portfolio from "@/pages/Portfolio";
 import Resume from "@/pages/Resume";
 import Figma from "@/pages/Figma";
-
-const queryClient = new QueryClient();
+import AmbientField from "@/gl/AmbientField";
+import Cursor from "@/components/Cursor";
+import RouteTransition from "@/components/RouteTransition";
+import Neko from "@/components/Neko";
 
 function Router() {
+  // resume.<domain> serves the resume as its own landing page.
   const isResumeHost =
     typeof window !== "undefined" &&
-    (window.location.hostname === "resume.mydomain.com" ||
-      window.location.hostname.startsWith("resume."));
+    window.location.hostname.startsWith("resume.");
 
   return (
     <Switch>
@@ -25,17 +24,17 @@ function Router() {
   );
 }
 
-function App() {
+export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+      {/* One canvas for the whole session — it outlives every route change. */}
+      <AmbientField />
+      <div className="relative z-10">
+        <Router />
+      </div>
+      <Neko />
+      <Cursor />
+      <RouteTransition />
+    </WouterRouter>
   );
 }
-
-export default App;

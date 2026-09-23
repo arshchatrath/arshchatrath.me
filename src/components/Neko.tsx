@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import nekoSprite from "@imgs/oneko.gif";
+import { fieldState } from "@/gl/AmbientField";
 
 /**
  * Oneko — the cat that chases the cursor.
@@ -185,6 +186,14 @@ export default function Neko() {
     // The sprite animates at 10fps by design — running it at display rate makes
     // it look like it's skating rather than trotting.
     const loop = (now: number) => {
+      // The opening sequence is deliberately bare — no cat sitting on it.
+      if (!fieldState.introDone) {
+        el.style.opacity = "0";
+        raf = requestAnimationFrame(loop);
+        return;
+      }
+      if (el.style.opacity !== "1") el.style.opacity = "1";
+
       if (now - lastFrame >= FRAME_MS) {
         lastFrame = now;
         step();
@@ -216,6 +225,8 @@ export default function Neko() {
       style={{
         width: 32,
         height: 32,
+        opacity: 0,
+        transition: "opacity 0.6s ease",
         imageRendering: "pixelated",
         backgroundImage: `url(${nekoSprite})`,
         // The raw sprite is a black cat — invisible on a near-black page.

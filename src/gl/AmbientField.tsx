@@ -26,6 +26,8 @@ export const fieldState = {
   mouse: [0.5, 0.5] as [number, number],
   /** Lets the preloader and route transitions dim the field. */
   intensity: 1,
+  /** False until the opening sequence hands over. */
+  introDone: false,
 };
 
 const VERT = /* glsl */ `

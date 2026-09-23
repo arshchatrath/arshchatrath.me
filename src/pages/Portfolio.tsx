@@ -846,14 +846,19 @@ export default function Portfolio() {
             {/* Name */}
             <div className="overflow-hidden mb-6">
               <h1
+                aria-label={HERO_NAME}
                 className="flex flex-nowrap justify-center md:justify-start whitespace-nowrap"
                 style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 6vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
               >
-                {HERO_NAME.split("").map((ch, i) =>
-                  ch === " "
-                    ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
-                    : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
-                )}
+                {/* Split for the stagger; the h1's aria-label carries the real
+                    name so assistive tech doesn't spell it out letter by letter. */}
+                <span aria-hidden="true" className="contents">
+                  {HERO_NAME.split("").map((ch, i) =>
+                    ch === " "
+                      ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
+                      : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
+                  )}
+                </span>
               </h1>
             </div>
 

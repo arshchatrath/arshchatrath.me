@@ -38,6 +38,7 @@ export default function Cursor() {
     let prevY = my;
 
     let magnet: HTMLElement | null = null;
+    let seen = false;
 
     const setX = gsap.quickSetter(ring, "x", "px");
     const setY = gsap.quickSetter(ring, "y", "px");
@@ -47,6 +48,15 @@ export default function Cursor() {
     const onMove = (e: PointerEvent) => {
       mx = e.clientX;
       my = e.clientY;
+
+      // First contact: appear under the pointer rather than flying in from
+      // wherever the ring was parked.
+      if (!seen) {
+        seen = true;
+        rx = prevX = mx;
+        ry = prevY = my;
+        gsap.to([ring, dot], { opacity: 1, duration: 0.3, ease: "power2.out" });
+      }
 
       const el =
         (e.target as HTMLElement | null)?.closest<HTMLElement>(
@@ -74,7 +84,7 @@ export default function Cursor() {
       gsap.to([ring, dot], { opacity: 0, duration: 0.2 });
     };
     const onEnter = () => {
-      gsap.to([ring, dot], { opacity: 1, duration: 0.2 });
+      if (seen) gsap.to([ring, dot], { opacity: 1, duration: 0.2 });
     };
 
     const tick = () => {
@@ -162,6 +172,7 @@ export default function Cursor() {
           marginLeft: -13,
           marginTop: -13,
           borderColor: "rgba(0,180,216,0.45)",
+          opacity: 0,
           willChange: "transform",
         }}
       >
@@ -174,7 +185,7 @@ export default function Cursor() {
         ref={dotRef}
         aria-hidden="true"
         className="pointer-events-none fixed left-0 top-0 z-[9999] rounded-full bg-[#00B4D8]"
-        style={{ width: 5, height: 5, marginLeft: -2.5, marginTop: -2.5, willChange: "transform" }}
+        style={{ width: 5, height: 5, marginLeft: -2.5, marginTop: -2.5, opacity: 0, willChange: "transform" }}
       />
     </>
   );

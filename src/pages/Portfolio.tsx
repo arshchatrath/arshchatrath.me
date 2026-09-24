@@ -304,6 +304,9 @@ export default function Portfolio() {
   const heroBlockRef  = useRef<HTMLDivElement>(null);
   const lenisRef      = useRef<Lenis | null>(null);
   const [intro, setIntro] = useState(false);
+  // Separate from `intro`: the hero starts at the loader's snap, but the
+  // overlay has to stay mounted until its columns have finished lifting.
+  const [loaderGone, setLoaderGone] = useState(false);
   const skewables = useRef<HTMLElement[]>([]);
 
   const reduceMotion =
@@ -320,7 +323,10 @@ export default function Portfolio() {
   // stalls, every `.opacity-0` element would stay hidden forever — so force the
   // gate open after a beat no matter what.
   useEffect(() => {
-    const t = setTimeout(() => setIntro(true), 4500);
+    const t = setTimeout(() => {
+      setIntro(true);
+      setLoaderGone(true);
+    }, 4500);
     return () => clearTimeout(t);
   }, []);
 
@@ -450,27 +456,27 @@ export default function Portfolio() {
     // Hero image slides in from right
     gsap.fromTo(".hero-img",
       { opacity: 0, x: 60 },
-      { opacity: 1, x: 0, duration: 0.9, ease: "power3.out", delay: 0.8 }
+      { opacity: 1, x: 0, duration: 0.9, ease: EASE.out, delay: 1.0 }
     );
 
     const chars = document.querySelectorAll<HTMLElement>(".hero-char");
     gsap.fromTo(chars,
       { y: "110%", opacity: 0 },
-      { y: "0%", opacity: 1, stagger: 0.045, duration: 0.7, ease: "power3.out", delay: 0.3 }
+      { y: "0%", opacity: 1, stagger: 0.035, duration: 0.8, ease: EASE.out, delay: 0.6 }
     );
     gsap.fromTo(".hero-subtitle",
       { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.8, delay: 1.5 }
+      { opacity: 1, y: 0, duration: 0.8, ease: EASE.out, delay: 1.15 }
     );
     HERO_LINES.forEach((_, i) => {
       gsap.fromTo(`.hero-line-${i}`,
         { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.6, delay: 2.1 + i * 0.25 }
+        { opacity: 1, y: 0, duration: 0.6, ease: EASE.out, delay: 1.3 + i * 0.12 }
       );
     });
-    // Floating hero text block after intro
+    // Floating hero text block once everything has landed
     gsap.to(heroBlockRef.current, {
-      y: -8, duration: 6, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 3.5
+      y: -8, duration: 6, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 3.2
     });
 
     // ── SECTION 2: Hello I'm Arsh ───────────────────────────────────────────
@@ -775,7 +781,9 @@ export default function Portfolio() {
 
   return (
     <>
-      {!intro && <Preloader onDone={() => setIntro(true)} />}
+      {!loaderGone && (
+        <Preloader onReveal={() => setIntro(true)} onDone={() => setLoaderGone(true)} />
+      )}
 
       <div
         ref={containerRef}
@@ -855,8 +863,8 @@ export default function Portfolio() {
                 <span aria-hidden="true" className="contents">
                   {HERO_NAME.split("").map((ch, i) =>
                     ch === " "
-                      ? <span key={i} className="hero-char inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
-                      : <span key={i} className="hero-char inline-block overflow-hidden">{ch}</span>
+                      ? <span key={i} className="hero-char opacity-0 inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
+                      : <span key={i} className="hero-char opacity-0 inline-block overflow-hidden">{ch}</span>
                   )}
                 </span>
               </h1>

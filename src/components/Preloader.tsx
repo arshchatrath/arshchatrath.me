@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { prefersReducedMotion } from "@/lib/motion";
@@ -19,26 +19,58 @@ gsap.registerPlugin(ScrambleTextPlugin);
  * `fromTo` whose "from" state (scaleY: 1) rendered immediately at time zero.
  * Every initial state here is set with `gsap.set`, and every animation is a
  * plain `.to()`, so nothing can render a start state before its turn.
+ *
+ * Start states also live in the markup. React runs effects *after* the
+ * browser paints, so a start state applied only in JS showed the line at full
+ * width and the label at full opacity for ~250ms (longer on slow devices —
+ * the WebGL shader compiles on the same thread), then snapped them away.
+ *
+ * `onReveal` fires at the snap, before the columns lift, so the hero builds
+ * itself as the curtain rises. `onDone` fires once the overlay is gone.
  */
-export default function Preloader({ onDone }: { onDone: () => void }) {
+export default function Preloader({
+  onReveal,
+  onDone,
+}: {
+  onReveal: () => void;
+  onDone: () => void;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  // The sequence runs exactly once per mount. The callbacks are read through a
+  // ref so the effect has no dependencies: `onReveal` makes the parent
+  // re-render, which hands us fresh function identities — with them as deps,
+  // that re-render killed the timeline and replayed the whole opening.
+  const cb = useRef({ onReveal, onDone });
+  useLayoutEffect(() => {
+    cb.current = { onReveal, onDone };
+  });
+
+  // Layout effect: runs before paint, so GSAP owns these elements from the
+  // first frame the browser draws.
+  useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
 
     document.body.style.overflow = "hidden";
     let finished = false;
+    let revealed = false;
+    const reveal = () => {
+      if (revealed) return;
+      revealed = true;
+      cb.current.onReveal();
+    };
     const release = () => {
       if (finished) return;
       finished = true;
+      reveal();
       document.body.style.overflow = "";
       fieldState.intensity = 1;
       fieldState.introDone = true;
-      onDone();
+      cb.current.onDone();
     };
 
     if (prefersReducedMotion()) {
@@ -90,6 +122,10 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
       }, 0.2)
 
       // ── 2. the snap ───────────────────────────────────────────────────
+      // Hand over here, not at the end: the page's heavier setup runs while
+      // only a hairline is moving, and the hero entrance then plays out under
+      // the lifting columns instead of after them.
+      .add(reveal, 1.5)
       .to(lineRef.current, {
         scaleX: fullStretch,
         duration: 0.5,
@@ -124,7 +160,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
       tl.kill();
       document.body.style.overflow = "";
     };
-  }, [onDone]);
+  }, []);
 
   return (
     <div
@@ -145,19 +181,21 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
         <div
           ref={lineRef}
           className="h-px w-full origin-center bg-[#00B4D8]"
-          style={{ boxShadow: "0 0 18px rgba(0,180,216,0.55)" }}
+          style={{ boxShadow: "0 0 18px rgba(0,180,216,0.55)", transform: "scaleX(0)" }}
         />
       </div>
 
       <span
         ref={labelRef}
         className="absolute bottom-10 left-6 font-mono text-[10px] uppercase tracking-[0.42em] text-[#f5f0e8]/45 md:left-16"
+        style={{ opacity: 0 }}
       >
         ARSH CHATRATH
       </span>
       <span
         ref={countRef}
         className="absolute bottom-10 right-6 font-mono text-[10px] tracking-[0.3em] text-[#00B4D8] md:right-16"
+        style={{ opacity: 0 }}
       >
         000
       </span>

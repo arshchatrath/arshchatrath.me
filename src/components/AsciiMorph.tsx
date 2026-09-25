@@ -136,7 +136,7 @@ export default function AsciiMorph({
       const probe = document.createElement("span");
       probe.textContent = "M";
       probe.style.cssText =
-        "position:absolute;visibility:hidden;font-family:'DM Mono',monospace;";
+        "position:absolute;visibility:hidden;font-family:var(--ff-mono);";
       probe.style.fontSize = cs.fontSize;
       el.appendChild(probe);
       const charW = probe.getBoundingClientRect().width || 8;

@@ -17,11 +17,17 @@
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --font-sans: 'Space Grotesk', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-sans: var(--ff-body);
+  --font-mono: var(--ff-mono);
+  --font-display: var(--ff-display);
 }
 
 :root {
+  /* Type. Change a font here and it changes everywhere. */
+  --ff-display: 'Bricolage Grotesque', 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ff-body: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ff-mono: 'Fragment Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
   --background: 0 0% 4%;
   --foreground: 37 32% 94%;
   --border: 0 0% 15%;
@@ -43,6 +49,18 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Headlines use the display face condensed: fully for the name, a little
+     for section titles. The width axis is what the kinetic hero will drive;
+     body text has no such axis and is unaffected. The font is requested with
+     its optical size pinned to 96, its headline design (+2 KB); without it
+     the browser gets the plainer small-text design even at poster sizes. */
+  h1 {
+    font-stretch: 75%;
+  }
+  h2 {
+    font-stretch: 85%;
   }
 
   body {

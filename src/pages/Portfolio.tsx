@@ -233,8 +233,8 @@ function FaqBoard() {
                 open ? "opacity-100 delay-200" : "opacity-0"
               }`}
               style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 900,
+                fontFamily: "var(--ff-display)",
+                fontWeight: 800,
                 fontSize: "13rem",
                 color: "rgba(0,180,216,0.07)",
               }}
@@ -802,7 +802,7 @@ export default function Portfolio() {
           data-hover
           onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(0); }}
           className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/80 hover:text-[#00B4D8] transition-colors"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          style={{ fontFamily: "var(--ff-body)" }}
         >
           Arsh Chatrath
         </a>
@@ -856,7 +856,7 @@ export default function Portfolio() {
               <h1
                 aria-label={HERO_NAME}
                 className="flex flex-nowrap justify-center md:justify-start whitespace-nowrap"
-                style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 6vw, 9rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
+                style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(3rem, 10vw, 15rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
               >
                 {/* Split for the stagger; the h1's aria-label carries the real
                     name so assistive tech doesn't spell it out letter by letter. */}
@@ -881,7 +881,7 @@ export default function Portfolio() {
                 <p
                   key={i}
                   className={`hero-line-${i} opacity-0 text-[#f5f0e8]/60 font-light text-sm md:text-base tracking-wide hero-bullet`}
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  style={{ fontFamily: "var(--ff-body)" }}
                 >
                   {line}
                 </p>
@@ -890,7 +890,7 @@ export default function Portfolio() {
 
             {/* Primary CTA — above the fold */}
             <div className="hero-cta flex flex-wrap items-center justify-center md:justify-start gap-3 mt-8"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover
@@ -941,14 +941,14 @@ export default function Portfolio() {
           {/* LEFT */}
           <div className="about-left opacity-0">
             <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
                 HELLO<br />I'M ARSH
               </h2>
             </div>
-            <p className="text-[#00B4D8] italic mt-3 mb-6 text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-4 mb-6">
               Thapar Institute, Patiala
             </p>
-            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "var(--ff-body)" }}>
               Most of what I have built started as something that annoyed me. A community
               nobody was showing up to. A capstone scramble spread across WhatsApp groups.
               A job hunt eating an hour every morning. I research it, test it, measure it,
@@ -967,7 +967,7 @@ export default function Portfolio() {
                   <div className="jl-border absolute left-0 top-0 w-0.5 bg-[#00B4D8]" style={{ height: "100%" }} />
                   <div className="jl-text flex gap-3 items-start opacity-0">
                     <span className="text-[#00B4D8] font-mono text-xs shrink-0 mt-1 uppercase tracking-wider">{label}</span>
-                    <span className="text-[#f5f0e8]/80" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{text}</span>
+                    <span className="text-[#f5f0e8]/80" style={{ fontFamily: "var(--ff-body)" }}>{text}</span>
                   </div>
                 </div>
               ))}
@@ -1032,11 +1032,11 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
             <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 What does it take to be a great PM?
               </h2>
             </div>
-            <p className="text-[#00B4D8] italic text-lg mt-2" style={{ fontFamily: "'Playfair Display', serif" }}>I asked myself:</p>
+            <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-3">I asked myself:</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -1048,7 +1048,7 @@ export default function Portfolio() {
             <ul className="flex flex-col gap-5">
               {PM_QUESTIONS.map((q, i) => (
                 <li key={i} className="pm-question opacity-0 flex gap-4 items-start"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  style={{ fontFamily: "var(--ff-body)" }}>
                   <span className="text-[#00B4D8] text-xl shrink-0">•</span>
                   <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{q}</span>
                 </li>
@@ -1091,7 +1091,7 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto">
           <div className="mb-16 flex items-center gap-6">
             <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 I Realized…
               </h2>
             </div>
@@ -1105,7 +1105,7 @@ export default function Portfolio() {
             <ul className="flex flex-col gap-6">
               {REALIZATIONS.map((r, i) => (
                 <li key={i} className="realization opacity-0 flex gap-4 items-start"
-                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  style={{ fontFamily: "var(--ff-body)" }}>
                   <span className="text-[#00B4D8] font-bold text-lg shrink-0">→</span>
                   <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{r}</span>
                 </li>
@@ -1119,7 +1119,7 @@ export default function Portfolio() {
           </div>
 
           <p className="proof-callout opacity-0 mt-24 text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
-            style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
+            style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
             THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
             AND HERE'S THE PROOF…
           </p>
@@ -1134,7 +1134,7 @@ export default function Portfolio() {
       <section id="work" className="work-section relative px-6 md:px-16 pt-28 pb-24">
         <div className="max-w-7xl mx-auto w-full">
           <div className="reveal-wrap overflow-hidden">
-            <h2 className="reveal-heading text-center" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
+            <h2 className="reveal-heading text-center" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
               PROOF, NOT JUST PROMISES
             </h2>
           </div>
@@ -1154,7 +1154,7 @@ export default function Portfolio() {
         <div className="max-w-7xl mx-auto w-full mt-14 grid lg:grid-cols-[190px_minmax(0,1fr)] gap-10">
           {/* Category rail — tracks which discipline you are reading */}
           <aside className="hidden lg:block">
-            <div className="sticky top-32 flex flex-col gap-7" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div className="sticky top-32 flex flex-col gap-7" style={{ fontFamily: "var(--ff-body)" }}>
               {CATEGORIES.map((c) => {
                 const count = PROJECTS.filter((x) => x.category === c.name).length;
                 return (
@@ -1211,7 +1211,7 @@ export default function Portfolio() {
 
                 <span className="block h-px w-full origin-left scale-x-0 bg-gradient-to-r from-[#00B4D8] via-[#00B4D8]/40 to-transparent transition-transform duration-500 ease-out group-hover:scale-x-100" />
 
-                <div className="p-6 md:p-8" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <div className="p-6 md:p-8" style={{ fontFamily: "var(--ff-body)" }}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#00B4D8]">
                       {proj.category}
@@ -1235,7 +1235,7 @@ export default function Portfolio() {
                     )}
                   </div>
 
-                  <h3 className="mt-3 text-[#f5f0e8] font-bold leading-tight" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.4rem, 2.6vw, 2.1rem)" }}>
+                  <h3 className="mt-3 text-[#f5f0e8] font-bold leading-tight" style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.4rem, 2.6vw, 2.1rem)" }}>
                     {proj.title}
                   </h3>
 
@@ -1285,11 +1285,11 @@ export default function Portfolio() {
           <div className="text-center mb-16">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">What sets me apart</p>
             <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 The X-Factor
               </h2>
             </div>
-            <p className="text-[#f5f0e8]/40 mt-3 text-sm tracking-wider fade-up" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <p className="text-[#f5f0e8]/40 mt-3 text-sm tracking-wider fade-up" style={{ fontFamily: "var(--ff-body)" }}>
               I sit at the intersection of three rare skillsets
             </p>
           </div>
@@ -1342,24 +1342,24 @@ export default function Portfolio() {
                 {/* X-FACTOR center label */}
                 <text x="210" y="172" textAnchor="middle"
                   fill="rgba(245,240,232,0.55)" fontSize="9"
-                  fontFamily="'DM Mono', monospace" letterSpacing="3">
+                  letterSpacing="3" style={{ fontFamily: "var(--ff-mono)" }}>
                   X-FACTOR
                 </text>
 
                 {/* Circle labels with guide lines — hoverable */}
                 <text x="80" y="52" textAnchor="middle"
-                  fill="#00B4D8" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
-                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default" }}>TECHNICAL</text>
+                  fill="#00B4D8" fontSize="12" fontFamily="var(--ff-body)"
+                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default", fontFamily: "var(--ff-body)" }}>TECHNICAL</text>
                 <line x1="80" y1="58" x2="120" y2="88" stroke="rgba(0,180,216,0.3)" strokeWidth="1" strokeDasharray="3 3" />
 
                 <text x="340" y="52" textAnchor="middle"
-                  fill="rgba(200,200,220,0.8)" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
-                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default" }}>PRODUCT</text>
+                  fill="rgba(200,200,220,0.8)" fontSize="12" fontFamily="var(--ff-body)"
+                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default", fontFamily: "var(--ff-body)" }}>PRODUCT</text>
                 <line x1="340" y1="58" x2="300" y2="88" stroke="rgba(160,160,185,0.3)" strokeWidth="1" strokeDasharray="3 3" />
 
                 <text x="210" y="393" textAnchor="middle"
-                  fill="rgba(0,180,216,0.8)" fontSize="12" fontFamily="'Space Grotesk', sans-serif"
-                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default" }}>LEADERSHIP</text>
+                  fill="rgba(0,180,216,0.8)" fontSize="12" fontFamily="var(--ff-body)"
+                  fontWeight="700" letterSpacing="3" className="venn-label" style={{ cursor: "default", fontFamily: "var(--ff-body)" }}>LEADERSHIP</text>
                 <line x1="210" y1="385" x2="210" y2="360" stroke="rgba(0,155,178,0.3)" strokeWidth="1" strokeDasharray="3 3" />
 
                 {/* Arrow from centroid → photo (centroid ≈ average of 3 circle centers) */}
@@ -1403,7 +1403,7 @@ export default function Portfolio() {
                 ].map(({ label, color, desc }) => (
                   <div key={label} className="border border-white/8 rounded p-3 bg-white/[0.03]">
                     <div className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
-                    <div className="text-[#f5f0e8]/50 text-[10px] leading-snug" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{desc}</div>
+                    <div className="text-[#f5f0e8]/50 text-[10px] leading-snug" style={{ fontFamily: "var(--ff-body)" }}>{desc}</div>
                   </div>
                 ))}
               </div>
@@ -1422,14 +1422,14 @@ export default function Portfolio() {
           <div className="text-center mb-12">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">Before you ask</p>
             <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 Questions I get a lot
               </h2>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-16" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-16" style={{ fontFamily: "var(--ff-body)" }}>
           <FaqBoard />
         </div>
 
@@ -1484,14 +1484,14 @@ export default function Portfolio() {
           <div className="col-span-1 md:col-span-2 flex flex-col items-center text-center">
             <h2
               className="overflow-visible whitespace-nowrap"
-              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(2.5rem, 7vw, 7rem)", lineHeight: 1.1, letterSpacing: "-0.04em", perspective: "1200px" }}
+              style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(2.5rem, 7vw, 7rem)", lineHeight: 1.1, letterSpacing: "-0.04em", perspective: "1200px" }}
             >
               <span className="hire-w0 inline-block mr-[0.2em]" style={{ opacity: 0 }}>HIRE</span>
               <span className="hire-w1 inline-block mr-[0.2em]" style={{ opacity: 0 }}>ME</span>
               <span className="hire-w2 inline-block text-[#00B4D8]" style={{ opacity: 0 }}>&lt;3</span>
             </h2>
 
-            <div className="mt-8 flex flex-col gap-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div className="mt-8 flex flex-col gap-3" style={{ fontFamily: "var(--ff-body)" }}>
               <a href="tel:+919888230798" data-hover className="contact-phone text-[#f5f0e8]/70 text-lg hover:text-[#00B4D8] transition-colors">+91 98882 30798</a>
               <a href="mailto:achatrath_be23@thapar.edu" data-hover className="contact-email text-[#f5f0e8]/70 text-lg hover:text-[#00B4D8] transition-colors">achatrath_be23@thapar.edu</a>
             </div>
@@ -1636,7 +1636,7 @@ export default function Portfolio() {
 
         /* ASCII morph stage */
         .ascii-stage .ascii-pre {
-          font-family: 'DM Mono', ui-monospace, monospace;
+          font-family: var(--ff-mono);
           font-size: clamp(4px, 0.92vw, 11px);
           line-height: 0.58em;
           letter-spacing: 0.02em;

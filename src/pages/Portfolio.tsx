@@ -28,6 +28,10 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
+const HERO_TAGLINE = "Product & Growth Builder";
+// What the name flickers through before it settles (kept to narrowish glyphs,
+// so a letter's slot never has to hold a W).
+const NAME_NOISE = "ABCDEFGHKLNOPRSTUVXYZ0123456789#%&*";
 // Water-drop hover: a displacement map for a round lens, drawn once. Red and
 // green hold how far to pull each pixel towards the centre (128 = stay put),
 // fading to nothing at the rim, so the edge of the drop is seamless.
@@ -426,10 +430,40 @@ export default function Portfolio() {
         heroRadius = (parseFloat(getComputedStyle(heroChars[0]).fontSize) || 120) * 1.15;
       };
 
+      // The name forms out of noise: every letter rises in as a random
+      // character, flickers through a few more, and settles into place, left
+      // to right. Each letter's slot is pinned to its final width meanwhile,
+      // so the line doesn't jitter as the glyphs change.
+      const finals = heroChars.map((el) => el.textContent ?? "");
+      heroChars.forEach((el) => {
+        el.style.width = `${el.getBoundingClientRect().width}px`;
+        el.style.textAlign = "center";
+      });
+      const scramble = { t: 0 };
+      let lastFlick = -1;
+      const scrambleStep = () => {
+        const flick = Math.floor(scramble.t * 24); // about 20 glyph changes a second
+        if (flick === lastFlick) return;
+        lastFlick = flick;
+        heroChars.forEach((el, i) => {
+          const settles = 0.3 + (i / heroChars.length) * 0.62;
+          el.textContent = scramble.t >= settles ? finals[i] : NAME_NOISE[(Math.random() * NAME_NOISE.length) | 0];
+        });
+      };
+      const settleName = () => {
+        heroChars.forEach((el, i) => {
+          el.textContent = finals[i];
+          el.style.width = "";
+          el.style.textAlign = "";
+        });
+      };
+      scrambleStep();
+
       const heroTl = gsap.timeline({ defaults: { ease: EASE.out } });
       heroTl
         .fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0)
         .fromTo(heroChars, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.9, stagger: STAGGER.tight }, 0.05)
+        .to(scramble, { t: 1, duration: 1.15, ease: "none", onUpdate: scrambleStep, onComplete: settleName }, 0.05)
         // the one allowed overshoot on the page: the stamp lands
         .fromTo(".hero-stamp", { scale: 1.14, rotate: 6 }, { scale: 1, rotate: 0, duration: 0.8, ease: EASE.pop }, 0.3)
         .fromTo(".hero-lead", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DUR.base }, 0.45)
@@ -453,6 +487,27 @@ export default function Portfolio() {
         hy = e.clientY + scrollY;
       };
       if (finePointer) window.addEventListener("pointermove", onHeroPointer, { passive: true });
+
+      // Tagline: a small ripple through the letters, from wherever the
+      // pointer comes in. Once after the entrance (so phones see it too),
+      // then on hover.
+      const tagEl = document.querySelector<HTMLElement>(".hero-kicker");
+      const tagChars = gsap.utils.toArray<HTMLElement>(".tag-char");
+      let ripple: gsap.core.Tween | null = null;
+      const rippleTag = (from: number) => {
+        if (ripple?.isActive()) return;
+        ripple = gsap.fromTo(tagChars, { y: 0, color: "#00B4D8" }, {
+          y: -3, color: "#f5f0e8", duration: 0.2, ease: "sine.out", yoyo: true, repeat: 1,
+          stagger: { each: 0.025, from },
+        });
+      };
+      heroTl.call(() => rippleTag(0), [], 1.35);
+      const onTagEnter = (e: PointerEvent) => {
+        const r = tagEl?.getBoundingClientRect();
+        if (!r) return;
+        rippleTag(Math.round(((e.clientX - r.left) / r.width) * (tagChars.length - 1)));
+      };
+      if (finePointer) tagEl?.addEventListener("pointerenter", onTagEnter);
 
       let heroThin = 0; // 0 at the top of the page, 1 once the hero has left
       const heroST = ScrollTrigger.create({
@@ -547,6 +602,9 @@ export default function Portfolio() {
         window.removeEventListener("resize", onHeroResize);
         gsap.ticker.remove(heroTick);
         gsap.ticker.remove(liquidTick);
+        tagEl?.removeEventListener("pointerenter", onTagEnter);
+        ripple?.kill();
+        settleName();
         if (nameEl) nameEl.style.filter = "";
         heroST.kill();
         heroTl.kill();
@@ -636,8 +694,9 @@ export default function Portfolio() {
     });
 
     // ── SECTION 2: Hello I'm Arsh ───────────────────────────────────────────
+    // the text sits on the right now, so it slides in from the right
     gsap.fromTo(".about-left",
-      { opacity: 0, x: -50 },
+      { opacity: 0, x: 50 },
       { opacity: 1, x: 0, duration: 0.9, scrollTrigger: { trigger: ".about-section", start: "top 70%" } }
     );
     // Polaroid bounce
@@ -993,8 +1052,13 @@ export default function Portfolio() {
         </svg>
 
         <div className="hero-inner relative w-full max-w-[1600px] mx-auto">
-          <p data-wire="Text / kicker" className="hero-kicker opacity-0 font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
-            Product &amp; Growth Builder
+          <p data-wire="Text / kicker" className="hero-kicker opacity-0 w-fit font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
+            <span className="sr-only">{HERO_TAGLINE}</span>
+            <span aria-hidden="true">
+              {HERO_TAGLINE.split("").map((c, i) => (
+                <span key={i} className="tag-char inline-block">{c === " " ? "\u00a0" : c}</span>
+              ))}
+            </span>
           </p>
 
           {/* Sized in CSS from the width and the height (see .hero-inner). The
@@ -1002,7 +1066,7 @@ export default function Portfolio() {
           <h1
             data-wire="H1 / name"
             aria-label="Arsh Chatrath"
-            className="hero-name mt-3 whitespace-nowrap"
+            className="hero-name mt-3 w-fit whitespace-nowrap"
             style={{ fontFamily: "var(--ff-display)", fontWeight: 800, lineHeight: 0.82, letterSpacing: "-0.02em" }}
           >
             <span aria-hidden="true" className="contents">
@@ -1151,9 +1215,9 @@ export default function Portfolio() {
             </div>
           </div>
 
-          {/* RIGHT: photo, with the Amritsar to Patiala map right under it
-              (fills the space the photo leaves beside the longer text) */}
-          <div className="flex flex-col items-center gap-[var(--space-stack)]">
+          {/* Photo, with the Amritsar to Patiala map right under it. Shown on
+              the left from tablet up (text first on phones, for reading order). */}
+          <div className="md:order-first flex flex-col items-center gap-[var(--space-stack)]">
             <div className="about-right opacity-0 flex justify-center">
               <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
                 <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
@@ -1284,22 +1348,22 @@ export default function Portfolio() {
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="work" className="work-section relative section-pad">
-        {/* Heading left, with the ticker running behind it */}
-        <div className="work-head relative">
-          <div aria-hidden="true" className="absolute top-1/2 left-[calc(50%-50vw)] w-screen -translate-y-1/2 overflow-hidden border-y border-[#00B4D8]/20 bg-[#00B4D8]/[0.03] py-1.5">
+        {/* Heading left. The ticker runs out from behind it to the right
+            edge, fading in where it meets the heading, so it never crosses
+            the text. On phones the heading is full width: ticker below it. */}
+        <div className="work-head max-w-7xl mx-auto w-full md:flex md:items-center md:gap-6">
+          <div className="reveal-wrap overflow-hidden shrink-0">
+            <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
+              PROOF, NOT JUST PROMISES
+            </h2>
+          </div>
+          <div aria-hidden="true" className="work-ticker mt-4 md:mt-0 min-w-0 md:flex-1 overflow-hidden border-y border-[#00B4D8]/20 bg-[#00B4D8]/[0.03] py-1.5 mx-[calc((100%-100vw)/2)] md:ml-0">
             <div className="ticker-track flex gap-12 whitespace-nowrap">
               {Array.from({ length: 8 }).map((_, i) => (
-                <span key={i} className="text-[#00B4D8]/70 font-mono text-xs tracking-[0.35em] uppercase shrink-0">
+                <span key={i} className="text-[#00B4D8] font-mono text-xs tracking-[0.35em] uppercase shrink-0">
                   SEVEN PROJECTS · THREE DISCIPLINES ·
                 </span>
               ))}
-            </div>
-          </div>
-          <div className="relative max-w-7xl mx-auto w-full">
-            <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
-                PROOF, NOT JUST PROMISES
-              </h2>
             </div>
           </div>
         </div>
@@ -1830,6 +1894,7 @@ export default function Portfolio() {
           .venn-arrow { display: inline; }
         }
         @media (min-width: 1024px) { .xf-photo { width: min(100%, 27rem); } }
+        @media (min-width: 768px) { .work-ticker { -webkit-mask-image: linear-gradient(to right, transparent, #000 5rem); mask-image: linear-gradient(to right, transparent, #000 5rem); } }
         .hire-wash { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%); mask-image: linear-gradient(to bottom, transparent, #000 38%); }
 
         /* Story scene (AsciiStory). Default is the stacked layout: reduced

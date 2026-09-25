@@ -13,9 +13,9 @@ import { fieldState } from "@/gl/fieldState";
  * Tinted to the site palette rather than left as the raw black sprite, which
  * would be invisible on a near-black page.
  *
- * Opt-in: it sleeps on a "Do you like cats?" switch in the bottom-right corner
- * and only chases the pointer once the switch is on. Switched off, it walks
- * back and curls up again. The choice is remembered on this device.
+ * It lives on a "Do you like cats?" switch in the bottom-right corner. On (the
+ * default) it chases the pointer; switched off, it walks back to the switch
+ * and curls up. The choice is remembered on this device.
  */
 
 const SPRITES: Record<string, [number, number][]> = {
@@ -91,11 +91,12 @@ export default function Neko() {
   const switchRef = useRef<HTMLButtonElement>(null);
   // Only where there's a pointer to chase and motion is welcome.
   const [enabled, setEnabled] = useState(false);
+  // On by default; off only if this visitor switched it off.
   const [follow, setFollow] = useState(() => {
     try {
-      return localStorage.getItem(STORE) === "1";
+      return localStorage.getItem(STORE) !== "0";
     } catch {
-      return false;
+      return true;
     }
   });
   const followRef = useRef(follow);

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import nekoSprite from "@imgs/oneko.gif";
 import { fieldState } from "@/gl/fieldState";
 
@@ -12,6 +12,10 @@ import { fieldState } from "@/gl/fieldState";
  *
  * Tinted to the site palette rather than left as the raw black sprite, which
  * would be invisible on a near-black page.
+ *
+ * Opt-in: it sleeps on a "Do you like cats?" switch in the bottom-right corner
+ * and only chases the pointer once the switch is on. Switched off, it walks
+ * back and curls up again. The choice is remembered on this device.
  */
 
 const SPRITES: Record<string, [number, number][]> = {
@@ -80,22 +84,51 @@ const SPRITES: Record<string, [number, number][]> = {
 const SPEED = 10;
 const FRAME_MS = 100;
 
+const STORE = "cat-follows";
+
 export default function Neko() {
   const ref = useRef<HTMLDivElement>(null);
+  const switchRef = useRef<HTMLButtonElement>(null);
+  // Only where there's a pointer to chase and motion is welcome.
+  const [enabled, setEnabled] = useState(false);
+  const [follow, setFollow] = useState(() => {
+    try {
+      return localStorage.getItem(STORE) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const followRef = useRef(follow);
+  useEffect(() => {
+    followRef.current = follow;
+    try {
+      localStorage.setItem(STORE, follow ? "1" : "0");
+    } catch {
+      /* storage blocked: it just won't be remembered */
+    }
+  }, [follow]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     // No pointer to chase, and it would sit stranded in a corner.
     if (window.matchMedia("(pointer: coarse)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setEnabled(true);
 
     const el = ref.current;
     if (!el) return;
 
-    let nekoX = window.innerWidth - 120;
-    let nekoY = window.innerHeight - 120;
-    let mouseX = nekoX;
-    let mouseY = nekoY;
+    // Home is on top of the switch, near its knob.
+    const home = () => {
+      const r = switchRef.current?.getBoundingClientRect();
+      return r ? { x: r.right - 26, y: r.top - 13 } : { x: window.innerWidth - 60, y: window.innerHeight - 70 };
+    };
+
+    let nekoX = -100;
+    let nekoY = -100;
+    let placed = false;
+    let mouseX = 0;
+    let mouseY = 0;
 
     let frameCount = 0;
     let idleTime = 0;
@@ -118,7 +151,8 @@ export default function Neko() {
     const idle = () => {
       idleTime += 1;
 
-      // Occasionally pick something to do while waiting.
+      // At home it naps; out chasing, it occasionally picks something to do.
+      if (!followRef.current && idleTime > 6 && idleAnimation === null) idleAnimation = "sleeping";
       if (idleTime > 10 && Math.floor(Math.random() * 200) === 0 && idleAnimation === null) {
         const options = ["sleeping", "scratchSelf"];
         if (nekoX < 32) options.push("scratchWallW");
@@ -154,33 +188,40 @@ export default function Neko() {
 
     const step = () => {
       frameCount += 1;
-      const diffX = nekoX - mouseX;
-      const diffY = nekoY - mouseY;
+      const following = followRef.current;
+      const target = following ? { x: mouseX, y: mouseY } : home();
+      const diffX = nekoX - target.x;
+      const diffY = nekoY - target.y;
       const distance = Math.hypot(diffX, diffY);
 
-      // Close enough — settle down.
-      if (distance < SPEED || distance < 48) {
+      // Close enough: settle down (exactly on its spot when going home).
+      if (distance < SPEED || (following && distance < 48)) {
+        if (!following) {
+          nekoX = target.x;
+          nekoY = target.y;
+        }
         idle();
         return;
       }
 
       resetIdle();
-      idleTime = 0;
-
-      if (idleAnimation === null) {
-        let direction = diffY / distance > 0.5 ? "N" : "";
-        direction += diffY / distance < -0.5 ? "S" : "";
-        direction += diffX / distance > 0.5 ? "W" : "";
-        direction += diffX / distance < -0.5 ? "E" : "";
-        setSprite(direction || "idle", frameCount);
+      // Woken up: a beat of surprise before it runs.
+      if (idleTime > 1) {
+        setSprite("alert", 0);
+        idleTime = Math.min(idleTime, 7) - 1;
+        return;
       }
+
+      let direction = diffY / distance > 0.5 ? "N" : "";
+      direction += diffY / distance < -0.5 ? "S" : "";
+      direction += diffX / distance > 0.5 ? "W" : "";
+      direction += diffX / distance < -0.5 ? "E" : "";
+      setSprite(direction || "idle", frameCount);
 
       nekoX -= (diffX / distance) * SPEED;
       nekoY -= (diffY / distance) * SPEED;
       nekoX = Math.min(Math.max(16, nekoX), window.innerWidth - 16);
       nekoY = Math.min(Math.max(16, nekoY), window.innerHeight - 16);
-
-      el.style.transform = `translate3d(${nekoX - 16}px, ${nekoY - 16}px, 0)`;
     };
 
     // The sprite animates at 10fps by design — running it at display rate makes
@@ -192,7 +233,15 @@ export default function Neko() {
         raf = requestAnimationFrame(loop);
         return;
       }
+      if (!placed) {
+        ({ x: nekoX, y: nekoY } = home());
+        mouseX = nekoX;
+        mouseY = nekoY;
+        placed = true;
+      }
       if (el.style.opacity !== "1") el.style.opacity = "1";
+      const sw = switchRef.current?.parentElement;
+      if (sw && sw.style.opacity !== "1") sw.style.opacity = "1";
 
       if (now - lastFrame >= FRAME_MS) {
         lastFrame = now;
@@ -207,7 +256,6 @@ export default function Neko() {
       mouseY = e.clientY;
     };
 
-    el.style.transform = `translate3d(${nekoX - 16}px, ${nekoY - 16}px, 0)`;
     window.addEventListener("pointermove", onMove, { passive: true });
     raf = requestAnimationFrame(loop);
 
@@ -218,21 +266,47 @@ export default function Neko() {
   }, []);
 
   return (
-    <div
-      ref={ref}
-      aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[9996]"
-      style={{
-        width: 32,
-        height: 32,
-        opacity: 0,
-        transition: "opacity 0.6s ease",
-        imageRendering: "pixelated",
-        backgroundImage: `url(${nekoSprite})`,
-        // The raw sprite is a black cat — invisible on a near-black page.
-        filter: "invert(1) drop-shadow(0 0 6px rgba(0,180,216,0.5))",
-        willChange: "transform",
-      }}
-    />
+    <>
+      {enabled && (
+        <div className="fixed bottom-4 right-4 z-[9995]" style={{ opacity: 0, transition: "opacity 0.6s ease" }}>
+          <button
+            ref={switchRef}
+            type="button"
+            role="switch"
+            aria-checked={follow}
+            data-hover
+            onClick={() => setFollow((f) => !f)}
+            className="flex items-center gap-3 rounded-full border border-white/10 bg-[#0b0b0b]/85 py-2 pl-4 pr-2.5 font-mono text-xs tracking-[0.06em] text-[#f5f0e8]/75 backdrop-blur transition-colors hover:border-[#00B4D8]/50 hover:text-[#f5f0e8]"
+          >
+            Do you like cats?
+            <span
+              aria-hidden="true"
+              className={`relative h-[18px] w-8 rounded-full transition-colors duration-300 ${follow ? "bg-[#00B4D8]" : "bg-white/15"}`}
+            >
+              <span
+                className="absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full bg-[#f5f0e8] transition-transform duration-300"
+                style={{ transform: follow ? "translateX(14px)" : "none" }}
+              />
+            </span>
+          </button>
+        </div>
+      )}
+      <div
+        ref={ref}
+        aria-hidden="true"
+        className="pointer-events-none fixed left-0 top-0 z-[9996]"
+        style={{
+          width: 32,
+          height: 32,
+          opacity: 0,
+          transition: "opacity 0.6s ease",
+          imageRendering: "pixelated",
+          backgroundImage: `url(${nekoSprite})`,
+          // The raw sprite is a black cat — invisible on a near-black page.
+          filter: "invert(1) drop-shadow(0 0 6px rgba(0,180,216,0.5))",
+          willChange: "transform",
+        }}
+      />
+    </>
   );
 }

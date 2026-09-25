@@ -1969,13 +1969,14 @@ export default function Portfolio() {
         .sg-art { grid-area: art; }
         .sg-text { grid-area: text; }
         .sg-art .story-img { height: clamp(8rem, 44vw, 15rem); }
+        /* Tablet up: the monkey and the text sit side by side as one group,
+           centred, with the heading on the group's left edge. The lessons are
+           the exact mirror of the questions, so nothing jumps when the wall
+           clears. The image is capped by width too, so the text keeps room. */
         @media (min-width: 768px) {
-          .story-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "art text"; column-gap: var(--space-block); }
-          .story-grid--flip { grid-template-areas: "head head" "text art"; }
-          .sg-art .story-img { height: clamp(12rem, 54svh, 32rem); }
-          /* each monkey hugs the text beside it rather than floating mid-column */
-          .story-grid .sg-art .story-img { margin-left: auto; margin-right: 0; }
-          .story-grid--flip .sg-art .story-img { margin-left: 0; margin-right: auto; }
+          .story-grid { grid-template-columns: auto minmax(0, 36rem); justify-content: center; grid-template-areas: "head head" "art text"; column-gap: clamp(2rem, 4vw, 4rem); }
+          .story-grid--flip { grid-template-columns: minmax(0, 36rem) auto; grid-template-areas: "head head" "text art"; }
+          .sg-art .story-img { height: clamp(12rem, min(54svh, 48vw), 32rem); }
         }
         /* held: a frame the height of the screen below the nav sticks while
            the scene plays. Content sits at the top of it, so the heading
@@ -1984,9 +1985,7 @@ export default function Portfolio() {
         .story--pinned .story-frame { position: sticky; top: var(--nav-h); height: calc(100svh - var(--nav-h)); overflow: hidden; }
         .story--pinned .story-panel { position: absolute; inset: 0; display: flex; align-items: flex-start; }
         .story--pinned .story-panel > section { width: 100%; padding-block: clamp(0.75rem, 3svh, 2rem); }
-        /* the lessons appear out of the wall, not after the section above, so
-           they can sit in the middle of the screen */
-        .story--pinned .story-b { opacity: 0; align-items: center; }
+        .story--pinned .story-b { opacity: 0; }
         .story--pinned .story-click { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; padding: 0.45em 0.9em; background: #070707; pointer-events: none; }
         .story--pinned .story-curtain { display: block; position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
         .story--pinned .story-mark { display: block; position: absolute; left: 0; width: 1px; pointer-events: none; }

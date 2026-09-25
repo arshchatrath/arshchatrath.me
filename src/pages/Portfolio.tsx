@@ -358,7 +358,7 @@ export default function Portfolio() {
     const t = setTimeout(() => {
       setIntro(true);
       setLoaderGone(true);
-    }, 6500);
+    }, 9000);
     return () => clearTimeout(t);
   }, []);
 

@@ -9,6 +9,7 @@ import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/moti
 import { fieldState } from "@/gl/fieldState";
 import Preloader from "@/components/Preloader";
 import AsciiStory from "@/components/AsciiStory";
+import BinaryRain from "@/components/BinaryRain";
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
 
 // ── Images (user-provided, transparent PNGs) ────────────────────────────────
@@ -1075,6 +1076,8 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section className="hero-section relative min-h-[100svh] flex items-center gutter-x pt-[calc(var(--nav-h)+var(--space-stack))] pb-[var(--space-block)] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
+        {/* Binary rain on the right, fading out towards the text (wide screens) */}
+        <BinaryRain />
 
         {/* Water drop: a lens (set from the effect) laid on a flat grey map.
             Grey means "don't move"; sRGB keeps that grey the exact midpoint. */}
@@ -1795,6 +1798,20 @@ export default function Portfolio() {
         .hero-char { font-variation-settings: "wdth" 75, "wght" 760; }
         .hero-stamp { position: relative; z-index: 2; width: clamp(110px, min(34vw, 23svh), 240px); margin: calc(var(--name-fs) * -0.3) 0 0 auto; }
         .hero-copy { margin-top: clamp(0.75rem, 2.5svh, 1.5rem); }
+        /* Binary rain: only where the hero has an empty right side. It fades
+           out towards the left, and at the top and bottom edges. */
+        .binary-rain { display: none; }
+        @media (min-width: 1024px), (orientation: landscape) {
+          .binary-rain {
+            /* a canvas keeps its default 150px height unless told otherwise */
+            display: block; position: absolute; top: 0; right: 0; width: 62%; height: 100%;
+            pointer-events: none; opacity: 0.8; transition: opacity 2s ease;
+            -webkit-mask-image: linear-gradient(to left, #000 15%, transparent 88%), linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+            -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(to left, #000 15%, transparent 88%), linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+            mask-composite: intersect;
+          }
+        }
         .hero-lead { font-size: clamp(0.95rem, 0.85rem + 0.35vw, 1.15rem); }
         .lead-word { display: inline-block; opacity: 0.7; }
         .lead-word.em { opacity: 1; }
@@ -1955,20 +1972,27 @@ export default function Portfolio() {
         @media (min-width: 768px) {
           .story-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "art text"; column-gap: var(--space-block); }
           .story-grid--flip { grid-template-areas: "head head" "text art"; }
-          .sg-art .story-img { height: clamp(12rem, 46svh, 30rem); }
+          .sg-art .story-img { height: clamp(12rem, 54svh, 32rem); }
+          /* each monkey hugs the text beside it rather than floating mid-column */
+          .story-grid .sg-art .story-img { margin-left: auto; margin-right: 0; }
+          .story-grid--flip .sg-art .story-img { margin-left: 0; margin-right: auto; }
         }
-        /* held: one screen-tall frame that sticks while the scene plays */
-        .story--pinned { height: calc(100svh + var(--story-track)); }
-        .story--pinned .story-frame { position: sticky; top: 0; height: 100svh; overflow: hidden; }
-        .story--pinned .story-panel { position: absolute; inset: 0; display: flex; align-items: center; padding-top: var(--nav-h); }
+        /* held: a frame the height of the screen below the nav sticks while
+           the scene plays. Content sits at the top of it, so the heading
+           follows the section above without a band of empty space. */
+        .story--pinned { height: calc(100svh - var(--nav-h) + var(--story-track)); }
+        .story--pinned .story-frame { position: sticky; top: var(--nav-h); height: calc(100svh - var(--nav-h)); overflow: hidden; }
+        .story--pinned .story-panel { position: absolute; inset: 0; display: flex; align-items: flex-start; }
         .story--pinned .story-panel > section { width: 100%; padding-block: clamp(0.75rem, 3svh, 2rem); }
-        .story--pinned .story-b { opacity: 0; }
-        .story--pinned .story-click { position: absolute; z-index: 3; left: 50%; top: calc(50% + var(--nav-h) / 2); transform: translate(-50%, -50%); opacity: 0; padding: 0.45em 0.9em; background: #070707; pointer-events: none; }
+        /* the lessons appear out of the wall, not after the section above, so
+           they can sit in the middle of the screen */
+        .story--pinned .story-b { opacity: 0; align-items: center; }
+        .story--pinned .story-click { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0; padding: 0.45em 0.9em; background: #070707; pointer-events: none; }
         .story--pinned .story-curtain { display: block; position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
         .story--pinned .story-mark { display: block; position: absolute; left: 0; width: 1px; pointer-events: none; }
-        .story-mark-q { top: 0; height: calc(0.45 * var(--story-track) + 55svh); }
-        .story-mark-turn { top: calc(0.45 * var(--story-track) + 55svh); height: calc(0.1 * var(--story-track)); }
-        .story-mark-l { top: calc(0.55 * var(--story-track) + 55svh); bottom: 0; }
+        .story-mark-q { top: 0; height: calc(0.45 * var(--story-track) + 55svh - var(--nav-h)); }
+        .story-mark-turn { top: calc(0.45 * var(--story-track) + 55svh - var(--nav-h)); height: calc(0.1 * var(--story-track)); }
+        .story-mark-l { top: calc(0.55 * var(--story-track) + 55svh - var(--nav-h)); bottom: 0; }
 
         /* Respect the OS reduced-motion setting */
         @media (prefers-reduced-motion: reduce) {

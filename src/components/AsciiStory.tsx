@@ -223,7 +223,8 @@ export default function AsciiStory({ first, second }: { first: ReactNode; second
 
     const st = ScrollTrigger.create({
       trigger: root,
-      start: "top top",
+      // the frame sticks below the nav, so the scene starts there too
+      start: () => `top ${parseFloat(getComputedStyle(frame).top) || 0}px`,
       end: "bottom bottom",
       onUpdate: (self) => render(self.progress),
       onRefresh: (self) => render(self.progress),

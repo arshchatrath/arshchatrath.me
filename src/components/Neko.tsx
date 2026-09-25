@@ -13,9 +13,9 @@ import { fieldState } from "@/gl/fieldState";
  * Tinted to the site palette rather than left as the raw black sprite, which
  * would be invisible on a near-black page.
  *
- * It lives on a "Do you like cats?" switch in the bottom-right corner. On (the
- * default) it chases the pointer; switched off, it walks back to the switch
- * and curls up. The choice is remembered on this device.
+ * It lives on a "Do you like cats?" switch in the bottom-right corner. On (every
+ * time the site opens) it chases the pointer; switched off, it walks back to
+ * the switch and curls up for the rest of the visit.
  */
 
 const SPRITES: Record<string, [number, number][]> = {
@@ -84,29 +84,16 @@ const SPRITES: Record<string, [number, number][]> = {
 const SPEED = 10;
 const FRAME_MS = 100;
 
-const STORE = "cat-follows";
-
 export default function Neko() {
   const ref = useRef<HTMLDivElement>(null);
   const switchRef = useRef<HTMLButtonElement>(null);
   // Only where there's a pointer to chase and motion is welcome.
   const [enabled, setEnabled] = useState(false);
-  // On by default; off only if this visitor switched it off.
-  const [follow, setFollow] = useState(() => {
-    try {
-      return localStorage.getItem(STORE) !== "0";
-    } catch {
-      return true;
-    }
-  });
+  // On every time the site opens; switching it off lasts for this visit.
+  const [follow, setFollow] = useState(true);
   const followRef = useRef(follow);
   useEffect(() => {
     followRef.current = follow;
-    try {
-      localStorage.setItem(STORE, follow ? "1" : "0");
-    } catch {
-      /* storage blocked: it just won't be remembered */
-    }
   }, [follow]);
 
   useEffect(() => {

@@ -5,6 +5,10 @@ import { deviceTier } from "@/lib/motion";
 /**
  * Cursor system.
  *
+ * Over text, the ring becomes a highlighter: a cream disc blended with
+ * "difference", so the letters under it invert (cream text turns dark on a
+ * light disc). Anywhere else it stays a plain teal ring. The dot stays teal.
+ *
  * Three behaviours the old dot didn't have:
  *  - magnetism: elements marked [data-magnetic] pull toward the pointer and the
  *    ring snaps to their centre
@@ -13,6 +17,37 @@ import { deviceTier } from "@/lib/motion";
  *
  * Skipped entirely on touch/low tier, where a custom cursor is dead weight.
  */
+/** Is the point over an actual glyph (not just inside a text element's box)? */
+function overText(x: number, y: number): boolean {
+  type CaretDoc = Document & {
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    caretRangeFromPoint?: (x: number, y: number) => Range | null;
+  };
+  const d = document as CaretDoc;
+  let node: Node | null = null;
+  let offset = 0;
+  if (d.caretPositionFromPoint) {
+    const p = d.caretPositionFromPoint(x, y);
+    node = p?.offsetNode ?? null;
+    offset = p?.offset ?? 0;
+  } else if (d.caretRangeFromPoint) {
+    const r = d.caretRangeFromPoint(x, y);
+    node = r?.startContainer ?? null;
+    offset = r?.startOffset ?? 0;
+  }
+  if (!node || node.nodeType !== Node.TEXT_NODE || !node.textContent?.trim()) return false;
+  // The caret lands next to the nearest letter even in empty space beside a
+  // line, so check the letters either side of it actually contain the point.
+  const len = node.textContent.length;
+  const range = document.createRange();
+  range.setStart(node, Math.max(0, offset - 1));
+  range.setEnd(node, Math.min(len, offset + 1));
+  const pad = 3;
+  return [...range.getClientRects()].some(
+    (r) => x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad,
+  );
+}
+
 export default function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -38,6 +73,7 @@ export default function Cursor() {
     let prevY = my;
 
     let magnet: HTMLElement | null = null;
+    let onText = false;
     let seen = false;
 
     const setX = gsap.quickSetter(ring, "x", "px");
@@ -62,16 +98,27 @@ export default function Cursor() {
         (e.target as HTMLElement | null)?.closest<HTMLElement>(
           "[data-magnetic], a, button, [data-hover], [data-cursor]",
         ) ?? null;
+      const cursorLabel = el?.dataset.cursor ?? "";
+      // A labelled disc can't invert (its label would too).
+      const text = !cursorLabel && overText(mx, my);
 
-      if (el !== magnet) {
+      if (el !== magnet || text !== onText) {
         magnet = el;
-        const cursorLabel = el?.dataset.cursor ?? "";
+        onText = text;
         label.textContent = cursorLabel;
+        if (text) {
+          ring.style.mixBlendMode = "difference";
+        } else {
+          // leaving text: drop the fill at once so it never flashes as a
+          // solid cream disc on its way out
+          ring.style.mixBlendMode = "normal";
+          gsap.set(ring, { backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(245,240,232,0)" });
+        }
         gsap.to(ring, {
-          width: cursorLabel ? 74 : el ? 46 : 26,
-          height: cursorLabel ? 74 : el ? 46 : 26,
-          borderColor: el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
-          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "transparent",
+          width: cursorLabel ? 74 : text ? (el ? 58 : 38) : el ? 46 : 26,
+          height: cursorLabel ? 74 : text ? (el ? 58 : 38) : el ? 46 : 26,
+          borderColor: text ? "rgba(0,180,216,0)" : el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
+          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : text ? "rgba(245,240,232,1)" : "rgba(245,240,232,0)",
           duration: 0.3,
           ease: "power3.out",
         });
@@ -169,9 +216,10 @@ export default function Cursor() {
         style={{
           width: 26,
           height: 26,
-          marginLeft: -13,
-          marginTop: -13,
+          // centred with a percentage, so it stays centred as it grows
+          translate: "-50% -50%",
           borderColor: "rgba(0,180,216,0.45)",
+          backgroundColor: "rgba(245,240,232,0)",
           opacity: 0,
           willChange: "transform",
         }}

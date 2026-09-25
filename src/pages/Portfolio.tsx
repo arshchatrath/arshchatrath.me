@@ -29,6 +29,13 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
 const HERO_TAGLINE = "Product & Growth Builder";
+// The intro under the name. [Bracketed] words are the bright ones.
+const HERO_LEAD =
+  "Founding Product & Growth Associate at [Talkeys], studying CS & Business Systems at [Thapar]. " +
+  "Looking for product and growth internships.";
+const HERO_LEAD_WORDS = HERO_LEAD.split(" ").map((w) =>
+  w.startsWith("[") ? { w: w.replace(/[[\]]/g, ""), em: true } : { w, em: false },
+);
 // What the name flickers through before it settles (kept to narrowish glyphs,
 // so a letter's slot never has to hold a W).
 const NAME_NOISE = "ABCDEFGHKLNOPRSTUVXYZ0123456789#%&*";
@@ -100,6 +107,17 @@ const PROJECTS: Project[] = [
   {
     index: "01",
     category: "PRODUCT",
+    img: banner3,
+    title: "Perplexity AI Campus Growth",
+    problem: "Drive product adoption in a saturated student market",
+    role: "VIP Campus Partner — growth & user acquisition",
+    approach: "Segmented target users (CS + research students) → ran campus activations by need",
+    result: "₹8.5L+ in revenue · Top 15 Campus Partners nationwide",
+    stack: ["Growth", "GTM", "Community"],
+  },
+  {
+    index: "02",
+    category: "PRODUCT",
     img: banner1,
     title: "Talkeys Community Platform",
     problem: "Low event engagement, declining user participation",
@@ -109,7 +127,7 @@ const PROJECTS: Project[] = [
     stack: ["Product", "A/B testing", "Ops"],
   },
   {
-    index: "02",
+    index: "03",
     category: "PRODUCT",
     img: banner2,
     title: "Capstone Team Finder Portal",
@@ -118,17 +136,6 @@ const PROJECTS: Project[] = [
     approach: "Found the pain point → built a platform for posting projects with tech requirements",
     result: "Turned scattered WhatsApp groups into one place teams actually form",
     stack: ["Full-stack", "Product"],
-  },
-  {
-    index: "03",
-    category: "PRODUCT",
-    img: banner3,
-    title: "Perplexity AI Campus Growth",
-    problem: "Drive product adoption in a saturated student market",
-    role: "VIP Campus Partner — growth & user acquisition",
-    approach: "Segmented target users (CS + research students) → ran campus activations by need",
-    result: "₹8.5L+ in revenue · Top 15 Campus Partners nationwide",
-    stack: ["Growth", "GTM", "Community"],
   },
   {
     index: "04",
@@ -418,6 +425,15 @@ export default function Portfolio() {
       const heroState = heroChars.map(() => ({ w: 75, g: 760, breath: 0 }));
       let heroCenters: { x: number; y: number }[] = [];
       let heroRadius = 150;
+      // intro words, for the spotlight (leadTick, below)
+      const leadWords = gsap.utils.toArray<HTMLElement>(".lead-word").map((el) => ({
+        el, base: el.classList.contains("em") ? 1 : 0.7, o: el.classList.contains("em") ? 1 : 0.7, y: 0, cx: 0, cy: 0,
+      }));
+      const cacheLead = () => leadWords.forEach((w) => {
+        const r = w.el.getBoundingClientRect();
+        w.cx = r.left + r.width / 2 + scrollX;
+        w.cy = r.top + r.height / 2 + scrollY;
+      });
       const nameEl = document.querySelector<HTMLElement>(".hero-name");
       const nameBox = { x: 0, y: 0, w: 0, h: 0 };
       const cacheHeroCenters = () => {
@@ -428,6 +444,7 @@ export default function Portfolio() {
           return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY };
         });
         heroRadius = (parseFloat(getComputedStyle(heroChars[0]).fontSize) || 120) * 1.15;
+        cacheLead();
       };
 
       // The name forms out of noise: every letter rises in as a random
@@ -508,6 +525,27 @@ export default function Portfolio() {
         rippleTag(Math.round(((e.clientX - r.left) / r.width) * (tagChars.length - 1)));
       };
       if (finePointer) tagEl?.addEventListener("pointerenter", onTagEnter);
+
+      // Intro: a soft spotlight follows the pointer across the words. The
+      // ones nearest it brighten and lift a hair, then ease back when it
+      // moves on. Positions are cached with the letter centres.
+      const leadTick = () => {
+        for (const w of leadWords) {
+          // distance squashed vertically, so the light spreads along a line
+          const d = Math.hypot(hx - w.cx, (hy - w.cy) * 1.8);
+          const t0 = Math.max(0, 1 - d / 150);
+          const t = t0 * t0 * (3 - 2 * t0);
+          const to = w.base + (1 - w.base) * t;
+          const ty = -2.5 * t;
+          if (w.o === to && w.y === ty) continue; // settled: no writes
+          const close = Math.abs(to - w.o) < 0.004 && Math.abs(ty - w.y) < 0.05;
+          w.o = close ? to : w.o + (to - w.o) * 0.16;
+          w.y = close ? ty : w.y + (ty - w.y) * 0.16;
+          w.el.style.opacity = w.o.toFixed(3);
+          w.el.style.transform = `translate3d(0, ${w.y.toFixed(2)}px, 0)`;
+        }
+      };
+      if (finePointer) gsap.ticker.add(leadTick);
 
       let heroThin = 0; // 0 at the top of the page, 1 once the hero has left
       const heroST = ScrollTrigger.create({
@@ -602,6 +640,7 @@ export default function Portfolio() {
         window.removeEventListener("resize", onHeroResize);
         gsap.ticker.remove(heroTick);
         gsap.ticker.remove(liquidTick);
+        gsap.ticker.remove(leadTick);
         tagEl?.removeEventListener("pointerenter", onTagEnter);
         ripple?.kill();
         settleName();
@@ -1126,12 +1165,14 @@ export default function Portfolio() {
           <div className="hero-copy">
             <p
               data-wire="Text / intro"
-              className="hero-lead opacity-0 leading-snug text-[#f5f0e8]/75 max-w-[38rem]"
+              className="hero-lead opacity-0 leading-snug text-[#f5f0e8] max-w-[36rem]"
               style={{ fontFamily: "var(--ff-body)" }}
             >
-              Founding Product &amp; Growth Associate at <span className="text-[#f5f0e8]">Talkeys</span>,
-              studying CS &amp; Business Systems at <span className="text-[#f5f0e8]">Thapar</span>.
-              Looking for product and growth internships.
+              {HERO_LEAD_WORDS.map((t, i) => (
+                <Fragment key={i}>
+                  <span className={t.em ? "lead-word em" : "lead-word"}>{t.w}</span>{" "}
+                </Fragment>
+              ))}
             </p>
 
             {/* A scoreboard, not badges: big numbers in the headline face,
@@ -1177,9 +1218,11 @@ export default function Portfolio() {
       {/* SECTION 2 — HELLO I'M ARSH                                          */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="about" className="about-section skewable section-pad max-w-7xl mx-auto">
+        {/* A crisscross: photo | intro on top, journey lines | map below.
+            Phones read it in order: intro, photo, lines, map. */}
         <div className="grid md:grid-cols-2 gap-[var(--space-block)] items-center">
-          {/* LEFT */}
-          <div className="about-left opacity-0">
+          {/* Intro (top right) */}
+          <div className="about-left opacity-0 md:col-start-2 md:row-start-1">
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
                 HELLO<br />I'M ARSH
@@ -1188,7 +1231,7 @@ export default function Portfolio() {
             <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-4 mb-6">
               Thapar Institute, Patiala
             </p>
-            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "var(--ff-body)" }}>
+            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed" style={{ fontFamily: "var(--ff-body)" }}>
               Most of what I have built started as something that annoyed me. A community
               nobody was showing up to. A capstone scramble spread across WhatsApp groups.
               A job hunt eating an hour every morning. I research it, test it, measure it,
@@ -1196,70 +1239,67 @@ export default function Portfolio() {
               InnoQuest, Top 15 nationally at AMEX, and in the top 1% picked for
               Amazon ML School.
             </p>
+          </div>
 
-            {/* Journey lines */}
-            <div className="journey-lines flex flex-col gap-4">
-              {[
-                ["Started as:", "Freshman with curiosity and ambition"],
-                ["Turned into:", "A builder who ships products and leads winning teams"],
-                ["Currently:", "Creating real-world impact through technology"],
-              ].map(([label, text]) => (
-                <div key={label} className="journey-line flex gap-3 items-stretch relative pl-4">
-                  <div className="jl-border absolute left-0 top-0 w-0.5 bg-[#00B4D8]" style={{ height: "100%" }} />
-                  <div className="jl-text flex gap-3 items-start opacity-0">
-                    <span className="text-[#00B4D8] font-mono text-xs shrink-0 mt-1 uppercase tracking-wider">{label}</span>
-                    <span className="text-[#f5f0e8]/80" style={{ fontFamily: "var(--ff-body)" }}>{text}</span>
-                  </div>
-                </div>
-              ))}
+          {/* Photo (top left) */}
+          <div className="about-right opacity-0 flex justify-center md:col-start-1 md:row-start-1">
+            <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
+              <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
 
-          {/* Photo, with the Amritsar to Patiala map right under it. Shown on
-              the left from tablet up (text first on phones, for reading order). */}
-          <div className="md:order-first flex flex-col items-center gap-[var(--space-stack)]">
-            <div className="about-right opacity-0 flex justify-center">
-              <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
-                <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
+          {/* Journey lines (bottom left) */}
+          <div className="journey-lines flex flex-col gap-4 w-fit max-w-full mx-auto md:col-start-1 md:row-start-2">
+            {[
+              ["Started as:", "Freshman with curiosity and ambition"],
+              ["Turned into:", "A builder who ships products and leads winning teams"],
+              ["Currently:", "Creating real-world impact through technology"],
+            ].map(([label, text]) => (
+              <div key={label} className="journey-line flex gap-3 items-stretch relative pl-4">
+                <div className="jl-border absolute left-0 top-0 w-0.5 bg-[#00B4D8]" style={{ height: "100%" }} />
+                <div className="jl-text flex gap-3 items-start opacity-0">
+                  <span className="text-[#00B4D8] font-mono text-xs shrink-0 mt-1 uppercase tracking-wider">{label}</span>
+                  <span className="text-[#f5f0e8]/80" style={{ fontFamily: "var(--ff-body)" }}>{text}</span>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Amritsar to Patiala (bottom right) */}
+          <div className="journey-map w-full max-w-[36rem] flex items-end justify-between gap-3 relative md:col-start-2 md:row-start-2">
+            {/* Amritsar */}
+            <div className="flex flex-col items-center gap-2 fade-up">
+              <img src={goldenTemple} width={318} height={188} alt="Golden Temple, Amritsar" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+              <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
             </div>
 
-            {/* Journey map */}
-            <div className="journey-map w-full max-w-[36rem] flex items-end justify-between gap-3 relative">
-              {/* Amritsar */}
-              <div className="flex flex-col items-center gap-2 fade-up">
-                <img src={goldenTemple} width={318} height={188} alt="Golden Temple, Amritsar" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
-                <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
-              </div>
+            {/* Traveling dashed SVG arrow */}
+            <div className="flex-1 min-w-[3rem] self-center relative h-14 md:h-16">
+              <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
+                <defs>
+                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00B4D8" />
+                  </marker>
+                </defs>
+                <path
+                  className="journey-path"
+                  d="M 10 78 Q 150 44 292 78"
+                  fill="none"
+                  stroke="#00B4D8"
+                  strokeWidth="2.5"
+                  strokeDasharray="12 8"
+                  strokeLinecap="round"
+                  markerEnd="url(#arrowhead)"
+                />
+                <circle className="journey-dot" r="4" fill="#00B4D8" opacity="0"
+                  style={{ filter: "drop-shadow(0 0 6px rgba(0,180,216,0.9))" }} />
+              </svg>
+            </div>
 
-              {/* Traveling dashed SVG arrow */}
-              <div className="flex-1 min-w-[3rem] self-center relative h-14 md:h-16">
-                <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
-                  <defs>
-                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                      <polygon points="0 0, 10 3.5, 0 7" fill="#00B4D8" />
-                    </marker>
-                  </defs>
-                  <path
-                    className="journey-path"
-                    d="M 10 78 Q 150 44 292 78"
-                    fill="none"
-                    stroke="#00B4D8"
-                    strokeWidth="2.5"
-                    strokeDasharray="12 8"
-                    strokeLinecap="round"
-                    markerEnd="url(#arrowhead)"
-                  />
-                  <circle className="journey-dot" r="4" fill="#00B4D8" opacity="0"
-                    style={{ filter: "drop-shadow(0 0 6px rgba(0,180,216,0.9))" }} />
-                </svg>
-              </div>
-
-              {/* Thapar */}
-              <div className="flex flex-col items-center gap-2 fade-up">
-                <img src={thaparUniversity} width={368} height={222} alt="Thapar University, Patiala" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
-                <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
-              </div>
+            {/* Thapar */}
+            <div className="flex flex-col items-center gap-2 fade-up">
+              <img src={thaparUniversity} width={368} height={222} alt="Thapar University, Patiala" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+              <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
             </div>
           </div>
         </div>
@@ -1755,7 +1795,9 @@ export default function Portfolio() {
         .hero-char { font-variation-settings: "wdth" 75, "wght" 760; }
         .hero-stamp { position: relative; z-index: 2; width: clamp(110px, min(34vw, 23svh), 240px); margin: calc(var(--name-fs) * -0.3) 0 0 auto; }
         .hero-copy { margin-top: clamp(0.75rem, 2.5svh, 1.5rem); }
-        .hero-lead { font-size: clamp(1.02rem, 0.9rem + 0.55vw, 1.4rem); }
+        .hero-lead { font-size: clamp(0.95rem, 0.85rem + 0.35vw, 1.15rem); }
+        .lead-word { display: inline-block; opacity: 0.7; }
+        .lead-word.em { opacity: 1; }
         .hero-stats { margin-top: clamp(0.75rem, 2.5svh, 1.5rem); }
         .hero-cta { margin-top: clamp(1rem, 3.5svh, 2.25rem); }
         .stat-num { font-family: var(--ff-display); font-size: clamp(1.45rem, 0.8rem + 2.4vw, 2.75rem); line-height: 0.95; letter-spacing: -0.01em; color: #f5f0e8; font-variation-settings: "wdth" 75, "wght" 760; }
@@ -1765,8 +1807,10 @@ export default function Portfolio() {
         @media (min-width: 1024px), (orientation: landscape) {
           /* --stamp-x centres the stamp in the space right of the name
              (5.1025em is the name's width), without passing the edge */
+          /* wide screens: the whole composition sits in from the left edge */
+          .hero-section { --hero-inset: clamp(0px, 6vw - 1rem, 7rem); padding-left: calc(var(--gutter) + var(--hero-inset)); }
           .hero-inner {
-            --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.7 / 5.1025), 19svh);
+            --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter) - var(--hero-inset)) * 0.7 / 5.1025), 19svh);
             --stamp-w: clamp(170px, min(27vw, 46svh), 440px);
             --stamp-x: min(calc((var(--name-fs) * 5.1025 + 100% - var(--stamp-w)) / 2), calc(100% - var(--stamp-w)));
           }

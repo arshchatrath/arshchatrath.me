@@ -204,7 +204,7 @@ export default function Preloader({
       // A few emitters along the top; each letter takes the nearest one, so
       // the beams fan down onto the name.
       const emitterCount = vw < 700 ? 3 : 5;
-      const emitters = Array.from({ length: emitterCount }, (_, i) => ({ x: ((i + 0.5) / emitterCount) * vw, y: -2 }));
+      const emitters = Array.from({ length: emitterCount }, (_, i) => ({ x: ((i + 0.5) / emitterCount) * vw, y: 4 }));
       const lasers = glyphs.map((g) => {
         const p = g.cut.getPointAtLength(0);
         const s = toScreen(g.x + p.x * scale, g.y - p.y * scale);
@@ -238,14 +238,11 @@ export default function Preloader({
         ctx.clearRect(0, 0, vw, vh);
         const on = beams.on * beams.reach;
         if (on > 0.01) {
-          // emitters glow at the top edge
+          // emitters: a small plain dot each, no glow
+          ctx.fillStyle = `rgba(215, 247, 255, ${0.9 * on})`;
           for (const e of emitters) {
-            const eg = ctx.createRadialGradient(e.x, 0, 0, e.x, 0, 22);
-            eg.addColorStop(0, `rgba(230, 250, 255, ${0.9 * on})`);
-            eg.addColorStop(1, "rgba(0, 180, 216, 0)");
-            ctx.fillStyle = eg;
             ctx.beginPath();
-            ctx.arc(e.x, 0, 22, 0, Math.PI * 2);
+            ctx.arc(e.x, e.y, 1.8, 0, Math.PI * 2);
             ctx.fill();
           }
           for (const L of lasers) {

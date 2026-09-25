@@ -1308,7 +1308,7 @@ export default function Portfolio() {
           {/* Photo (top left) */}
           <div className="about-right opacity-0 flex justify-center md:col-start-1 md:row-start-1">
             <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
-              <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
+              <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(18rem,72vw)] md:w-[min(26rem,40vw)] h-auto object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
 

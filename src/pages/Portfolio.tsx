@@ -1283,10 +1283,12 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="about" className="about-section skewable section-pad max-w-7xl mx-auto">
         {/* A crisscross: photo | intro on top, journey lines | map below.
-            Phones read it in order: intro, photo, lines, map. */}
-        <div className="grid md:grid-cols-2 gap-[var(--space-block)] items-center">
+            Phones read it in order: intro, photo, lines, map. From tablet up
+            the top row sits on the seam and the bottom row hangs from it, so
+            each picture is close to the text under or over it. */}
+        <div className="grid md:grid-cols-2 gap-x-[var(--space-block)] gap-y-[clamp(1.25rem,2.5vw,1.75rem)] items-center">
           {/* Intro (top right) */}
-          <div className="about-left opacity-0 md:col-start-2 md:row-start-1">
+          <div className="about-left opacity-0 md:col-start-2 md:row-start-1 md:self-end">
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
                 HELLO<br />I'M ARSH
@@ -1306,14 +1308,14 @@ export default function Portfolio() {
           </div>
 
           {/* Photo (top left) */}
-          <div className="about-right opacity-0 flex justify-center md:col-start-1 md:row-start-1">
+          <div className="about-right opacity-0 flex justify-center md:col-start-1 md:row-start-1 md:self-end">
             <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
               <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(18rem,72vw)] md:w-[min(26rem,40vw)] h-auto object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
 
           {/* Journey lines (bottom left) */}
-          <div className="journey-lines flex flex-col gap-4 w-fit max-w-full mx-auto md:col-start-1 md:row-start-2">
+          <div className="journey-lines flex flex-col gap-4 w-fit max-w-full mx-auto md:col-start-1 md:row-start-2 md:self-start">
             {[
               ["Started as:", "Freshman with curiosity and ambition"],
               ["Turned into:", "A builder who ships products and leads winning teams"],
@@ -1330,7 +1332,7 @@ export default function Portfolio() {
           </div>
 
           {/* Amritsar to Patiala (bottom right) */}
-          <div className="journey-map w-full max-w-[36rem] flex items-end justify-between gap-3 relative md:col-start-2 md:row-start-2">
+          <div className="journey-map w-full max-w-[36rem] flex items-end justify-between gap-3 relative md:col-start-2 md:row-start-2 md:self-start">
             {/* Amritsar */}
             <div className="flex flex-col items-center gap-2 fade-up">
               <img src={goldenTemple} width={318} height={188} alt="Golden Temple, Amritsar" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />

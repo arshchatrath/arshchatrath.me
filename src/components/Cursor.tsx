@@ -84,6 +84,10 @@ export default function Cursor() {
     let lastTextAt = -Infinity;
     let seen = false;
 
+    // Centre both on the pointer through GSAP itself. A CSS translate got
+    // folded into GSAP's transform when it first read each element, and the
+    // highlighter was 0px wide at that moment, so it lost its centring.
+    gsap.set([ring, fill], { xPercent: -50, yPercent: -50 });
     const setX = gsap.quickSetter([ring, fill], "x", "px");
     const setY = gsap.quickSetter([ring, fill], "y", "px");
     const setDotX = gsap.quickSetter(dot, "x", "px");
@@ -250,8 +254,6 @@ export default function Cursor() {
         style={{
           width: 26,
           height: 26,
-          // centred with a percentage, so it stays centred as it grows
-          translate: "-50% -50%",
           borderColor: "rgba(0,180,216,0.45)",
           opacity: 0,
           willChange: "transform",
@@ -271,7 +273,6 @@ export default function Cursor() {
         style={{
           width: 0,
           height: 0,
-          translate: "-50% -50%",
           backgroundColor: "#f5f0e8",
           mixBlendMode: "difference",
           opacity: 0,

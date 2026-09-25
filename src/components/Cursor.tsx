@@ -5,9 +5,12 @@ import { deviceTier } from "@/lib/motion";
 /**
  * Cursor system.
  *
- * Over text, the ring becomes a highlighter: a cream disc blended with
+ * Over text, a highlighter grows out of the ring: a cream disc blended with
  * "difference", so the letters under it invert (cream text turns dark on a
- * light disc). Anywhere else it stays a plain teal ring. The dot stays teal.
+ * light disc). It lives on its own layer that is always blended, so it can
+ * grow in and shrink away smoothly instead of switching; a short grace period
+ * keeps it from flickering across the gaps between words. Anywhere else the
+ * cursor is a plain teal ring. The dot stays teal.
  *
  * Three behaviours the old dot didn't have:
  *  - magnetism: elements marked [data-magnetic] pull toward the pointer and the
@@ -48,9 +51,12 @@ function overText(x: number, y: number): boolean {
   );
 }
 
+const TEXT_GRACE_MS = 140;
+
 export default function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -60,8 +66,9 @@ export default function Cursor() {
 
     const dot = dotRef.current;
     const ring = ringRef.current;
+    const fill = fillRef.current;
     const label = labelRef.current;
-    if (!dot || !ring || !label) return;
+    if (!dot || !ring || !fill || !label) return;
 
     document.documentElement.classList.add("has-custom-cursor");
 
@@ -74,10 +81,11 @@ export default function Cursor() {
 
     let magnet: HTMLElement | null = null;
     let onText = false;
+    let lastTextAt = -Infinity;
     let seen = false;
 
-    const setX = gsap.quickSetter(ring, "x", "px");
-    const setY = gsap.quickSetter(ring, "y", "px");
+    const setX = gsap.quickSetter([ring, fill], "x", "px");
+    const setY = gsap.quickSetter([ring, fill], "y", "px");
     const setDotX = gsap.quickSetter(dot, "x", "px");
     const setDotY = gsap.quickSetter(dot, "y", "px");
 
@@ -94,41 +102,66 @@ export default function Cursor() {
         gsap.to([ring, dot], { opacity: 1, duration: 0.3, ease: "power2.out" });
       }
 
+      const now = performance.now();
+
       const el =
         (e.target as HTMLElement | null)?.closest<HTMLElement>(
           "[data-magnetic], a, button, [data-hover], [data-cursor]",
         ) ?? null;
       const cursorLabel = el?.dataset.cursor ?? "";
       // A labelled disc can't invert (its label would too).
-      const text = !cursorLabel && overText(mx, my);
+      const hit = !cursorLabel && overText(mx, my);
+      if (hit) lastTextAt = now;
+      // grace period: crossing the gap between two words isn't leaving text
+      const text = hit || (!cursorLabel && now - lastTextAt < TEXT_GRACE_MS);
 
       if (el !== magnet || text !== onText) {
         magnet = el;
         onText = text;
         label.textContent = cursorLabel;
-        if (text) {
-          ring.style.mixBlendMode = "difference";
-        } else {
-          // leaving text: drop the fill at once so it never flashes as a
-          // solid cream disc on its way out
-          ring.style.mixBlendMode = "normal";
-          gsap.set(ring, { backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(245,240,232,0)" });
-        }
+        const size = cursorLabel ? 74 : text ? (el ? 58 : 40) : el ? 46 : 26;
         gsap.to(ring, {
-          width: cursorLabel ? 74 : text ? (el ? 58 : 38) : el ? 46 : 26,
-          height: cursorLabel ? 74 : text ? (el ? 58 : 38) : el ? 46 : 26,
+          width: size,
+          height: size,
           borderColor: text ? "rgba(0,180,216,0)" : el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
-          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : text ? "rgba(245,240,232,1)" : "rgba(245,240,232,0)",
-          duration: 0.3,
+          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(0,180,216,0)",
+          duration: 0.55,
           ease: "power3.out",
+          overwrite: "auto",
         });
-        gsap.to(label, { opacity: cursorLabel ? 1 : 0, duration: 0.2 });
-        gsap.to(dot, { opacity: cursorLabel ? 0 : 1, duration: 0.2 });
+        // the highlighter grows out of the dot, or melts back into it
+        gsap.to(fill, {
+          width: text ? size : 0,
+          height: text ? size : 0,
+          opacity: text ? 1 : 0,
+          duration: text ? 0.7 : 0.6,
+          ease: text ? "power2.out" : "power2.inOut",
+          overwrite: "auto",
+        });
+        gsap.to(label, { opacity: cursorLabel ? 1 : 0, duration: 0.25 });
+        gsap.to(dot, { opacity: cursorLabel ? 0 : 1, duration: 0.25 });
       }
     };
 
+    // Resting on a gap between words sends no more pointer moves, so let the
+    // grace period run out on its own.
+    const graceCheck = window.setInterval(() => {
+      if (!onText || performance.now() - lastTextAt < TEXT_GRACE_MS) return;
+      if (overText(mx, my)) {
+        lastTextAt = performance.now();
+        return;
+      }
+      onText = false;
+      const size = magnet ? 46 : 26;
+      gsap.to(ring, { width: size, height: size, borderColor: magnet ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)", duration: 0.55, ease: "power3.out", overwrite: "auto" });
+      gsap.to(fill, { width: 0, height: 0, opacity: 0, duration: 0.6, ease: "power2.inOut", overwrite: "auto" });
+    }, 120);
+
     const onLeave = () => {
       gsap.to([ring, dot], { opacity: 0, duration: 0.2 });
+      onText = false;
+      lastTextAt = -Infinity;
+      gsap.to(fill, { width: 0, height: 0, opacity: 0, duration: 0.3, overwrite: "auto" });
     };
     const onEnter = () => {
       if (seen) gsap.to([ring, dot], { opacity: 1, duration: 0.2 });
@@ -153,7 +186,7 @@ export default function Cursor() {
       setDotY(my);
 
       // Stretch along the direction of travel.
-      gsap.set(ring, {
+      gsap.set([ring, fill], {
         rotate: angle,
         scaleX: 1 + speed * 0.012,
         scaleY: 1 - speed * 0.006,
@@ -204,6 +237,7 @@ export default function Cursor() {
       document.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("pointerenter", onEnter);
       gsap.ticker.remove(tick);
+      window.clearInterval(graceCheck);
     };
   }, []);
 
@@ -219,7 +253,6 @@ export default function Cursor() {
           // centred with a percentage, so it stays centred as it grows
           translate: "-50% -50%",
           borderColor: "rgba(0,180,216,0.45)",
-          backgroundColor: "rgba(245,240,232,0)",
           opacity: 0,
           willChange: "transform",
         }}
@@ -229,6 +262,22 @@ export default function Cursor() {
           className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#00B4D8] opacity-0"
         />
       </div>
+      {/* The text highlighter: its own always-blended layer, so it can grow
+          and shrink smoothly. Sits under the ring and the dot. */}
+      <div
+        ref={fillRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed left-0 top-0 z-[9998] rounded-full"
+        style={{
+          width: 0,
+          height: 0,
+          translate: "-50% -50%",
+          backgroundColor: "#f5f0e8",
+          mixBlendMode: "difference",
+          opacity: 0,
+          willChange: "transform",
+        }}
+      />
       <div
         ref={dotRef}
         aria-hidden="true"

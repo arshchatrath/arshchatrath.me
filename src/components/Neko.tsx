@@ -16,6 +16,9 @@ import { fieldState } from "@/gl/fieldState";
  * It lives on a "Do you like cats?" switch in the bottom-right corner. On (every
  * time the site opens) it chases the pointer; switched off, it walks back to
  * the switch and curls up for the rest of the visit.
+ *
+ * On phone-sized screens there's no switch and nothing to chase: the cat
+ * just sleeps on the floating Resume button, and comes and goes with it.
  */
 
 const SPRITES: Record<string, [number, number][]> = {
@@ -98,17 +101,21 @@ export default function Neko() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // No pointer to chase, and it would sit stranded in a corner.
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    // Phones: it sleeps on the floating Resume button (.resume-fab).
+    const onPhone = window.matchMedia("(max-width: 639px)").matches;
+    // Tablets with touch: no pointer to chase, and nowhere to sleep.
+    if (!onPhone && window.matchMedia("(pointer: coarse)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    setEnabled(true);
+    if (onPhone) followRef.current = false;
+    else setEnabled(true);
 
     const el = ref.current;
     if (!el) return;
 
-    // Home is on top of the switch, near its knob.
+    // Home is on top of the switch, near its knob (on phones, on top of the
+    // Resume button's right end).
     const home = () => {
-      const r = switchRef.current?.getBoundingClientRect();
+      const r = (onPhone ? document.querySelector(".resume-fab") : switchRef.current)?.getBoundingClientRect();
       return r ? { x: r.right - 26, y: r.top - 13 } : { x: window.innerWidth - 60, y: window.innerHeight - 70 };
     };
 
@@ -176,7 +183,7 @@ export default function Neko() {
 
     const step = () => {
       frameCount += 1;
-      const following = followRef.current;
+      const following = !onPhone && followRef.current;
       const target = following ? { x: mouseX, y: mouseY } : home();
       const diffX = nekoX - target.x;
       const diffY = nekoY - target.y;
@@ -227,7 +234,9 @@ export default function Neko() {
         mouseY = nekoY;
         placed = true;
       }
-      if (el.style.opacity !== "1") el.style.opacity = "1";
+      // on phones it's only there while the Resume button is
+      const show = onPhone ? (document.querySelector(".resume-fab.on") ? "1" : "0") : "1";
+      if (el.style.opacity !== show) el.style.opacity = show;
       const sw = switchRef.current?.parentElement;
       if (sw && sw.style.opacity !== "1") sw.style.opacity = "1";
 

@@ -1,3 +1,4 @@
+@import "./fonts.css";
 @import "tailwindcss";
 
 @theme inline {
@@ -27,6 +28,31 @@
   --ff-display: 'Bricolage Grotesque', 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --ff-body: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --ff-mono: 'Fragment Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Colour. Teal is building and thinking; gold appears only for wins. */
+  --ink: #0a0a0a;
+  --ink-raised: #121212;
+  --line: rgba(245, 240, 232, 0.12);
+  --paper: #f5f0e8;
+  --paper-2: rgba(245, 240, 232, 0.72); /* secondary text, ~7:1 on ink */
+  --paper-3: rgba(245, 240, 232, 0.55); /* labels, ~5.8:1 on ink */
+  --teal: #00b4d8;
+  --gold: #f2b544;
+
+  /* Space. Every value shrinks on small screens instead of staying at
+     desktop size, which is what left phones full of empty bands. */
+  --space-section: clamp(3.5rem, 2rem + 6vw, 8rem);
+  --space-block: clamp(1.75rem, 1rem + 3vw, 4rem);
+  --space-stack: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+  --gutter: clamp(1.25rem, 0.5rem + 3.5vw, 4rem);
+  --nav-h: 4.5rem;
+
+  /* Type scale. Nothing on the page goes below 12px. */
+  --step-label: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --step-body: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-lead: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+  --step-h3: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  --step-h2: clamp(2.25rem, 1.4rem + 4vw, 5rem);
 
   --background: 0 0% 4%;
   --foreground: 37 32% 94%;
@@ -87,4 +113,20 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
   }
+}
+
+/* Layout utilities built on the spacing tokens. Sections use these instead of
+   fixed padding, so a phone gets phone-sized gaps. */
+@utility section-pad {
+  padding-block: var(--space-section);
+  padding-inline: var(--gutter);
+}
+@utility section-y {
+  padding-block: var(--space-section);
+}
+@utility gutter-x {
+  padding-inline: var(--gutter);
+}
+@utility block-gap {
+  margin-bottom: var(--space-block);
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import nekoSprite from "@imgs/oneko.gif";
-import { fieldState } from "@/gl/AmbientField";
+import { fieldState } from "@/gl/fieldState";
 
 /**
  * Oneko — the cat that chases the cursor.

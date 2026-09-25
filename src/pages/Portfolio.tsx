@@ -6,7 +6,7 @@ import Lenis from "lenis";
 import { SplitText } from "gsap/SplitText";
 import { usePageMeta } from "@/lib/page-meta";
 import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/motion";
-import { fieldState } from "@/gl/AmbientField";
+import { fieldState } from "@/gl/fieldState";
 import Preloader from "@/components/Preloader";
 import AsciiMorph from "@/components/AsciiMorph";
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
@@ -17,7 +17,6 @@ import goldenTemple     from "@imgs/Amritsar golden temple.webp";
 import thaparUniversity from "@imgs/Thapar university patiala.webp";
 import monkeyThinking   from "@imgs/Monkey thinking.webp";
 import monkeyRealising  from "@imgs/Monkey realising.webp";
-import arshWithMic      from "@imgs/Arsh with mic.webp";
 import arshHalftone     from "@imgs/Arsh smiling with mic in hand.webp";
 import arshAudience     from "@imgs/Arsh with mic in audience.webp";
 import arshThumbsUp     from "@imgs/Arsh thumbs up.webp";
@@ -31,8 +30,8 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 const HERO_NAME = "ARSH CHATRATH";
 const HERO_LINES = [
   "I find broken user experiences and fix them systematically",
-  "Product & Operations @ Talkeys — 1000+ users, 60% growth",
-  "Top 15 nationally @ Perplexity · IIT Roorkee winner · AMEX Top 3",
+  "Founding Product & Growth Associate @ Talkeys · 8,000+ users",
+  "₹8.5L+ revenue for Perplexity · 1st of 250+ teams at IIT Roorkee · Amazon ML School '25",
 ];
 const PM_QUESTIONS = [
   "How do I know I'm solving the right problem?",
@@ -69,9 +68,9 @@ const PROJECTS: Project[] = [
     img: banner1,
     title: "Talkeys Community Platform",
     problem: "Low event engagement, declining user participation",
-    role: "Product & Operations Head — owned roadmap & execution",
+    role: "Founding Product & Growth Associate · owned the roadmap and prioritisation",
     approach: "User research → A/B tested 3 engagement strategies → prioritised features by data",
-    result: "60% increase in participation · scaled to 1000+ active users",
+    result: "60% lift in participation · 8,000+ users on the platform",
     stack: ["Product", "A/B testing", "Ops"],
   },
   {
@@ -93,7 +92,7 @@ const PROJECTS: Project[] = [
     problem: "Drive product adoption in a saturated student market",
     role: "VIP Campus Partner — growth & user acquisition",
     approach: "Segmented target users (CS + research students) → ran campus activations by need",
-    result: "Engaged 1500+ students · Top 15 Campus Partners nationwide",
+    result: "₹8.5L+ in revenue · Top 15 Campus Partners nationwide",
     stack: ["Growth", "GTM", "Community"],
   },
   {
@@ -104,7 +103,7 @@ const PROJECTS: Project[] = [
     problem: "Stress detection is either self-reported and unreliable, or a model nobody can question",
     role: "Built end to end — wearable firmware, ML stack and API",
     approach: "Fused ECG/EDA/EMG/temp biosignals, voice and the DASS-21 survey by late fusion, with SHAP and LIME explaining every prediction in plain language",
-    result: "88.3% accuracy / 0.97 AUC on WESAD physiological data; fusion lifted reliability on medium stress",
+    result: "73% accuracy on 500+ samples · 3rd place at the Indian-Israeli Hackathon",
     stack: ["Python", "FastAPI", "TensorFlow", "ESP32", "SHAP / LIME"],
     links: [
       { label: "Live", href: "https://safespaceai.vercel.app" },
@@ -163,7 +162,7 @@ const FAQS = [
   },
   {
     q: "What have you actually shipped?",
-    a: "The Talkeys community platform (scaled to 1000+ active users, 60% lift in participation), a capstone team-finder portal that replaced fragmented WhatsApp groups, and campus growth for Perplexity AI reaching 1500+ students.",
+    a: "The Talkeys community platform (8,000+ users, 60% lift in participation), a capstone team-finder portal that replaced fragmented WhatsApp groups, and ₹8.5L+ in revenue as a Perplexity Campus Partner.",
   },
   {
     q: "Are you technical?",
@@ -244,8 +243,8 @@ function FaqBoard() {
 
             {/* Index — always visible, anchors the card while it resizes */}
             <span
-              className={`absolute top-4 left-4 z-10 font-mono text-[10px] tracking-[0.25em] transition-colors duration-500 ${
-                open ? "text-[#00B4D8]" : "text-[#f5f0e8]/35"
+              className={`absolute top-4 left-4 z-10 font-mono text-xs tracking-[0.25em] transition-colors duration-500 ${
+                open ? "text-[#00B4D8]" : "text-[#f5f0e8]/55"
               }`}
             >
               {String(i + 1).padStart(2, "0")}
@@ -281,22 +280,6 @@ function FaqBoard() {
   );
 }
 
-// ── Section divider ──────────────────────────────────────────────────────────
-function SectionDivider() {
-  return (
-    <div className="section-div px-6 md:px-16 py-1 pointer-events-none">
-      <svg width="100%" height="2" viewBox="0 0 1000 2" preserveAspectRatio="none">
-        <line
-          className="div-line"
-          x1="0" y1="1" x2="1000" y2="1"
-          stroke="#00B4D8" strokeWidth="1" opacity="0.35"
-          strokeDasharray="1000" strokeDashoffset="1000"
-        />
-      </svg>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const containerRef  = useRef<HTMLDivElement>(null);
@@ -314,8 +297,8 @@ export default function Portfolio() {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   usePageMeta(
-    "Arsh Chatrath — Product Builder & Campus Partner @Perplexity",
-    "Product Builder. Campus Partner @Perplexity, Product & Operations Head @Talkeys (1000+ users, 60% growth). IIT Roorkee winner. Looking for product & growth internships.",
+    "Arsh Chatrath · Product & Growth Builder",
+    "Founding Product & Growth Associate at Talkeys (8,000+ users). Led Helix to 12,000+ registrations. ₹8.5L+ revenue for Perplexity. Seeking product & growth internships.",
     "/",
   );
 
@@ -368,7 +351,7 @@ export default function Portfolio() {
         // and the global skew.
         const v = gsap.utils.clamp(-1, 1, self.getVelocity() / 2600);
         fieldState.velocity = v;
-        if (skewables.current.length) {
+        if (!reduceMotion && skewables.current.length) {
           gsap.to(skewables.current, {
             skewY: v * 2.2,
             duration: 0.5,
@@ -393,20 +376,17 @@ export default function Portfolio() {
     // Reduced motion: reveal everything at rest instead of animating it in.
     // Without this, every `.opacity-0` element stays invisible forever.
     if (prefersReducedMotion()) {
-      gsap.set(".opacity-0, .hire-w0, .hire-w1, .hire-w2", { opacity: 1 });
+      // Reveal content only. A blanket reveal also un-hid the dark overlay on
+      // the PM section (a black box) and the FAQ cards' folded/unfolded text
+      // (overlapping), both of which are meant to stay hidden at rest.
+      const root = containerRef.current;
+      const content = gsap.utils
+        .toArray<HTMLElement>(root.querySelectorAll(".opacity-0, .hire-w0, .hire-w1, .hire-w2"))
+        .filter((el) => !el.matches(".pm-scrim, .rz-seam") && !el.parentElement?.closest(".faq-card"));
+      gsap.set(content, { opacity: 1 });
       gsap.set(".venn-c1, .venn-c2, .venn-c3", { opacity: 1, attr: { strokeDashoffset: 0 } });
-      gsap.set(".div-line", { attr: { strokeDashoffset: 0 } });
       return;
     }
-
-    // ── Section divider draw-in ─────────────────────────────────────────────
-    document.querySelectorAll(".div-line").forEach(el => {
-      gsap.fromTo(el,
-        { attr: { strokeDashoffset: 1000 } },
-        { attr: { strokeDashoffset: 0 }, duration: 1.2, ease: "power2.out",
-          scrollTrigger: { trigger: el.closest(".section-div"), start: "top 90%" } }
-      );
-    });
 
     // ── Section headings: masked per-line reveal ────────────────────────────
     // SplitText with autoSplit re-splits on resize, so lines stay correct when
@@ -416,6 +396,7 @@ export default function Portfolio() {
       const split = SplitText.create(el, {
         type: "lines",
         mask: "lines",
+        aria: "none",
         linesClass: "reveal-line",
         autoSplit: true,
         onSplit(self) {
@@ -437,6 +418,7 @@ export default function Portfolio() {
       const split = SplitText.create(el, {
         type: "lines",
         mask: "lines",
+        aria: "none",
         autoSplit: true,
         onSplit(self) {
           return gsap.from(self.lines, {
@@ -455,8 +437,8 @@ export default function Portfolio() {
     // ── SECTION 1: Hero ─────────────────────────────────────────────────────
     // Hero image slides in from right
     gsap.fromTo(".hero-img",
-      { opacity: 0, x: 60 },
-      { opacity: 1, x: 0, duration: 0.9, ease: EASE.out, delay: 1.0 }
+      { x: 60 },
+      { x: 0, duration: 0.9, ease: EASE.out, delay: 1.0 }
     );
 
     const chars = document.querySelectorAll<HTMLElement>(".hero-char");
@@ -582,9 +564,9 @@ export default function Portfolio() {
         item.querySelector(".cat-dot")?.classList.toggle("bg-[#00B4D8]/30", !on);
         const name = item.querySelector(".cat-name");
         name?.classList.toggle("text-[#00B4D8]", on);
-        name?.classList.toggle("text-[#f5f0e8]/40", !on);
+        name?.classList.toggle("text-[#f5f0e8]/55", !on);
         item.querySelector(".cat-blurb")?.classList.toggle("text-[#f5f0e8]/55", on);
-        item.querySelector(".cat-blurb")?.classList.toggle("text-[#f5f0e8]/25", !on);
+        item.querySelector(".cat-blurb")?.classList.toggle("text-[#f5f0e8]/55", !on);
       });
     };
     gsap.utils.toArray<HTMLElement>(".work-card").forEach((card) => {
@@ -795,7 +777,7 @@ export default function Portfolio() {
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
       <nav
         aria-label="Primary"
-        className="fixed top-0 left-0 w-full z-40 flex items-center justify-between px-6 md:px-16 py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5"
+        className="fixed top-0 left-0 w-full z-40 flex items-center justify-between gutter-x py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5"
       >
         <a
           href="#top"
@@ -806,7 +788,7 @@ export default function Portfolio() {
         >
           Arsh Chatrath
         </a>
-        <span className="nav-chapter hidden lg:block font-mono text-[10px] tracking-[0.3em] uppercase text-[#f5f0e8]/35">
+        <span className="nav-chapter hidden lg:block font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/55">
           01 / 09 &mdash; intro
         </span>
         <div className="flex items-center gap-4 md:gap-7">
@@ -815,7 +797,7 @@ export default function Portfolio() {
               key={href}
               href={href}
               data-hover
-              onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(href); }}
+              onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(href, { offset: -72 }); }}
               className="hidden sm:inline font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
             >
               {label}
@@ -844,18 +826,18 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="hero-section h-screen flex items-center justify-center relative px-6 md:px-16 overflow-hidden">
+      <section className="hero-section min-h-[100svh] flex items-center justify-center relative gutter-x pt-[calc(var(--nav-h)+var(--space-stack))] pb-[var(--space-block)] overflow-hidden">
         {/* Animated teal gradient noise BG */}
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
 
-        <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-7xl mx-auto gap-6 md:gap-12">
+        <div className="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl mx-auto gap-6 lg:gap-12">
           {/* LEFT — text */}
-          <div ref={heroBlockRef} className="flex flex-col items-center md:items-start text-center md:text-left flex-1">
+          <div ref={heroBlockRef} className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1">
             {/* Name */}
             <div className="overflow-hidden mb-6">
               <h1
                 aria-label={HERO_NAME}
-                className="flex flex-nowrap justify-center md:justify-start whitespace-nowrap"
+                className="flex flex-nowrap justify-center lg:justify-start whitespace-nowrap"
                 style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(3rem, 10vw, 15rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
               >
                 {/* Split for the stagger; the h1's aria-label carries the real
@@ -871,12 +853,12 @@ export default function Portfolio() {
             </div>
 
             {/* Subtitle */}
-            <div className="hero-subtitle text-[#00B4D8] font-mono text-lg md:text-2xl tracking-[0.3em] uppercase mb-8 opacity-0">
-              Creative Builder
+            <div className="hero-subtitle text-[#00B4D8] font-mono text-sm md:text-xl tracking-[0.25em] uppercase mb-6 md:mb-8 opacity-0">
+              Product &amp; Growth Builder
             </div>
 
             {/* 3 lines with hover underline */}
-            <div className="flex flex-col items-center md:items-start gap-3 text-center md:text-left max-w-xl">
+            <div className="flex flex-col items-center lg:items-start gap-3 text-center lg:text-left max-w-xl">
               {HERO_LINES.map((line, i) => (
                 <p
                   key={i}
@@ -889,12 +871,12 @@ export default function Portfolio() {
             </div>
 
             {/* Primary CTA — above the fold */}
-            <div className="hero-cta flex flex-wrap items-center justify-center md:justify-start gap-3 mt-8"
+            <div className="hero-cta flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-8"
               style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover
-                onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire"); }}
+                onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire", { offset: -72 }); }}
                 data-magnetic
                 className="lets-talk-btn inline-flex items-center gap-2 text-[#0a0a0a] font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full"
                 style={{ background: "#00B4D8", boxShadow: "0 0 30px rgba(0,180,216,0.35)" }}
@@ -912,12 +894,19 @@ export default function Portfolio() {
           </div>
 
           {/* RIGHT — Arsh with mic image */}
-          <div className="hero-img opacity-0 flex-shrink-0 flex items-end justify-center">
+          {/* Visible from the first frame (no fade): it is the page's largest
+              element, and hiding it until the intro finished is what held the
+              "main content visible" time at 4.6s on phones. Phones get a
+              25 KB copy instead of the 135 KB original. */}
+          <div className="hero-img min-w-0 lg:shrink-0 lg:w-[min(38vw,520px)] flex items-end justify-center">
             <img
-              src={arshWithMic}
-              alt="Arsh Chatrath"
-              className="h-[50vh] md:h-[70vh] object-contain object-bottom"
-              style={{ maxHeight: "70vh" }}
+              src="/img/hero-800.webp"
+              srcSet="/img/hero-480.webp 480w, /img/hero-800.webp 800w, /img/hero-1080.webp 1080w"
+              sizes="(min-width: 1024px) 38vw, 66vw"
+              width={1080}
+              height={1350}
+              alt="Arsh Chatrath speaking at a microphone"
+              className="h-[38svh] w-auto lg:h-auto lg:w-full lg:max-w-[min(38vw,520px)] lg:max-h-[72svh] object-contain object-bottom"
               fetchPriority="high"
               decoding="async"
             />
@@ -925,19 +914,18 @@ export default function Portfolio() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 opacity-40 animate-bounce">
           <span className="font-mono text-xs tracking-widest" style={{ writingMode: "vertical-rl" }}>scroll</span>
           <div className="w-px h-10 bg-gradient-to-b from-[#00B4D8] to-transparent" />
         </div>
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 2 — HELLO I'M ARSH                                          */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="about" className="about-section skewable py-24 px-6 md:px-16 max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
+      <section id="about" className="about-section skewable section-pad max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-[var(--space-block)] items-center">
           {/* LEFT */}
           <div className="about-left opacity-0">
             <div className="reveal-wrap overflow-hidden">
@@ -952,8 +940,9 @@ export default function Portfolio() {
               Most of what I have built started as something that annoyed me. A community
               nobody was showing up to. A capstone scramble spread across WhatsApp groups.
               A job hunt eating an hour every morning. I research it, test it, measure it,
-              and ship — then I do it again. National competition winner at IIT Roorkee,
-              AMEX and Amazon ML.
+              and ship. Then I do it again. First of 250+ teams at IIT Roorkee's
+              InnoQuest, Top 15 nationally at AMEX, and in the top 1% picked for
+              Amazon ML School.
             </p>
 
             {/* Journey lines */}
@@ -977,21 +966,21 @@ export default function Portfolio() {
           {/* RIGHT — Photo */}
           <div className="about-right opacity-0 flex justify-center">
             <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
-              <img src={arshCrossedArm} alt="Arsh Chatrath" className="w-64 md:w-80 object-contain" loading="lazy" decoding="async" />
+              <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
 
         {/* Journey map */}
-        <div className="journey-map mt-24 flex items-end justify-between gap-8 max-w-3xl mx-auto relative">
+        <div className="journey-map mt-[var(--space-block)] flex items-end justify-between gap-[var(--space-stack)] max-w-3xl mx-auto relative">
           {/* Amritsar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={goldenTemple} alt="Golden Temple, Amritsar" className="h-56 w-56 object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+            <img src={goldenTemple} width={368} height={460} alt="Golden Temple, Amritsar" className="w-[clamp(6rem,24vw,14rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
           </div>
 
           {/* Traveling dashed SVG arrow */}
-          <div className="flex-1 relative h-32">
+          <div className="flex-1 min-w-0 relative h-20 md:h-32">
             <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
               <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -1015,22 +1004,21 @@ export default function Portfolio() {
 
           {/* Thapar */}
           <div className="flex flex-col items-center gap-3 fade-up">
-            <img src={thaparUniversity} alt="Thapar University, Patiala" className="h-56 w-56 object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+            <img src={thaparUniversity} width={368} height={460} alt="Thapar University, Patiala" className="w-[clamp(6rem,24vw,14rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
             <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
           </div>
         </div>
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="pm-section skewable relative overflow-hidden py-24 px-6 md:px-16">
+      <section className="pm-section skewable relative overflow-hidden section-pad">
         {/* darkens as you leave the questions behind */}
         <div className="pm-scrim pointer-events-none absolute inset-0 z-20 bg-[#050505] opacity-0" />
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
+          <div className="block-gap">
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 What does it take to be a great PM?
@@ -1066,13 +1054,13 @@ export default function Portfolio() {
       <AsciiMorph
         from={monkeyThinking}
         to={monkeyRealising}
-        className="ascii-stage h-[240vh] px-4"
+        className="ascii-stage h-[170svh] lg:h-[240vh] px-4"
       />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 4 — I REALIZED…                                             */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="realize-section skewable relative overflow-hidden py-24 px-6 md:px-16">
+      <section className="realize-section skewable relative overflow-hidden section-pad">
         {/* curtain retracts downward to uncover the answers; resting state is
             fully retracted, so if the scroll driver never runs you just see the
             section normally rather than a blank panel */}
@@ -1089,7 +1077,7 @@ export default function Portfolio() {
           }}
         />
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16 flex items-center gap-6">
+          <div className="block-gap flex items-center gap-6">
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 I Realized…
@@ -1118,7 +1106,7 @@ export default function Portfolio() {
             </div>
           </div>
 
-          <p className="proof-callout opacity-0 mt-24 text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
+          <p className="proof-callout opacity-0 mt-[var(--space-block)] text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
             style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
             THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
             AND HERE'S THE PROOF…
@@ -1126,12 +1114,11 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="work" className="work-section relative px-6 md:px-16 pt-28 pb-24">
+      <section id="work" className="work-section relative section-pad">
         <div className="max-w-7xl mx-auto w-full">
           <div className="reveal-wrap overflow-hidden">
             <h2 className="reveal-heading text-center" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
@@ -1151,7 +1138,7 @@ export default function Portfolio() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto w-full mt-14 grid lg:grid-cols-[190px_minmax(0,1fr)] gap-10">
+        <div className="max-w-7xl mx-auto w-full mt-[var(--space-block)] grid lg:grid-cols-[190px_minmax(0,1fr)] gap-10">
           {/* Category rail — tracks which discipline you are reading */}
           <aside className="hidden lg:block">
             <div className="sticky top-32 flex flex-col gap-7" style={{ fontFamily: "var(--ff-body)" }}>
@@ -1161,12 +1148,12 @@ export default function Portfolio() {
                   <div key={c.name} className="cat-item" data-cat={c.name}>
                     <div className="flex items-baseline gap-2">
                       <span className="cat-dot h-1.5 w-1.5 rounded-full bg-[#00B4D8]/30 transition-colors" />
-                      <span className="cat-name font-mono text-[11px] uppercase tracking-[0.22em] text-[#f5f0e8]/40 transition-colors">
+                      <span className="cat-name font-mono text-xs uppercase tracking-[0.22em] text-[#f5f0e8]/55 transition-colors">
                         {c.name}
                       </span>
-                      <span className="font-mono text-[10px] text-[#f5f0e8]/25">{String(count).padStart(2, "0")}</span>
+                      <span className="font-mono text-xs text-[#f5f0e8]/55">{String(count).padStart(2, "0")}</span>
                     </div>
-                    <p className="cat-blurb mt-1 pl-3.5 text-[11px] leading-snug text-[#f5f0e8]/25 transition-colors">
+                    <p className="cat-blurb mt-1 pl-3.5 text-xs leading-snug text-[#f5f0e8]/55 transition-colors">
                       {c.blurb}
                     </p>
                   </div>
@@ -1182,20 +1169,20 @@ export default function Portfolio() {
               <article
                 key={proj.index}
                 data-cat={proj.category}
-                className="work-card group opacity-0 sticky rounded-2xl border border-white/12 bg-[#0b0b0b] overflow-hidden shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.9),0_30px_80px_-40px_rgba(0,0,0,1)]"
+                className="work-card group opacity-0 md:sticky rounded-2xl border border-white/12 bg-[#0b0b0b] overflow-hidden shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.9),0_30px_80px_-40px_rgba(0,0,0,1)]"
                 style={{ top: "calc(7.5rem + " + i * 10 + "px)" }}
               >
                 {/* Media strip — banner art stays at its designed 120px */}
                 <div className="relative flex items-center justify-center overflow-hidden border-b border-white/8" style={{ height: 120, background: "#161616" }}>
                   {proj.img ? (
-                    <img src={proj.img} alt={proj.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
+                    <img src={proj.img} width={1000} height={194} alt={proj.title} className="w-full h-full object-contain" loading="lazy" decoding="async" />
                   ) : (
                     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-6 text-center">
                       {proj.flow?.map((f) => (
                         <span
                           key={f}
                           className={
-                            "font-mono text-[10px] md:text-xs tracking-[0.25em] " +
+                            "font-mono text-xs md:text-xs tracking-[0.25em] " +
                             (f.startsWith("→") ? "text-[#00B4D8]" : "text-[#f5f0e8]/45")
                           }
                         >
@@ -1204,7 +1191,7 @@ export default function Portfolio() {
                       ))}
                     </div>
                   )}
-                  <span className="absolute top-3 right-4 font-mono text-[10px] tracking-[0.25em] text-[#f5f0e8]/30">
+                  <span className="absolute top-3 right-4 font-mono text-xs tracking-[0.25em] text-[#f5f0e8]/55">
                     {proj.index} / 07
                   </span>
                 </div>
@@ -1213,7 +1200,7 @@ export default function Portfolio() {
 
                 <div className="p-6 md:p-8" style={{ fontFamily: "var(--ff-body)" }}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#00B4D8]">
+                    <span className="font-mono text-xs uppercase tracking-[0.28em] text-[#00B4D8]">
                       {proj.category}
                     </span>
                     {proj.links && (
@@ -1226,7 +1213,7 @@ export default function Portfolio() {
                             rel="noreferrer noopener"
                             data-hover
                             data-cursor="OPEN"
-                            className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#f5f0e8]/55 underline-offset-4 transition-colors hover:text-[#00B4D8] hover:underline"
+                            className="font-mono text-xs uppercase tracking-[0.22em] text-[#f5f0e8]/55 underline-offset-4 transition-colors hover:text-[#00B4D8] hover:underline"
                           >
                             {l.label} ↗
                           </a>
@@ -1247,7 +1234,7 @@ export default function Portfolio() {
                         ["Approach", proj.approach],
                       ].map(([label, text]) => (
                         <div key={label} className="border-l border-white/12 pl-4">
-                          <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#00B4D8]/70">{label}</dt>
+                          <dt className="font-mono text-xs uppercase tracking-[0.2em] text-[#00B4D8]/70">{label}</dt>
                           <dd className="mt-1 text-[13px] leading-relaxed text-[#f5f0e8]/85">{text}</dd>
                         </div>
                       ))}
@@ -1255,12 +1242,12 @@ export default function Portfolio() {
 
                     <div className="flex flex-col gap-4">
                       <div className="rounded-lg border border-[#00B4D8]/25 bg-[#00B4D8]/[0.07] px-4 py-3">
-                        <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-[#00B4D8]">Result</span>
+                        <span className="block font-mono text-xs uppercase tracking-[0.2em] text-[#00B4D8]">Result</span>
                         <p className="mt-1 text-[14px] font-semibold leading-relaxed text-[#f5f0e8]">{proj.result}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {proj.stack.map((t) => (
-                          <span key={t} className="rounded-full border border-white/12 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] text-[#f5f0e8]/50">
+                          <span key={t} className="rounded-full border border-white/12 px-3 py-1 font-mono text-xs uppercase tracking-[0.15em] text-[#f5f0e8]/50">
                             {t}
                           </span>
                         ))}
@@ -1274,22 +1261,21 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 6 — THE X-FACTOR                                            */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="xfactor" className="venn-section skewable py-24 px-6 md:px-16 overflow-hidden">
+      <section id="xfactor" className="venn-section skewable section-pad overflow-hidden">
         <div className="max-w-7xl mx-auto">
 
-          <div className="text-center mb-16">
+          <div className="text-center block-gap">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">What sets me apart</p>
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
                 The X-Factor
               </h2>
             </div>
-            <p className="text-[#f5f0e8]/40 mt-3 text-sm tracking-wider fade-up" style={{ fontFamily: "var(--ff-body)" }}>
+            <p className="text-[#f5f0e8]/55 mt-3 text-sm tracking-wider fade-up" style={{ fontFamily: "var(--ff-body)" }}>
               I sit at the intersection of three rare skillsets
             </p>
           </div>
@@ -1402,8 +1388,8 @@ export default function Portfolio() {
                   { label: "Leader",    color: "rgba(0,180,216,0.75)", desc: "Aligns teams, ships fast" },
                 ].map(({ label, color, desc }) => (
                   <div key={label} className="border border-white/8 rounded p-3 bg-white/[0.03]">
-                    <div className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
-                    <div className="text-[#f5f0e8]/50 text-[10px] leading-snug" style={{ fontFamily: "var(--ff-body)" }}>{desc}</div>
+                    <div className="font-mono text-xs uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
+                    <div className="text-[#f5f0e8]/50 text-xs leading-snug" style={{ fontFamily: "var(--ff-body)" }}>{desc}</div>
                   </div>
                 ))}
               </div>
@@ -1412,14 +1398,13 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 7 - FAQ */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="faq" className="faq-section skewable py-16 md:py-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-16">
-          <div className="text-center mb-12">
+      <section id="faq" className="faq-section skewable section-y overflow-hidden">
+        <div className="max-w-7xl mx-auto gutter-x">
+          <div className="text-center block-gap">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">Before you ask</p>
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
@@ -1429,7 +1414,7 @@ export default function Portfolio() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-6 md:px-16" style={{ fontFamily: "var(--ff-body)" }}>
+        <div className="max-w-7xl mx-auto gutter-x" style={{ fontFamily: "var(--ff-body)" }}>
           <FaqBoard />
         </div>
 
@@ -1450,12 +1435,11 @@ export default function Portfolio() {
         />
       </section>
 
-      <SectionDivider />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 8 — HIRE ME                                                 */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="hire" className="hire-section min-h-[60vh] flex items-center justify-center relative overflow-hidden py-24">
+      <section id="hire" className="hire-section flex items-center justify-center relative overflow-hidden section-y">
         {/* Animated gradient wash behind the sign-off */}
         <AnimatedGradientBackground
           Breathing={!reduceMotion}

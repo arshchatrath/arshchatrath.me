@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import gsap from "gsap";
 import { prefersReducedMotion } from "@/lib/motion";
-import { fieldState } from "@/gl/AmbientField";
+import { fieldState } from "@/gl/fieldState";
 
 /**
  * Route transitions.

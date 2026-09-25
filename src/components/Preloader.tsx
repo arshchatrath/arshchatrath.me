@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import { prefersReducedMotion } from "@/lib/motion";
-import { fieldState } from "@/gl/AmbientField";
+import { fieldState } from "@/gl/fieldState";
 
 gsap.registerPlugin(ScrambleTextPlugin);
 
@@ -70,10 +70,24 @@ export default function Preloader({
       document.body.style.overflow = "";
       fieldState.intensity = 1;
       fieldState.introDone = true;
+      try {
+        sessionStorage.setItem("intro-seen", "1");
+      } catch {
+        /* ignore */
+      }
       cb.current.onDone();
     };
 
-    if (prefersReducedMotion()) {
+    // Seen it already this session (a reload, or back from /resume)? Go
+    // straight to the page; the opening is for first impressions only.
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("intro-seen") === "1";
+    } catch {
+      /* storage blocked: just play it */
+    }
+
+    if (prefersReducedMotion() || seen) {
       gsap.set(root, { autoAlpha: 0 });
       release();
       return;
@@ -85,7 +99,6 @@ export default function Preloader({
     // Every start state is declared up front rather than inside a tween.
     gsap.set(cols, { yPercent: 0 });
     gsap.set(lineRef.current, { scaleX: 0, opacity: 1 });
-    gsap.set([countRef.current, labelRef.current], { opacity: 0 });
     fieldState.intensity = 0.25;
 
     // How far the line has to stretch to span the viewport from 44vw.
@@ -95,11 +108,6 @@ export default function Preloader({
 
     tl
       // ── 1. the measure ────────────────────────────────────────────────
-      .to([countRef.current, labelRef.current], {
-        opacity: 1,
-        duration: 0.4,
-        ease: "power2.out",
-      }, 0.15)
       .to(labelRef.current, {
         duration: 1.1,
         scrambleText: { text: "ARSH CHATRATH", chars: "upperCase", speed: 0.45 },
@@ -187,15 +195,13 @@ export default function Preloader({
 
       <span
         ref={labelRef}
-        className="absolute bottom-10 left-6 font-mono text-[10px] uppercase tracking-[0.42em] text-[#f5f0e8]/45 md:left-16"
-        style={{ opacity: 0 }}
+        className="absolute bottom-10 left-6 font-mono text-xs uppercase tracking-[0.42em] text-[#f5f0e8]/45 md:left-16"
       >
         ARSH CHATRATH
       </span>
       <span
         ref={countRef}
-        className="absolute bottom-10 right-6 font-mono text-[10px] tracking-[0.3em] text-[#00B4D8] md:right-16"
-        style={{ opacity: 0 }}
+        className="absolute bottom-10 right-6 font-mono text-xs tracking-[0.3em] text-[#00B4D8] md:right-16"
       >
         000
       </span>

@@ -1,12 +1,15 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import NotFound from "@/pages/not-found";
 import Portfolio from "@/pages/Portfolio";
 import Resume from "@/pages/Resume";
 import Figma from "@/pages/Figma";
-import AmbientField from "@/gl/AmbientField";
 import Cursor from "@/components/Cursor";
 import RouteTransition from "@/components/RouteTransition";
 import Neko from "@/components/Neko";
+
+// The WebGL background (and OGL) loads as its own chunk after first paint.
+const AmbientField = lazy(() => import("@/gl/AmbientField"));
 
 function Router() {
   // resume.<domain> serves the resume as its own landing page.
@@ -28,7 +31,9 @@ export default function App() {
   return (
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       {/* One canvas for the whole session — it outlives every route change. */}
-      <AmbientField />
+      <Suspense fallback={null}>
+        <AmbientField />
+      </Suspense>
       <div className="relative z-10">
         <Router />
       </div>

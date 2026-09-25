@@ -183,6 +183,7 @@ export default function AsciiMorph({
         // The stage holds with CSS sticky, so progress runs while it fills the
         // screen. Tied to enter->exit instead, peak noise landed when the stage
         // was centred and the clean images played out off-screen — backwards.
+        st?.kill(); // a rebuild replaces the trigger instead of stacking another
         st = ScrollTrigger.create({
           trigger: section,
           start: "top top",
@@ -197,15 +198,35 @@ export default function AsciiMorph({
       }
     };
 
-    build();
+    // Build only when the stage is about a screen and a half away. Doing it at
+    // page load put two image decodes and a 25k-character string into the
+    // same long task as the intro handoff.
+    let built = false;
+    let lastW = 0;
+    const near = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        near.disconnect();
+        built = true;
+        lastW = window.innerWidth;
+        build();
+      },
+      { rootMargin: "150% 0px" },
+    );
+    near.observe(section);
 
     const onResize = () => {
+      // Phone browsers fire resize whenever the address bar slides in or out.
+      // Only a width change alters the grid, so height-only resizes are ignored.
+      if (!built || window.innerWidth === lastW) return;
+      lastW = window.innerWidth;
       gsap.delayedCall(0.2, build);
     };
     window.addEventListener("resize", onResize);
 
     return () => {
       disposed = true;
+      near.disconnect();
       window.removeEventListener("resize", onResize);
       st?.kill();
     };

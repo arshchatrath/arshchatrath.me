@@ -2,34 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>Arsh Chatrath - Product Builder</title>
-    <meta name="description" content="Arsh Chatrath — Product Builder. Campus Partner @Perplexity, Product & Operations Head @Talkeys (1000+ users, 60% growth). IIT Roorkee winner. Looking for product & growth internships." />
+    <!-- No maximum-scale: blocking pinch-zoom fails accessibility. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arsh Chatrath · Product &amp; Growth Builder</title>
+    <meta name="description" content="Founding Product &amp; Growth Associate at Talkeys (8,000+ users). Led Helix to 12,000+ registrations. ₹8.5L+ revenue for Perplexity. Seeking product &amp; growth internships." />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#0a0a0a" />
     <link rel="canonical" href="https://arshchatrath.me/" />
 
     <meta property="og:site_name" content="Arsh Chatrath" />
-    <meta property="og:title" content="Arsh Chatrath — Product Builder & Campus Partner @Perplexity" />
-    <meta property="og:description" content="Product Builder. Campus Partner @Perplexity, Product & Operations Head @Talkeys (1000+ users, 60% growth). IIT Roorkee winner. Looking for product & growth internships." />
+    <meta property="og:title" content="Arsh Chatrath · Product &amp; Growth Builder" />
+    <meta property="og:description" content="Founding Product &amp; Growth Associate at Talkeys (8,000+ users). Led Helix to 12,000+ registrations. ₹8.5L+ revenue for Perplexity. Seeking product &amp; growth internships." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://arshchatrath.me/" />
     <meta property="og:image" content="https://arshchatrath.me/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Arsh Chatrath — Product Builder" />
+    <meta property="og:image:alt" content="Arsh Chatrath · Product &amp; Growth Builder" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Arsh Chatrath — Product Builder & Campus Partner @Perplexity" />
-    <meta name="twitter:description" content="Product Builder. Campus Partner @Perplexity, Product & Operations Head @Talkeys (1000+ users, 60% growth). Looking for product & growth internships." />
+    <meta name="twitter:title" content="Arsh Chatrath · Product &amp; Growth Builder" />
+    <meta name="twitter:description" content="Founding Product &amp; Growth Associate at Talkeys (8,000+ users). Led Helix to 12,000+ registrations. ₹8.5L+ revenue for Perplexity." />
     <meta name="twitter:image" content="https://arshchatrath.me/og-image.jpg" />
 
     <link rel="icon" type="image/x-icon" href="/icon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- The hero photo is the page's largest element: start fetching it before
+         the JavaScript even runs, at the size this screen needs. -->
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@96,75..100,400..800&family=Schibsted+Grotesk:wght@400..700&family=Fragment+Mono&display=swap"
+      rel="preload"
+      as="image"
+      href="/img/hero-800.webp"
+      imagesrcset="/img/hero-480.webp 480w, /img/hero-800.webp 800w, /img/hero-1080.webp 1080w"
+      imagesizes="(min-width: 1024px) 38vw, 66vw"
+      fetchpriority="high"
     />
+
+    <!-- Fonts are self-hosted and fetched immediately, so they're usually
+         ready before the page draws its text and nothing reflows. ₹ lives in
+         the latin-ext file and appears in the hero, hence the fourth preload. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/bricolage-grotesque-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/schibsted-grotesk-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/fragment-mono-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/schibsted-grotesk-latin-ext.woff2" />
 
     <script type="application/ld+json">
       {
@@ -38,9 +52,11 @@
         "name": "Arsh Chatrath",
         "url": "https://arshchatrath.me",
         "image": "https://arshchatrath.me/og-image.jpg",
-        "jobTitle": "Product Builder",
+        "jobTitle": "Founding Product & Growth Associate",
+        "worksFor": { "@type": "Organization", "name": "Talkeys" },
         "email": "mailto:achatrath_be23@thapar.edu",
         "telephone": "+91-98882-30798",
+        "sameAs": ["https://github.com/arshchatrath"],
         "alumniOf": {
           "@type": "CollegeOrUniversity",
           "name": "Thapar Institute of Engineering and Technology, Patiala"
@@ -51,14 +67,32 @@
           "addressRegion": "Punjab",
           "addressCountry": "IN"
         },
-        "knowsAbout": ["Product Management", "Growth", "User Research", "Full-stack Development"]
+        "knowsAbout": ["Product Management", "Growth", "Go-to-Market Strategy", "User Research", "AI Automation"]
       }
     </script>
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Without JavaScript the app can't render, so the essentials are here in
+         plain HTML: who, what, proof, and how to get in touch. -->
+    <noscript>
+      <main style="max-width:44rem;margin:0 auto;padding:4rem 1.5rem;font-family:system-ui,sans-serif;color:#f5f0e8;background:#0a0a0a;line-height:1.6">
+        <p style="color:#00b4d8;font:12px/1 monospace;letter-spacing:.3em;text-transform:uppercase">Product &amp; growth builder</p>
+        <h1 style="font-size:3rem;line-height:1;margin:.6rem 0 1rem">Arsh Chatrath</h1>
+        <p>Founding Product &amp; Growth Associate at Talkeys. Computer Science &amp; Business Systems at Thapar Institute, Patiala.</p>
+        <ul>
+          <li>Talkeys: owned the roadmap for 8,000+ users, 60% lift in participation</li>
+          <li>Helix, TIET's tech fest: Overall Student Coordinator, 12,000+ registrations, 450+ person team</li>
+          <li>Perplexity AI Campus Partner: ₹8.5L+ revenue, top 15 nationally</li>
+          <li>1st of 250+ teams, InnoQuest at IIT Roorkee · Top 15 nationally, AMEX · Amazon ML School '25</li>
+        </ul>
+        <p><a style="color:#00b4d8" href="mailto:achatrath_be23@thapar.edu">achatrath_be23@thapar.edu</a> · <a style="color:#00b4d8" href="/resume.pdf">Resume (PDF)</a> · <a style="color:#00b4d8" href="https://github.com/arshchatrath">GitHub</a></p>
+      </main>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Vercel Web Analytics (cookieless). Enable it in Vercel → Project → Analytics. -->
+    <!-- Vercel Web Analytics (cookieless). -->
     <script defer src="/_vercel/insights/script.js"></script>
   </body>
 </html>

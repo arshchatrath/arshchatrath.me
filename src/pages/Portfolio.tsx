@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -28,10 +28,10 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
-const HERO_LINES = [
-  "I find broken user experiences and fix them systematically",
-  "Founding Product & Growth Associate @ Talkeys · 8,000+ users",
-  "₹8.5L+ revenue for Perplexity · 1st of 250+ teams at IIT Roorkee · Amazon ML School '25",
+const HERO_PROOF = [
+  { k: "12,000+", v: "Helix registrations" },
+  { k: "60%", v: "participation lift at Talkeys" },
+  { k: "Top 1%", v: "Amazon ML School '25" },
 ];
 const PM_QUESTIONS = [
   "How do I know I'm solving the right problem?",
@@ -284,12 +284,16 @@ function FaqBoard() {
 export default function Portfolio() {
   const containerRef  = useRef<HTMLDivElement>(null);
   const progressRef   = useRef<HTMLDivElement>(null);
-  const heroBlockRef  = useRef<HTMLDivElement>(null);
   const lenisRef      = useRef<Lenis | null>(null);
   const [intro, setIntro] = useState(false);
   // Separate from `intro`: the hero starts at the loader's snap, but the
   // overlay has to stay mounted until its columns have finished lifting.
   const [loaderGone, setLoaderGone] = useState(false);
+  // True once the loader is gone and the browser has a free moment. The rest
+  // of the page's animations are built then, not at the hand-over: building
+  // all ten sections at once froze a slow phone for ~0.5s right as the loader
+  // faded, so the fade skipped straight to its end.
+  const [pageReady, setPageReady] = useState(false);
   const skewables = useRef<HTMLElement[]>([]);
 
   const reduceMotion =
@@ -364,10 +368,113 @@ export default function Portfolio() {
     return () => st.kill();
   }, []);
 
+  // ── Hero: entrance and the living name ───────────────────────────────────
+  // Runs the moment the loader hands over, on its own, so nothing heavier
+  // competes with it while the loader fades.
+  useEffect(() => {
+    if (!intro || prefersReducedMotion()) return;
+
+      // ── SECTION 1: Hero ─────────────────────────────────────────────────────
+      // Each letter of the name has two live font axes: width (75 to 100) and
+      // weight. heroState holds the current values and a ticker eases them toward
+      // targets set by the pointer (letters near it widen), the scroll (the name
+      // thins as it leaves) and a single breath after the entrance.
+      const heroChars = gsap.utils.toArray<HTMLElement>(".hero-char");
+      const heroState = heroChars.map(() => ({ w: 75, g: 760, breath: 0 }));
+      let heroCenters: { x: number; y: number }[] = [];
+      let heroRadius = 150;
+      const cacheHeroCenters = () => {
+        heroCenters = heroChars.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY };
+        });
+        heroRadius = (parseFloat(getComputedStyle(heroChars[0]).fontSize) || 120) * 1.15;
+      };
+
+      const heroTl = gsap.timeline({ defaults: { ease: EASE.out } });
+      heroTl
+        .fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0)
+        .fromTo(heroChars, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.9, stagger: STAGGER.tight }, 0.05)
+        // the one allowed overshoot on the page: the stamp lands
+        .fromTo(".hero-stamp", { scale: 1.14, rotate: 6 }, { scale: 1, rotate: 0, duration: 0.8, ease: EASE.pop }, 0.3)
+        .fromTo(".hero-lead", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DUR.base }, 0.45)
+        .fromTo(".hero-chip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.fast, stagger: 0.08 }, 0.55)
+        .fromTo(".hero-cta", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0.7)
+        .add(cacheHeroCenters)
+        // one breath through the letters, so the name reads as alive before
+        // anyone touches it (and on phones, where nobody can hover)
+        .to(heroState, { breath: 1, duration: 0.45, ease: EASE.ambient, yoyo: true, repeat: 1, stagger: 0.05 }, 1.1);
+
+      const finePointer = window.matchMedia("(pointer: fine)").matches;
+      let hx = -1e5;
+      let hy = -1e5;
+      const onHeroPointer = (e: PointerEvent) => {
+        hx = e.clientX + scrollX;
+        hy = e.clientY + scrollY;
+      };
+      if (finePointer) window.addEventListener("pointermove", onHeroPointer, { passive: true });
+
+      let heroThin = 0; // 0 at the top of the page, 1 once the hero has left
+      const heroST = ScrollTrigger.create({
+        trigger: ".hero-section",
+        start: "top top",
+        end: "bottom top",
+        onUpdate: (self) => { heroThin = self.progress; },
+      });
+
+      const heroTick = () => {
+        if (heroThin >= 1 || !heroCenters.length) return;
+        for (let i = 0; i < heroChars.length; i++) {
+          const st = heroState[i];
+          let near = 0;
+          if (finePointer) {
+            const c = heroCenters[i];
+            const t = Math.max(0, 1 - Math.hypot(hx - c.x, hy - c.y) / heroRadius);
+            near = t * t * (3 - 2 * t);
+          }
+          const lift = Math.max(near, st.breath * 0.8);
+          const tw = 75 + 17 * lift;
+          const tg = 760 + 40 * lift - 300 * heroThin;
+          const nw = st.w + (tw - st.w) * 0.16;
+          const ng = st.g + (tg - st.g) * 0.2;
+          // Only touch the page when something visibly changed: an idle hero
+          // costs nothing per frame.
+          if (Math.abs(nw - st.w) > 0.05 || Math.abs(ng - st.g) > 0.5) {
+            st.w = nw;
+            st.g = ng;
+            heroChars[i].style.fontVariationSettings = `"wdth" ${nw.toFixed(1)}, "wght" ${ng.toFixed(0)}`;
+          }
+        }
+      };
+      gsap.ticker.add(heroTick);
+      const onHeroResize = () => { gsap.delayedCall(0.2, cacheHeroCenters); };
+      window.addEventListener("resize", onHeroResize);
+      const heroCleanup = () => {
+        window.removeEventListener("pointermove", onHeroPointer);
+        window.removeEventListener("resize", onHeroResize);
+        gsap.ticker.remove(heroTick);
+        heroST.kill();
+        heroTl.kill();
+      };
+    return heroCleanup;
+  }, [intro]);
+
+  // Build the rest of the page once the loader has gone, in the browser's
+  // next idle moment (with a ceiling, so a busy device still gets it soon).
+  useEffect(() => {
+    if (!loaderGone) return;
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(() => setPageReady(true), { timeout: 1200 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = window.setTimeout(() => setPageReady(true), 150);
+    return () => window.clearTimeout(t);
+  }, [loaderGone]);
+
   // ── All GSAP animations ───────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
-    if (!intro) return; // hold everything until the preloader hands over
+    if (!pageReady) return; // built once the loader has gone (see pageReady)
 
     // Sections that lean with scroll velocity. Cheap, and it's what makes the
     // page feel like it has mass rather than snapping between states.
@@ -432,33 +539,6 @@ export default function Portfolio() {
         },
       });
       splits.push(split);
-    });
-
-    // ── SECTION 1: Hero ─────────────────────────────────────────────────────
-    // Hero image slides in from right
-    gsap.fromTo(".hero-img",
-      { x: 60 },
-      { x: 0, duration: 0.9, ease: EASE.out, delay: 1.0 }
-    );
-
-    const chars = document.querySelectorAll<HTMLElement>(".hero-char");
-    gsap.fromTo(chars,
-      { y: "110%", opacity: 0 },
-      { y: "0%", opacity: 1, stagger: 0.035, duration: 0.8, ease: EASE.out, delay: 0.6 }
-    );
-    gsap.fromTo(".hero-subtitle",
-      { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.8, ease: EASE.out, delay: 1.15 }
-    );
-    HERO_LINES.forEach((_, i) => {
-      gsap.fromTo(`.hero-line-${i}`,
-        { opacity: 0, y: 18 },
-        { opacity: 1, y: 0, duration: 0.6, ease: EASE.out, delay: 1.3 + i * 0.12 }
-      );
-    });
-    // Floating hero text block once everything has landed
-    gsap.to(heroBlockRef.current, {
-      y: -8, duration: 6, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 3.2
     });
 
     // ── SECTION 2: Hello I'm Arsh ───────────────────────────────────────────
@@ -759,7 +839,7 @@ export default function Portfolio() {
       tickers.forEach(fn => gsap.ticker.remove(fn));
       transitionST.kill();
     };
-  }, [intro]);
+  }, [pageReady]);
 
   return (
     <>
@@ -779,7 +859,8 @@ export default function Portfolio() {
         aria-label="Primary"
         className="fixed top-0 left-0 w-full z-40 flex items-center justify-between gutter-x py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5"
       >
-        <a
+        <div className="flex items-center gap-5">
+          <a
           href="#top"
           data-hover
           onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo(0); }}
@@ -788,9 +869,10 @@ export default function Portfolio() {
         >
           Arsh Chatrath
         </a>
-        <span className="nav-chapter hidden lg:block font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/55">
+          <span className="nav-chapter hidden lg:block font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/55">
           01 / 09 &mdash; intro
         </span>
+        </div>
         <div className="flex items-center gap-4 md:gap-7">
           {NAV_LINKS.map(({ href, label }) => (
             <a
@@ -826,58 +908,79 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="hero-section min-h-[100svh] flex items-center justify-center relative gutter-x pt-[calc(var(--nav-h)+var(--space-stack))] pb-[var(--space-block)] overflow-hidden">
-        {/* Animated teal gradient noise BG */}
+      <section className="hero-section relative min-h-[100svh] flex items-center gutter-x pt-[calc(var(--nav-h)+var(--space-stack))] pb-[var(--space-block)] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
 
-        <div className="flex flex-col lg:flex-row items-center justify-between w-full max-w-7xl mx-auto gap-6 lg:gap-12">
-          {/* LEFT — text */}
-          <div ref={heroBlockRef} className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1">
-            {/* Name */}
-            <div className="overflow-hidden mb-6">
-              <h1
-                aria-label={HERO_NAME}
-                className="flex flex-nowrap justify-center lg:justify-start whitespace-nowrap"
-                style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(3rem, 10vw, 15rem)", lineHeight: 1, letterSpacing: "-0.02em" }}
-              >
-                {/* Split for the stagger; the h1's aria-label carries the real
-                    name so assistive tech doesn't spell it out letter by letter. */}
-                <span aria-hidden="true" className="contents">
-                  {HERO_NAME.split("").map((ch, i) =>
-                    ch === " "
-                      ? <span key={i} className="hero-char opacity-0 inline-block" style={{ width: "0.3em" }}>&nbsp;</span>
-                      : <span key={i} className="hero-char opacity-0 inline-block overflow-hidden">{ch}</span>
-                  )}
-                </span>
-              </h1>
-            </div>
+        <div className="hero-inner relative w-full max-w-[1600px] mx-auto">
+          <p data-wire="Text / kicker" className="hero-kicker opacity-0 font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
+            Product &amp; Growth Builder
+          </p>
 
-            {/* Subtitle */}
-            <div className="hero-subtitle text-[#00B4D8] font-mono text-sm md:text-xl tracking-[0.25em] uppercase mb-6 md:mb-8 opacity-0">
-              Product &amp; Growth Builder
-            </div>
-
-            {/* 3 lines with hover underline */}
-            <div className="flex flex-col items-center lg:items-start gap-3 text-center lg:text-left max-w-xl">
-              {HERO_LINES.map((line, i) => (
-                <p
-                  key={i}
-                  className={`hero-line-${i} opacity-0 text-[#f5f0e8]/60 font-light text-sm md:text-base tracking-wide hero-bullet`}
-                  style={{ fontFamily: "var(--ff-body)" }}
-                >
-                  {line}
-                </p>
+          {/* Sized in CSS to fill the width exactly (see .hero-inner). The
+              h1's aria-label carries the name; the letters are presentational. */}
+          <h1
+            data-wire="H1 / name"
+            aria-label="Arsh Chatrath"
+            className="hero-name mt-3 whitespace-nowrap"
+            style={{ fontFamily: "var(--ff-display)", fontWeight: 800, lineHeight: 0.82, letterSpacing: "-0.02em" }}
+          >
+            <span aria-hidden="true" className="contents">
+              {HERO_NAME.split(" ").map((word, wi) => (
+                <Fragment key={word}>
+                  {wi > 0 && <span className="name-gap" />}
+                  <span className="name-line">
+                    {word.split("").map((ch, i) => (
+                      <span key={i} className="hero-char opacity-0 inline-block">{ch}</span>
+                    ))}
+                  </span>
+                </Fragment>
               ))}
-            </div>
+            </span>
+          </h1>
 
-            {/* Primary CTA — above the fold */}
-            <div className="hero-cta flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-8"
-              style={{ fontFamily: "var(--ff-body)" }}>
+          {/* The stamp: overlaps the name like a stamp on an envelope. Visible
+              from the first frame (it is the page's largest element). */}
+          <div data-wire="Image / portrait" className="hero-stamp">
+            <img
+              src="/img/hero-800.webp"
+              srcSet="/img/hero-320.webp 320w, /img/hero-480.webp 480w, /img/hero-800.webp 800w, /img/hero-1080.webp 1080w"
+              sizes="(min-width: 1024px) 22vw, 42vw"
+              width={1080}
+              height={1350}
+              alt="Arsh Chatrath speaking at a microphone"
+              className="block w-full h-auto rotate-[4deg] drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)]"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
+
+          <div className="hero-copy">
+            <p
+              data-wire="Text / intro"
+              className="hero-lead opacity-0 text-[length:var(--step-lead)] leading-snug text-[#f5f0e8]/80 max-w-[36rem]"
+              style={{ fontFamily: "var(--ff-body)" }}
+            >
+              Founding Product &amp; Growth Associate at <span className="text-[#f5f0e8]">Talkeys</span>.
+              {" "}I find broken user experiences and fix them, systematically.
+            </p>
+
+            <ul data-wire="List / proof" className="mt-[var(--space-stack)] flex flex-wrap gap-2 font-mono">
+              {HERO_PROOF.map((p) => (
+                <li
+                  key={p.v}
+                  className="hero-chip opacity-0 rounded-full border border-white/15 px-3 py-1.5 text-xs uppercase tracking-[0.12em] text-[#f5f0e8]/72"
+                >
+                  <span className="text-[#00B4D8]">{p.k}</span> {p.v}
+                </li>
+              ))}
+            </ul>
+
+            <div data-wire="Button / CTA" className="hero-cta opacity-0 mt-[var(--space-block)] flex flex-wrap items-center gap-3" style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover
-                onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire", { offset: -72 }); }}
                 data-magnetic
+                onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire", { offset: -72 }); }}
                 className="lets-talk-btn inline-flex items-center gap-2 text-[#0a0a0a] font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full"
                 style={{ background: "#00B4D8", boxShadow: "0 0 30px rgba(0,180,216,0.35)" }}
               >
@@ -892,31 +995,6 @@ export default function Portfolio() {
               </a>
             </div>
           </div>
-
-          {/* RIGHT — Arsh with mic image */}
-          {/* Visible from the first frame (no fade): it is the page's largest
-              element, and hiding it until the intro finished is what held the
-              "main content visible" time at 4.6s on phones. Phones get a
-              25 KB copy instead of the 135 KB original. */}
-          <div className="hero-img min-w-0 lg:shrink-0 lg:w-[min(38vw,520px)] flex items-end justify-center">
-            <img
-              src="/img/hero-800.webp"
-              srcSet="/img/hero-480.webp 480w, /img/hero-800.webp 800w, /img/hero-1080.webp 1080w"
-              sizes="(min-width: 1024px) 38vw, 66vw"
-              width={1080}
-              height={1350}
-              alt="Arsh Chatrath speaking at a microphone"
-              className="h-[38svh] w-auto lg:h-auto lg:w-full lg:max-w-[min(38vw,520px)] lg:max-h-[72svh] object-contain object-bottom"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 opacity-40 animate-bounce">
-          <span className="font-mono text-xs tracking-widest" style={{ writingMode: "vertical-rl" }}>scroll</span>
-          <div className="w-px h-10 bg-gradient-to-b from-[#00B4D8] to-transparent" />
         </div>
       </section>
 
@@ -1029,7 +1107,7 @@ export default function Portfolio() {
 
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="monkey-left opacity-0 flex justify-center">
-              <img src={monkeyThinking} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
+              <img src={monkeyThinking} width={624} height={780} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
                 style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
 
@@ -1101,7 +1179,7 @@ export default function Portfolio() {
             </ul>
 
             <div className="monkey-right opacity-0 flex justify-center">
-              <img src={monkeyRealising} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
+              <img src={monkeyRealising} width={624} height={780} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
                 style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
             </div>
           </div>
@@ -1372,7 +1450,7 @@ export default function Portfolio() {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none"
                   style={{ background: "radial-gradient(circle, rgba(0,180,216,0.10) 0%, transparent 70%)" }} />
                 <img
-                  src={arshHalftone}
+                  src={arshHalftone} width={680} height={850}
                   alt="Arsh Chatrath"
                   className="h-72 md:h-80 lg:h-[26rem] object-contain relative z-10 venn-photo"
                   loading="lazy"
@@ -1461,7 +1539,7 @@ export default function Portfolio() {
           
           {/* LEFT — Arsh with mic in audience */}
           <div className="parallax-left hidden md:flex justify-end select-none h-[300px] pointer-events-none">
-            <img src={arshAudience} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
+            <img src={arshAudience} width={496} height={620} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
           {/* CENTER — content */}
@@ -1496,7 +1574,7 @@ export default function Portfolio() {
 
           {/* RIGHT — Arsh thumbs up */}
           <div className="parallax-right hidden md:flex justify-start select-none h-[300px] pointer-events-none">
-            <img src={arshThumbsUp} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
+            <img src={arshThumbsUp} width={496} height={620} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
         </div>
@@ -1513,17 +1591,32 @@ export default function Portfolio() {
           50%       { opacity: 0.9; transform: scale(1.12) translateY(-15px); }
         }
 
-        /* Hero bullet hover underline */
-        .hero-bullet { position: relative; display: inline-block; }
-        .hero-bullet::after {
-          content: "";
-          position: absolute;
-          bottom: -2px; left: 0;
-          width: 0; height: 1px;
-          background: #00B4D8;
-          transition: width 0.4s ease;
+        /* Hero: the poster name. Its font size is computed so the name fills
+           the width exactly: "ARSH CHATRATH" measures 5.10em on one line and
+           "CHATRATH" 3.18em (width axis 75). The 0.93 leaves room for letters
+           to widen under the cursor. Portrait phones and tablets stack it on
+           two lines; wide or landscape screens set it on one. */
+        .hero-inner { --name-fs: calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.93 / 3.1753); }
+        .hero-name { font-size: var(--name-fs); }
+        .name-line { display: block; overflow: hidden; padding-bottom: 0.04em; }
+        .name-gap { display: none; }
+        .hero-char { font-variation-settings: "wdth" 75, "wght" 760; }
+        .hero-stamp { position: relative; z-index: 2; width: clamp(150px, 42vw, 300px); margin: calc(var(--name-fs) * -0.28) 0 0 auto; }
+        .hero-copy { margin-top: var(--space-stack); }
+        @media (min-width: 1024px), (orientation: landscape) {
+          .hero-inner { --name-fs: calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.93 / 5.1025); }
+          .name-line { display: inline-block; vertical-align: top; }
+          .name-gap { display: inline-block; width: 0.22em; }
+          .hero-stamp { position: absolute; right: 0; top: calc(2rem + var(--name-fs) * 0.55); width: clamp(190px, 22vw, 340px); margin: 0; }
+          .hero-copy { max-width: min(58%, 40rem); margin-top: var(--space-block); }
         }
-        .hero-bullet:hover::after { width: 100%; }
+        /* Portrait tablets: the intro wraps beside the stamp, magazine style,
+           instead of leaving a blank block to its left. */
+        @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+          .hero-stamp { float: right; width: clamp(200px, 36vw, 320px); margin: calc(var(--name-fs) * -0.28) 0 1rem 2rem; }
+          .hero-copy { margin-top: var(--space-block); }
+          .hero-inner::after { content: ""; display: block; clear: both; }
+        }
 
         /* Journey path traveling dash */
         .journey-path { animation: travelDash 1.2s linear infinite; }

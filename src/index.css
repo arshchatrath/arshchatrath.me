@@ -130,3 +130,13 @@
 @utility block-gap {
   margin-bottom: var(--space-block);
 }
+
+/* Labels on the loader's wireframe boxes (created by Preloader.tsx). */
+.pl-tag {
+  position: absolute;
+  font: 12px/1 var(--ff-mono);
+  letter-spacing: 0.08em;
+  color: rgba(0, 180, 216, 0.9);
+  white-space: nowrap;
+  opacity: 0;
+}

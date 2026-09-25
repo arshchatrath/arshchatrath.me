@@ -1,33 +1,28 @@
 import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
-import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
-import { prefersReducedMotion } from "@/lib/motion";
+import { EASE, prefersReducedMotion } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
 
-gsap.registerPlugin(ScrambleTextPlugin);
-
 /**
- * The opening.
+ * The opening: sketch to shipped.
  *
- * Three beats, ~2.4s total, and it never leaves the dark:
- *   1. a hairline grows from the centre while a counter runs 000 → 100
- *   2. at 100 the line snaps to the full width of the screen
- *   3. the overlay splits into columns that lift away left to right
+ * The loader reads the real hero's boxes from the page (every element marked
+ * `data-wire`), draws their outlines like a Figma frame with a small label on
+ * each, and runs a build log. Then its background fades away so the real
+ * content appears inside the outlines as the hero animates in, and the
+ * outlines dissolve. It never lifts off the page: it becomes the page.
  *
- * Deliberately no full-screen colour fill. The previous version flashed a
- * solid teal panel over everything for two and a half seconds — a chained
- * `fromTo` whose "from" state (scaleY: 1) rendered immediately at time zero.
- * Every initial state here is set with `gsap.set`, and every animation is a
- * plain `.to()`, so nothing can render a start state before its turn.
+ * Because the outlines are measured from the live layout, they match the
+ * phone layout on a phone and the desktop layout on a desktop.
  *
- * Start states also live in the markup. React runs effects *after* the
- * browser paints, so a start state applied only in JS showed the line at full
- * width and the label at full opacity for ~250ms (longer on slow devices —
- * the WebGL shader compiles on the same thread), then snapped them away.
- *
- * `onReveal` fires at the snap, before the columns lift, so the hero builds
- * itself as the curtain rises. `onDone` fires once the overlay is gone.
+ * Rules carried over from the earlier glitch fixes:
+ *  - start states are applied before the first paint (layout effect), and
+ *    only `.to()` tweens follow, so nothing renders a start state out of turn
+ *  - the sequence runs once per mount; callbacks are read through a ref
  */
+
+const LOG = ["v0.1  layout", "v0.4  copy", "v0.8  proof", "v1.0  shipped"];
+
 export default function Preloader({
   onReveal,
   onDone,
@@ -36,28 +31,26 @@ export default function Preloader({
   onDone: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const countRef = useRef<HTMLSpanElement>(null);
-  const labelRef = useRef<HTMLSpanElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const labelsRef = useRef<HTMLDivElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
 
-  // The sequence runs exactly once per mount. The callbacks are read through a
-  // ref so the effect has no dependencies: `onReveal` makes the parent
-  // re-render, which hands us fresh function identities — with them as deps,
-  // that re-render killed the timeline and replayed the whole opening.
   const cb = useRef({ onReveal, onDone });
   useLayoutEffect(() => {
     cb.current = { onReveal, onDone };
   });
 
-  // Layout effect: runs before paint, so GSAP owns these elements from the
-  // first frame the browser draws.
   useLayoutEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
+    const svg = svgRef.current;
+    const labels = labelsRef.current;
+    const log = logRef.current;
+    if (!root || !svg || !labels || !log) return;
 
     document.body.style.overflow = "hidden";
-    let finished = false;
     let revealed = false;
+    let finished = false;
     const reveal = () => {
       if (revealed) return;
       revealed = true;
@@ -78,133 +71,122 @@ export default function Preloader({
       cb.current.onDone();
     };
 
-    // Seen it already this session (a reload, or back from /resume)? Go
-    // straight to the page; the opening is for first impressions only.
     let seen = false;
     try {
       seen = sessionStorage.getItem("intro-seen") === "1";
     } catch {
       /* storage blocked: just play it */
     }
-
     if (prefersReducedMotion() || seen) {
       gsap.set(root, { autoAlpha: 0 });
       release();
       return;
     }
 
-    const cols = root.querySelectorAll<HTMLElement>(".pl-col");
-    const counter = { v: 0 };
+    // ── Measure the real hero and draw its wireframe ─────────────────────────
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
+    const rects: SVGRectElement[] = [];
+    const tags: HTMLElement[] = [];
+    document.querySelectorAll<HTMLElement>("[data-wire]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      // Only boxes actually on screen (a page restored mid-scroll gets none).
+      if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > vh) return;
+      const pad = 6;
+      const x = Math.max(1, r.left - pad);
+      const y = Math.max(1, r.top - pad);
+      const w = Math.min(vw - 2, r.right + pad) - x;
+      const h = r.height + pad * 2;
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", String(x));
+      rect.setAttribute("y", String(y));
+      rect.setAttribute("width", String(w));
+      rect.setAttribute("height", String(h));
+      rect.setAttribute("rx", "6");
+      const perimeter = 2 * (w + h);
+      rect.style.strokeDasharray = String(perimeter);
+      rect.style.strokeDashoffset = String(perimeter);
+      svg.appendChild(rect);
+      rects.push(rect);
 
-    // Every start state is declared up front rather than inside a tween.
-    gsap.set(cols, { yPercent: 0 });
-    gsap.set(lineRef.current, { scaleX: 0, opacity: 1 });
+      const tag = document.createElement("span");
+      tag.className = "pl-tag";
+      tag.textContent = el.dataset.wire ?? "";
+      // Tall boxes carry their label inside the top-left corner (like a
+      // Figma frame); short ones get it just above. Stops the labels of
+      // stacked boxes from colliding.
+      const inside = h > 44 || y <= 30;
+      tag.style.left = `${inside ? x + 8 : x}px`;
+      tag.style.top = `${inside ? y + 8 : y - 18}px`;
+      labels.appendChild(tag);
+      tags.push(tag);
+    });
+
+    // One status line that updates in place, like a build indicator in a
+    // toolbar. (Stacked lines collided with the button box on phones.)
+    const status = log.querySelector<HTMLElement>(".pl-status");
+    const step = (i: number) => () => {
+      if (status) status.textContent = LOG[i];
+    };
     fieldState.intensity = 0.25;
 
-    // How far the line has to stretch to span the viewport from 44vw.
-    const fullStretch = 1 / 0.44;
-
     const tl = gsap.timeline({ onComplete: release });
-
     tl
-      // ── 1. the measure ────────────────────────────────────────────────
-      .to(labelRef.current, {
-        duration: 1.1,
-        scrambleText: { text: "ARSH CHATRATH", chars: "upperCase", speed: 0.45 },
-      }, 0.2)
-      .to(lineRef.current, {
-        scaleX: 1,
-        duration: 1.25,
-        ease: "power2.inOut",
-      }, 0.2)
-      .to(counter, {
-        v: 100,
-        duration: 1.25,
-        ease: "power1.inOut",
-        onUpdate: () => {
-          if (countRef.current) {
-            countRef.current.textContent = String(Math.round(counter.v)).padStart(3, "0");
-          }
-          fieldState.intensity = 0.25 + (counter.v / 100) * 0.45;
-        },
-      }, 0.2)
-
-      // ── 2. the snap ───────────────────────────────────────────────────
-      // Hand over here, not at the end: the page's heavier setup runs while
-      // only a hairline is moving, and the hero entrance then plays out under
-      // the lifting columns instead of after them.
-      .add(reveal, 1.5)
-      .to(lineRef.current, {
-        scaleX: fullStretch,
-        duration: 0.5,
-        ease: "expo.out",
-      }, 1.5)
-      .to([countRef.current, labelRef.current], {
-        opacity: 0,
-        y: -10,
-        duration: 0.35,
-        ease: "power2.in",
-      }, 1.62)
-
-      // ── 3. the lift ───────────────────────────────────────────────────
-      .to(lineRef.current, {
-        opacity: 0,
-        duration: 0.35,
-        ease: "power2.in",
-      }, 1.92)
-      .to(cols, {
-        yPercent: -100,
-        duration: 0.95,
-        ease: "expo.inOut",
-        stagger: { each: 0.055, from: "start" },
-      }, 1.95)
-      .to({}, {
-        duration: 0.01,
-        onStart: () => { fieldState.intensity = 1; },
-      }, 2.1)
+      // 1. the sketch draws itself
+      .to(rects, { strokeDashoffset: 0, duration: 0.65, ease: EASE.inOut, stagger: 0.08 }, 0)
+      .to(tags, { opacity: 1, duration: 0.3, stagger: 0.08 }, 0.1)
+      .call(step(1), [], 0.35)
+      .call(step(2), [], 0.6)
+      // 2. hand over: the hero starts animating in under the outlines
+      .add(reveal, 0.85)
+      // 3. the paper goes, and the real content fills the sketch
+      .to(bgRef.current, { opacity: 0, duration: 0.55, ease: EASE.out }, 0.9)
+      .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, 0.95)
+      // shipped at the hand-over, then the status steps aside before the
+      // real nav fades in underneath it
+      .call(step(3), [], 0.8)
+      .to(log, { color: "#00b4d8", duration: 0.15 }, 0.8)
+      .to(log, { opacity: 0, duration: 0.25, ease: EASE.in }, 0.95)
+      // 4. the sketch dissolves
+      .to([svg, labels], { opacity: 0, duration: 0.45, ease: EASE.in }, 1.3)
       .set(root, { autoAlpha: 0 });
 
     return () => {
       tl.kill();
       document.body.style.overflow = "";
+      rects.forEach((r) => r.remove());
+      tags.forEach((t) => t.remove());
     };
   }, []);
 
   return (
     <div
       ref={rootRef}
-      className="fixed inset-0 z-[99999] overflow-hidden"
+      className="pointer-events-none fixed inset-0 z-[99999]"
       role="status"
       aria-label="Loading"
     >
-      {/* Columns that lift away, rather than one panel that fills the screen */}
-      <div className="absolute inset-0 flex">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="pl-col h-full flex-1 bg-[#0a0a0a]" />
-        ))}
-      </div>
-
-      {/* The measure */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 w-[44vw] -translate-x-1/2 -translate-y-1/2">
-        <div
-          ref={lineRef}
-          className="h-px w-full origin-center bg-[#00B4D8]"
-          style={{ boxShadow: "0 0 18px rgba(0,180,216,0.55)", transform: "scaleX(0)" }}
-        />
-      </div>
-
-      <span
-        ref={labelRef}
-        className="absolute bottom-10 left-6 font-mono text-xs uppercase tracking-[0.42em] text-[#f5f0e8]/45 md:left-16"
+      <div ref={bgRef} className="absolute inset-0 bg-[#0a0a0a]" />
+      <svg
+        ref={svgRef}
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full"
+        fill="none"
+        stroke="rgba(0,180,216,0.85)"
+        strokeWidth="1"
+      />
+      <div ref={labelsRef} aria-hidden="true" className="absolute inset-0" />
+      {/* Build status, top corner (the nav is hidden under the loader, so this
+          spot is always free). Visible from the first frame. */}
+      <div
+        ref={logRef}
+        aria-hidden="true"
+        className="absolute top-[26px] right-[var(--gutter)] flex items-center gap-2 font-mono text-xs tracking-[0.18em] text-[#f5f0e8]/55"
       >
-        ARSH CHATRATH
-      </span>
-      <span
-        ref={countRef}
-        className="absolute bottom-10 right-6 font-mono text-xs tracking-[0.3em] text-[#00B4D8] md:right-16"
-      >
-        000
-      </span>
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00b4d8]" />
+        <span className="pl-status">{LOG[0]}</span>
+      </div>
     </div>
   );
 }

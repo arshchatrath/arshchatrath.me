@@ -5,32 +5,32 @@ import { fieldState } from "@/gl/fieldState";
 import { NAME_GLYPHS, NAME_UPM } from "./nameGlyphs";
 
 /**
- * The opening: a laser engraves the name.
+ * The opening: a laser show engraves the name.
  *
- * On black, a laser tip warms up at the first letter, then slowly traces the
- * outline of the whole name as one continuous line: it follows each letter's
- * contour, travels over to the next letter without cutting, and carries on,
- * easing in at the start and out at the end. It leaves a very light blue
- * hairline. The stretch just
- * behind the tip glows hotter and cools as it moves on; a faint beam comes
- * down to the tip and a few sparks spray off it. Once the name is cut, the
- * outline flashes, the black lifts, and the real name is already sitting
- * inside the engraving (the outlines are drawn over the real letters'
- * measured positions), so the hand-off has no jump.
+ *  1. Emitters light up along the top of a black screen and fan their beams
+ *     down onto the name, laid out in the middle of the screen.
+ *  2. One laser per letter, all at once: each tip slowly works its way round
+ *     its own letter's outline (hot trail behind it, sparks off it), so the
+ *     whole name is cut in about two seconds.
+ *  3. The beams switch off and the engraving pulses bright blue.
+ *  4. The name glides from the centre to its place in the hero, the black
+ *     lifts, and the real name is already sitting inside the outline (the
+ *     outlines are built on the real letters' measured positions), so the
+ *     hand-off has no jump.
  *
- * The letter shapes are the font's real outlines (see nameGlyphs.ts). A hint
- * says how to skip; any click, key or scroll fast-forwards it; repeat visits
- * and reduced motion skip it.
+ * Letter shapes are the font's real outlines (nameGlyphs.ts). A hint says how
+ * to skip; any click, key or scroll fast-forwards. Repeat visits and reduced
+ * motion skip it entirely.
  *
  * Rules carried over from the earlier glitch fixes:
  *  - start states are applied before the first paint (layout effect)
  *  - the sequence runs once per mount; callbacks are read through a ref
  */
 
-const ENGRAVE_S = 4.2; // time to trace the whole name
-const WARMUP_S = 0.45; // the tip glows at the first point before it cuts
-const TRAVEL_UNITS = 220; // share of the trace spent moving between letters, font units
-const HOT_UNITS = 140; // length of the glowing stretch behind the tip, font units
+const LOCK_S = 0.35; // beams reach down to the letters
+const CUT_S = 1.6; // how long each laser takes round its letter
+const STAGGER_S = 0.035; // lasers start one after another, left to right
+const HOT_UNITS = 150; // glowing stretch behind each tip, font units
 
 export default function Preloader({
   onReveal,
@@ -121,8 +121,9 @@ export default function Preloader({
       canvas.height = Math.round(vh * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Where each real letter sits: its box's left edge is the glyph origin,
-      // and a zero-size probe on the line gives the exact baseline.
+      // ── Build the outlines on the real letters' final positions ────────────
+      // Each letter's box's left edge is its glyph origin; a zero-size probe
+      // on the line gives the exact baseline.
       const scale = parseFloat(getComputedStyle(chars[0]).fontSize) / NAME_UPM;
       const baselines = new Map<Element, number>();
       const baselineOf = (line: Element) => {
@@ -139,25 +140,37 @@ export default function Preloader({
       };
 
       const NS = "http://www.w3.org/2000/svg";
+      const stage = document.createElementNS(NS, "g"); // moves the whole name
+      svg.appendChild(stage);
+      made.push(stage);
       type Glyph = { cut: SVGPathElement; glow: SVGPathElement; hot: SVGPathElement; len: number; x: number; y: number };
       const glyphs: Glyph[] = [];
+      const box = { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity };
       chars.forEach((el) => {
         const d = NAME_GLYPHS[el.textContent ?? ""];
         if (!d || !el.parentElement) return;
-        const x = el.getBoundingClientRect().left;
+        const rect = el.getBoundingClientRect();
+        box.l = Math.min(box.l, rect.left);
+        box.t = Math.min(box.t, rect.top);
+        box.r = Math.max(box.r, rect.right);
+        box.b = Math.max(box.b, rect.bottom);
+        const x = rect.left;
         const y = baselineOf(el.parentElement);
         const g = document.createElementNS(NS, "g");
         g.setAttribute("transform", `translate(${x} ${y}) scale(${scale} ${-scale})`);
         const cut = document.createElementNS(NS, "path");
         const glow = document.createElementNS(NS, "path");
         const hot = document.createElementNS(NS, "path");
-        [cut, glow, hot].forEach((el) => el.setAttribute("d", d));
+        [cut, glow, hot].forEach((p) => p.setAttribute("d", d));
         cut.setAttribute("class", "pl-cut");
         glow.setAttribute("class", "pl-glow");
         hot.setAttribute("class", "pl-hot");
+        // widths in screen px, converted to the letters' units
+        cut.setAttribute("stroke-width", `${1.2 / scale}`);
+        glow.setAttribute("stroke-width", `${6 / scale}`);
+        hot.setAttribute("stroke-width", `${2.2 / scale}`);
         g.append(glow, cut, hot);
-        svg.appendChild(g);
-        made.push(g);
+        stage.appendChild(g);
         const len = cut.getTotalLength();
         cut.style.strokeDasharray = glow.style.strokeDasharray = `${len}`;
         cut.style.strokeDashoffset = glow.style.strokeDashoffset = `${len}`;
@@ -165,101 +178,108 @@ export default function Preloader({
         hot.style.strokeDashoffset = `${HOT_UNITS}`;
         glyphs.push({ cut, glow, hot, len, x, y });
       });
-      // Screen position of a point along a letter's outline.
-      const at = (g: Glyph, len: number) => {
-        const p = g.cut.getPointAtLength(len);
-        return { x: g.x + p.x * scale, y: g.y - p.y * scale };
+
+      // ── The stage: centred (and a touch larger) while it's cut ─────────────
+      // k = 1 centred, k = 0 at its place in the hero.
+      const cx = (box.l + box.r) / 2;
+      const cy = (box.t + box.b) / 2;
+      const big = Math.min(1.2, (vw * 0.86) / (box.r - box.l));
+      const stagePos = { k: 1 };
+      const toScreen = (x: number, y: number) => {
+        const k = stagePos.k;
+        const s = 1 + (big - 1) * k;
+        return { x: cx + (vw / 2 - cx) * k + (x - cx) * s, y: cy + (vh / 2 - cy) * k + (y - cy) * s };
       };
+      const placeStage = () => {
+        const k = stagePos.k;
+        const s = 1 + (big - 1) * k;
+        stage.setAttribute(
+          "transform",
+          `translate(${cx + (vw / 2 - cx) * k} ${cy + (vh / 2 - cy) * k}) scale(${s}) translate(${-cx} ${-cy})`,
+        );
+      };
+      placeStage();
 
-      // The whole trace as one line: cut a letter, travel to the next, cut it...
-      type Seg = { from: number; len: number; g: number; travel: boolean };
-      const segs: Seg[] = [];
-      let total = 0;
-      glyphs.forEach((g, i) => {
-        segs.push({ from: total, len: g.len, g: i, travel: false });
-        total += g.len;
-        if (i < glyphs.length - 1) {
-          segs.push({ from: total, len: TRAVEL_UNITS, g: i, travel: true });
-          total += TRAVEL_UNITS;
-        }
+      // ── The lasers ─────────────────────────────────────────────────────────
+      // A few emitters along the top; each letter takes the nearest one, so
+      // the beams fan down onto the name.
+      const emitterCount = vw < 700 ? 3 : 5;
+      const emitters = Array.from({ length: emitterCount }, (_, i) => ({ x: ((i + 0.5) / emitterCount) * vw, y: -2 }));
+      const lasers = glyphs.map((g) => {
+        const p = g.cut.getPointAtLength(0);
+        const s = toScreen(g.x + p.x * scale, g.y - p.y * scale);
+        const e = emitters.reduce((a, b) => (Math.abs(b.x - s.x) < Math.abs(a.x - s.x) ? b : a));
+        return { e, x: s.x, y: s.y, cutting: false, done: false, t: 0 };
       });
+      const beams = { reach: 0, on: 1 };
 
-      // The laser: where the tip is, how big its glow is, whether it's
-      // cutting (sparks) or just moving, and its sparks.
-      const first = at(glyphs[0], 0);
-      const tip = { x: first.x, y: first.y, on: false, cutting: false, size: 0 };
       type Spark = { x: number; y: number; vx: number; vy: number; life: number; max: number };
       const sparks: Spark[] = [];
-      let current = 0;
 
-      const cutLetter = (g: Glyph) => {
-        g.cut.style.strokeDashoffset = g.glow.style.strokeDashoffset = "0";
-        g.hot.style.opacity = "0";
-      };
-      const engraveTo = (dist: number) => {
-        while (current < segs.length - 1 && dist >= segs[current + 1].from) {
-          if (!segs[current].travel) cutLetter(glyphs[segs[current].g]);
-          current++;
-        }
-        const seg = segs[current];
-        const local = Math.min(seg.len, Math.max(0, dist - seg.from));
-        if (seg.travel) {
-          // between letters: glide over to the next one's starting point
-          const a = at(glyphs[seg.g], glyphs[seg.g].len);
-          const b = at(glyphs[seg.g + 1], 0);
-          const t = local / seg.len;
-          const e = t * t * (3 - 2 * t);
-          tip.x = a.x + (b.x - a.x) * e;
-          tip.y = a.y + (b.y - a.y) * e;
-          tip.cutting = false;
-          return;
-        }
-        const g = glyphs[seg.g];
+      const engrave = (i: number) => {
+        const g = glyphs[i];
+        const L = lasers[i];
+        const local = g.len * L.t;
         g.cut.style.strokeDashoffset = g.glow.style.strokeDashoffset = `${g.len - local}`;
         g.hot.style.strokeDashoffset = `${HOT_UNITS - local}`;
-        const p = at(g, local);
-        tip.x = p.x;
-        tip.y = p.y;
-        tip.cutting = true;
+        const p = g.cut.getPointAtLength(local);
+        const s = toScreen(g.x + p.x * scale, g.y - p.y * scale);
+        L.x = s.x;
+        L.y = s.y;
+        L.cutting = L.t > 0 && L.t < 1;
+        if (L.t >= 1 && !L.done) {
+          L.done = true;
+          g.hot.style.opacity = "0";
+        }
       };
 
       const draw = () => {
         raf = requestAnimationFrame(draw);
         ctx.clearRect(0, 0, vw, vh);
-        if (tip.on) {
-          // faint beam from above
-          const beam = ctx.createLinearGradient(tip.x, 0, tip.x, tip.y);
-          beam.addColorStop(0, "rgba(160, 230, 255, 0)");
-          beam.addColorStop(1, "rgba(190, 240, 255, 0.35)");
-          ctx.strokeStyle = beam;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(tip.x, 0);
-          ctx.lineTo(tip.x, tip.y);
-          ctx.stroke();
-          // the tip's glow (smaller while it's only moving)
-          const r = Math.max(1, 16 * tip.size * (tip.cutting ? 1 : 0.6));
-          const glow = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, r);
-          glow.addColorStop(0, "rgba(255, 255, 255, 0.95)");
-          glow.addColorStop(0.25, "rgba(190, 240, 255, 0.55)");
-          glow.addColorStop(1, "rgba(0, 180, 216, 0)");
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(tip.x, tip.y, r, 0, Math.PI * 2);
-          ctx.fill();
-          for (let n = tip.cutting ? 2 : 0; n > 0; n--) {
-            sparks.push({
-              x: tip.x,
-              y: tip.y,
-              vx: (Math.random() - 0.5) * 5,
-              vy: -Math.random() * 3.2 - 0.4,
-              life: 0,
-              max: 14 + Math.random() * 20,
-            });
+        const on = beams.on * beams.reach;
+        if (on > 0.01) {
+          // emitters glow at the top edge
+          for (const e of emitters) {
+            const eg = ctx.createRadialGradient(e.x, 0, 0, e.x, 0, 22);
+            eg.addColorStop(0, `rgba(230, 250, 255, ${0.9 * on})`);
+            eg.addColorStop(1, "rgba(0, 180, 216, 0)");
+            ctx.fillStyle = eg;
+            ctx.beginPath();
+            ctx.arc(e.x, 0, 22, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          for (const L of lasers) {
+            // beams reach down from the emitter to the tip
+            const tx = L.e.x + (L.x - L.e.x) * beams.reach;
+            const ty = L.e.y + (L.y - L.e.y) * beams.reach;
+            const beam = ctx.createLinearGradient(L.e.x, L.e.y, tx, ty);
+            beam.addColorStop(0, `rgba(160, 230, 255, ${0.05 * on})`);
+            beam.addColorStop(1, `rgba(200, 245, 255, ${0.45 * on})`);
+            ctx.strokeStyle = beam;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(L.e.x, L.e.y);
+            ctx.lineTo(tx, ty);
+            ctx.stroke();
+            if (L.done) continue;
+            // the tip
+            const r = L.cutting ? 11 : 7;
+            const glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, r);
+            glow.addColorStop(0, `rgba(255, 255, 255, ${0.95 * on})`);
+            glow.addColorStop(0.3, `rgba(190, 240, 255, ${0.5 * on})`);
+            glow.addColorStop(1, "rgba(0, 180, 216, 0)");
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(tx, ty, r, 0, Math.PI * 2);
+            ctx.fill();
+            if (L.cutting && Math.random() < 0.7) {
+              sparks.push({ x: tx, y: ty, vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 2.8 - 0.3, life: 0, max: 12 + Math.random() * 16 });
+            }
           }
         }
-        // sparks: short streaks that arc down and fade
-        ctx.lineWidth = 1;
+        // sparks: short streaks that arc down and fade (drawn in 3 alpha
+        // bands, one stroke each, so hundreds of them stay cheap)
+        const bands: Path2D[] = [new Path2D(), new Path2D(), new Path2D()];
         for (let s = sparks.length - 1; s >= 0; s--) {
           const k = sparks[s];
           k.life += 1;
@@ -267,16 +287,19 @@ export default function Preloader({
             sparks.splice(s, 1);
             continue;
           }
-          k.vy += 0.22;
+          k.vy += 0.2;
           k.x += k.vx;
           k.y += k.vy;
-          ctx.strokeStyle = `rgba(210, 245, 255, ${(1 - k.life / k.max).toFixed(2)})`;
-          ctx.beginPath();
-          ctx.moveTo(k.x, k.y);
-          ctx.lineTo(k.x - k.vx * 1.6, k.y - k.vy * 1.6);
-          ctx.stroke();
+          const band = bands[Math.min(2, Math.floor((k.life / k.max) * 3))];
+          band.moveTo(k.x, k.y);
+          band.lineTo(k.x - k.vx * 1.5, k.y - k.vy * 1.5);
         }
-        if (!tip.on && !sparks.length) {
+        ctx.lineWidth = 1;
+        [0.85, 0.5, 0.2].forEach((a, i) => {
+          ctx.strokeStyle = `rgba(215, 247, 255, ${a})`;
+          ctx.stroke(bands[i]);
+        });
+        if (on <= 0.01 && !sparks.length && stagePos.k <= 0) {
           cancelAnimationFrame(raf);
           raf = 0;
         }
@@ -284,29 +307,35 @@ export default function Preloader({
       raf = requestAnimationFrame(draw);
 
       const cutAll = () => {
-        glyphs.forEach(cutLetter);
-        tip.on = false;
+        glyphs.forEach((g, i) => {
+          lasers[i].t = 1;
+          engrave(i);
+        });
         engraved = true;
       };
 
-      const pos = { d: 0 };
+      const buildEnd = LOCK_S + (glyphs.length - 1) * STAGGER_S + CUT_S; // ~2.3s
       tl = gsap.timeline({ onComplete: release });
-      tl
-        // 1. the laser warms up at the first point...
-        .add(() => { tip.on = true; })
-        .to(tip, { size: 1, duration: WARMUP_S, ease: "power2.out" })
-        // ...then slowly traces the whole name as one line, easing in and out
-        .to(pos, { d: total, duration: ENGRAVE_S, ease: "sine.inOut", onUpdate: () => engraveTo(pos.d) })
-        .to(hintRef.current, { opacity: 1, duration: 0.6 }, 1.2)
-        .add(cutAll, WARMUP_S + ENGRAVE_S)
-        // 2. the finished engraving flashes once...
-        .to(".pl-cut", { stroke: "rgba(235, 251, 255, 1)", duration: 0.14, yoyo: true, repeat: 1, ease: "sine.inOut" })
-        // 3. ...and the page comes up under it, the real name already in place
-        .add(reveal, "-=0.05")
-        .to(hintRef.current, { opacity: 0, duration: 0.2 }, "<")
-        .to(bgRef.current, { opacity: 0, duration: 0.6, ease: EASE.out }, "<")
-        .to(svg, { opacity: 0, duration: 0.55, ease: EASE.in }, "<0.2")
-        .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, "<")
+      // 1. emitters light and the beams reach down onto the letters
+      tl.to(beams, { reach: 1, duration: LOCK_S, ease: "power2.out" }, 0);
+      // 2. every letter has its own laser, working slowly round its outline
+      lasers.forEach((L, i) => {
+        tl!.to(L, { t: 1, duration: CUT_S, ease: "sine.inOut", onUpdate: () => engrave(i) }, LOCK_S + i * STAGGER_S);
+      });
+      tl.to(hintRef.current, { opacity: 1, duration: 0.5 }, 1)
+        .add(cutAll, buildEnd)
+        // 3. the beams switch off and the engraving pulses bright blue
+        .to(beams, { on: 0, duration: 0.3, ease: EASE.in }, buildEnd)
+        .to(".pl-cut", { stroke: "rgba(225, 250, 255, 1)", duration: 0.18, yoyo: true, repeat: 1, ease: "sine.inOut" }, buildEnd + 0.05)
+        .to(".pl-glow", { attr: { "stroke-width": 16 / scale }, stroke: "rgba(120, 215, 255, 0.35)", duration: 0.18, yoyo: true, repeat: 1, ease: "sine.inOut" }, buildEnd + 0.05)
+        // 4. the name glides from the centre to its place in the hero...
+        .to(stagePos, { k: 0, duration: 0.85, ease: EASE.inOut, onUpdate: placeStage }, buildEnd + 0.35)
+        .to(hintRef.current, { opacity: 0, duration: 0.2 }, buildEnd + 0.35)
+        // ...and the page comes up around it, the real name already in place
+        .add(reveal, buildEnd + 1.12)
+        .to(bgRef.current, { opacity: 0, duration: 0.6, ease: EASE.out }, buildEnd + 1.12)
+        .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, buildEnd + 1.12)
+        .to(svg, { opacity: 0, duration: 0.5, ease: EASE.in }, buildEnd + 1.3)
         .set(root, { autoAlpha: 0 });
     };
 
@@ -338,7 +367,7 @@ export default function Preloader({
       aria-label="Loading"
     >
       <div ref={bgRef} className="absolute inset-0 bg-[#050606]" />
-      <svg ref={svgRef} aria-hidden="true" className="pl-engraving absolute inset-0 h-full w-full" fill="none" />
+      <svg ref={svgRef} aria-hidden="true" className="absolute inset-0 h-full w-full" fill="none" />
       <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
       <p
         ref={hintRef}

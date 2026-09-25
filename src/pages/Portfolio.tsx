@@ -8,7 +8,7 @@ import { usePageMeta } from "@/lib/page-meta";
 import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
 import Preloader from "@/components/Preloader";
-import AsciiMorph from "@/components/AsciiMorph";
+import AsciiStory, { AsciiArt } from "@/components/AsciiStory";
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
 
 // ── Images (user-provided, transparent PNGs) ────────────────────────────────
@@ -489,13 +489,12 @@ export default function Portfolio() {
     // Reduced motion: reveal everything at rest instead of animating it in.
     // Without this, every `.opacity-0` element stays invisible forever.
     if (prefersReducedMotion()) {
-      // Reveal content only. A blanket reveal also un-hid the dark overlay on
-      // the PM section (a black box) and the FAQ cards' folded/unfolded text
-      // (overlapping), both of which are meant to stay hidden at rest.
+      // Reveal content only. A blanket reveal also un-hid the FAQ cards'
+      // folded/unfolded text (overlapping), which is meant to stay hidden.
       const root = containerRef.current;
       const content = gsap.utils
         .toArray<HTMLElement>(root.querySelectorAll(".opacity-0, .hire-w0, .hire-w1, .hire-w2"))
-        .filter((el) => !el.matches(".pm-scrim, .rz-seam") && !el.parentElement?.closest(".faq-card"));
+        .filter((el) => !el.parentElement?.closest(".faq-card"));
       gsap.set(content, { opacity: 1 });
       gsap.set(".venn-c1, .venn-c2, .venn-c3", { opacity: 1, attr: { strokeDashoffset: 0 } });
       return;
@@ -580,36 +579,6 @@ export default function Portfolio() {
       el.addEventListener("mouseenter", () => gsap.to(el, { x: 8, duration: 0.2, ease: "power2.out" }));
       el.addEventListener("mouseleave", () => gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }));
     });
-
-    // ── TRANSITION: questions dissolve, realizations wipe in ────────────────
-    // Deliberately no pin and no sticky. This only reads where the two real
-    // sections are and paints two overlays that already sit inside them, so
-    // there is nothing to mis-measure and nothing extra to scroll through.
-    const pmScrim   = document.querySelector<HTMLElement>(".pm-scrim");
-    const rzCurtain = document.querySelector<HTMLElement>(".rz-curtain");
-    const rzSeam    = document.querySelector<HTMLElement>(".rz-seam");
-
-    const transitionST = ScrollTrigger.create({
-      trigger: ".realize-section",
-      start: "top bottom",
-      end: "top 35%",
-      invalidateOnRefresh: true,
-      onUpdate: (self) => {
-        const p = self.progress;
-        // the questions sink into the dark behind you
-        if (pmScrim) gsap.set(pmScrim, { opacity: p * 0.92 });
-        // the answers are uncovered from the top down
-        if (rzCurtain) gsap.set(rzCurtain, { scaleY: 1 - p });
-        // a light seam rides the moving edge of the wipe
-        if (rzSeam) {
-          gsap.set(rzSeam, {
-            top: `${p * 100}%`,
-            opacity: p > 0.02 && p < 0.98 ? 1 : 0,
-          });
-        }
-      },
-    });
-
 
     // ── SECTION 4: Realizations ─────────────────────────────────────────────
     gsap.fromTo(".monkey-right",
@@ -710,12 +679,16 @@ export default function Portfolio() {
     );
 
     // ── Chapter readout in the nav ──────────────────────────────────────────
+    // ponytail: read once; if a rotation flips the story layout the readout
+    // keeps the old ranges until reload (cosmetic only)
+    const storyHeld = !!document.querySelector(".story--pinned");
     const chapters: Array<[string, string]> = [
       [".hero-section", "intro"],
       [".about-section", "about"],
-      [".pm-section", "questions"],
-      [".ascii-stage", "the turn"],
-      [".realize-section", "lessons"],
+      // held story scene: its stages are scroll ranges (see .story-mark)
+      [storyHeld ? ".story-mark-q" : ".pm-section", "questions"],
+      [storyHeld ? ".story-mark-turn" : ".story-click", "the turn"],
+      [storyHeld ? ".story-mark-l" : ".realize-section", "lessons"],
       [".work-section", "work"],
       [".venn-section", "x-factor"],
       [".faq-section", "faq"],
@@ -843,7 +816,6 @@ export default function Portfolio() {
       window.removeEventListener("load", refresh);
       splits.forEach(sp => sp.revert());
       tickers.forEach(fn => gsap.ticker.remove(fn));
-      transitionST.kill();
     };
   }, [pageReady]);
 
@@ -1128,107 +1100,79 @@ export default function Portfolio() {
 
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 3 — WHAT DOES IT TAKE TO BE A GREAT PM?                    */}
+      {/* SECTIONS 3-4 — THE QUESTIONS TURN INTO THE LESSONS                  */}
+      {/* One held scene: an ASCII wall spreads from the thinking monkey,     */}
+      {/* covers everything, and pulls back into the realising monkey.        */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="pm-section skewable relative overflow-hidden section-pad">
-        {/* darkens as you leave the questions behind */}
-        <div className="pm-scrim pointer-events-none absolute inset-0 z-20 bg-[#050505] opacity-0" />
-        <div className="max-w-7xl mx-auto">
-          <div className="block-gap">
-            <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
-                What does it take to be a great PM?
-              </h2>
+      <AsciiStory
+        first={
+          <section className="pm-section section-pad overflow-x-clip">
+            <div className="story-grid max-w-7xl mx-auto">
+              <div className="sg-head">
+                <div className="reveal-wrap overflow-hidden">
+                  <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+                    What does it take to be a great PM?
+                  </h2>
+                </div>
+                <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-3">I asked myself:</p>
+              </div>
+
+              <div className="sg-art monkey-left opacity-0">
+                <AsciiArt src={monkeyThinking} />
+              </div>
+
+              <ul className="sg-text flex flex-col gap-3 md:gap-5">
+                {PM_QUESTIONS.map((q, i) => (
+                  <li key={i} className="pm-question opacity-0 flex gap-4 items-start"
+                    style={{ fontFamily: "var(--ff-body)" }}>
+                    <span className="text-[#00B4D8] text-xl shrink-0 leading-none mt-0.5">•</span>
+                    <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{q}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-3">I asked myself:</p>
-          </div>
+          </section>
+        }
+        second={
+          <section className="realize-section section-pad overflow-x-clip">
+            <div className="story-grid story-grid--flip max-w-7xl mx-auto">
+              <div className="sg-head flex items-center gap-6">
+                <div className="reveal-wrap overflow-hidden">
+                  <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
+                    I Realized…
+                  </h2>
+                </div>
+                <svg width="60" height="20" viewBox="0 0 60 20" fill="none" aria-hidden="true" className="hidden sm:block shrink-0">
+                  <path d="M 0 10 L 48 10" stroke="#00B4D8" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" />
+                  <polygon points="46,5 60,10 46,15" fill="#00B4D8" />
+                </svg>
+              </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="monkey-left opacity-0 flex justify-center">
-              <img src={monkeyThinking} width={624} height={780} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
-                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
+              <ul className="sg-text flex flex-col gap-3 md:gap-6">
+                {REALIZATIONS.map((r, i) => (
+                  <li key={i} className="realization opacity-0 flex gap-4 items-start"
+                    style={{ fontFamily: "var(--ff-body)" }}>
+                    <span className="text-[#00B4D8] font-bold text-lg shrink-0 leading-none mt-0.5">→</span>
+                    <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{r}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="sg-art monkey-right opacity-0">
+                <AsciiArt src={monkeyRealising} />
+              </div>
             </div>
-
-            <ul className="flex flex-col gap-5">
-              {PM_QUESTIONS.map((q, i) => (
-                <li key={i} className="pm-question opacity-0 flex gap-4 items-start"
-                  style={{ fontFamily: "var(--ff-body)" }}>
-                  <span className="text-[#00B4D8] text-xl shrink-0">•</span>
-                  <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{q}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* ASCII MORPH - the thinking monkey erodes into noise and re-forms */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <AsciiMorph
-        from={monkeyThinking}
-        to={monkeyRealising}
-        className="ascii-stage h-[170svh] lg:h-[240vh] px-4"
+          </section>
+        }
       />
 
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 4 — I REALIZED…                                             */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      <section className="realize-section skewable relative overflow-hidden section-pad">
-        {/* curtain retracts downward to uncover the answers; resting state is
-            fully retracted, so if the scroll driver never runs you just see the
-            section normally rather than a blank panel */}
-        <div
-          className="rz-curtain pointer-events-none absolute inset-0 z-20 origin-bottom bg-[#070707]"
-          style={{ transform: "scaleY(0)" }}
-        />
-        <div
-          className="rz-seam pointer-events-none absolute left-0 right-0 z-30 h-px opacity-0"
-          style={{
-            top: "0%",
-            background: "linear-gradient(90deg, transparent, #00B4D8 35%, #ffffff 50%, #00B4D8 65%, transparent)",
-            boxShadow: "0 0 26px 5px rgba(0,180,216,0.55)",
-          }}
-        />
-        <div className="max-w-7xl mx-auto">
-          <div className="block-gap flex items-center gap-6">
-            <div className="reveal-wrap overflow-hidden">
-              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
-                I Realized…
-              </h2>
-            </div>
-            <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
-              <path d="M 0 10 L 48 10" stroke="#00B4D8" strokeWidth="2" strokeDasharray="6 4" strokeLinecap="round" />
-              <polygon points="46,5 60,10 46,15" fill="#00B4D8" />
-            </svg>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <ul className="flex flex-col gap-6">
-              {REALIZATIONS.map((r, i) => (
-                <li key={i} className="realization opacity-0 flex gap-4 items-start"
-                  style={{ fontFamily: "var(--ff-body)" }}>
-                  <span className="text-[#00B4D8] font-bold text-lg shrink-0">→</span>
-                  <span className="text-[#f5f0e8]/85 text-base md:text-lg leading-snug">{r}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="monkey-right opacity-0 flex justify-center">
-              <img src={monkeyRealising} width={624} height={780} alt="" aria-hidden="true" className="h-80 md:h-96 object-contain"
-                style={{ filter: "drop-shadow(0 0 40px rgba(0,180,216,0.08))" }} loading="lazy" decoding="async" />
-            </div>
-          </div>
-
-          <p className="proof-callout opacity-0 mt-[var(--space-block)] text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
-            style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
-            THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
-            AND HERE'S THE PROOF…
-          </p>
-        </div>
-      </section>
+      <div className="gutter-x pb-[var(--space-section)] pt-[var(--space-block)]">
+        <p className="proof-callout opacity-0 text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
+          style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
+          THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
+          AND HERE'S THE PROOF…
+        </p>
+      </div>
 
 
       {/* ════════════════════════════════════════════════════════════════════ */}
@@ -1777,17 +1721,34 @@ export default function Portfolio() {
         @media (min-width: 1024px) { .xf-photo { width: min(100%, 27rem); } }
         .hire-wash { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%); mask-image: linear-gradient(to bottom, transparent, #000 38%); }
 
-        /* ASCII morph stage */
-        .ascii-stage .ascii-pre {
-          font-family: var(--ff-mono);
-          font-size: clamp(4px, 0.92vw, 11px);
-          line-height: 0.58em;
-          letter-spacing: 0.02em;
-          color: rgba(0, 180, 216, 0.9);
+        /* Story scene (AsciiStory). Default is the stacked layout: reduced
+           motion, short screens, and the moment before the fit check. */
+        .story { position: relative; --story-track: 180svh; }
+        .story-click { width: fit-content; margin: 0 auto; font-family: var(--ff-mono); font-size: clamp(1rem, 0.8rem + 1.2vw, 1.75rem); letter-spacing: 0.08em; white-space: pre; color: #f2b544; }
+        .story-curtain, .story-mark { display: none; }
+        .ascii-art { margin: 0; width: 100%; overflow: hidden; white-space: pre; user-select: none; font-family: var(--ff-mono); font-size: clamp(3.4px, 0.52vw, 7.5px); line-height: 0.58em; letter-spacing: 0.02em; color: rgba(0, 180, 216, 0.9); text-shadow: 0 0 16px rgba(0, 180, 216, 0.3); }
+        .story-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(7.5rem, 36vw, 12rem); grid-template-areas: "head art" "text text"; column-gap: 1rem; row-gap: clamp(1rem, 3svh, 2rem); align-items: center; }
+        .sg-head { grid-area: head; }
+        .sg-art { grid-area: art; }
+        .sg-text { grid-area: text; }
+        .sg-art .ascii-art { height: clamp(8rem, 44vw, 15rem); }
+        @media (min-width: 768px) {
+          .story-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "art text"; column-gap: var(--space-block); }
+          .story-grid--flip { grid-template-areas: "head head" "text art"; }
+          .sg-art .ascii-art { height: clamp(12rem, 46svh, 30rem); }
         }
-
-        /* Section-to-section transition overlays */
-        .rz-curtain, .pm-scrim { will-change: transform, opacity; }
+        /* held: one screen-tall frame that sticks while the scene plays */
+        .story--pinned { height: calc(100svh + var(--story-track)); }
+        .story--pinned .story-frame { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+        .story--pinned .story-panel { position: absolute; inset: 0; display: flex; align-items: center; padding-top: var(--nav-h); }
+        .story--pinned .story-panel > section { width: 100%; padding-block: clamp(0.75rem, 3svh, 2rem); }
+        .story--pinned .story-b { opacity: 0; }
+        .story--pinned .story-click { position: absolute; z-index: 3; left: 50%; top: calc(50% + var(--nav-h) / 2); transform: translate(-50%, -50%); opacity: 0; padding: 0.45em 0.9em; background: #070707; pointer-events: none; }
+        .story--pinned .story-curtain { display: block; position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+        .story--pinned .story-mark { display: block; position: absolute; left: 0; width: 1px; pointer-events: none; }
+        .story-mark-q { top: 0; height: calc(0.45 * var(--story-track) + 55svh); }
+        .story-mark-turn { top: calc(0.45 * var(--story-track) + 55svh); height: calc(0.1 * var(--story-track)); }
+        .story-mark-l { top: calc(0.55 * var(--story-track) + 55svh); bottom: 0; }
 
         /* Respect the OS reduced-motion setting */
         @media (prefers-reduced-motion: reduce) {

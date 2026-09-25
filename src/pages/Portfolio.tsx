@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { SplitText } from "gsap/SplitText";
 import { usePageMeta } from "@/lib/page-meta";
-import { EASE, DUR, STAGGER, SCRUB, deviceTier, prefersReducedMotion } from "@/lib/motion";
+import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
 import Preloader from "@/components/Preloader";
 import AsciiMorph from "@/components/AsciiMorph";
@@ -28,21 +28,6 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
-// About: the manifesto. Words in [brackets] light up teal as you read; keep a
-// bracket to a word or two. Edit the sentence freely, the animation adapts.
-const ABOUT_MANIFESTO =
-  "I grew up in [Amritsar] and study Computer Science & Business Systems at [Thapar,] Patiala. " +
-  "Most of what I have built started as something that [annoyed me.] A community nobody was showing up to. " +
-  "A capstone scramble spread across WhatsApp groups. A job hunt eating an hour every morning. " +
-  "So I [research] it, [test] it, [measure] it, and [ship.] Then I do it again. " +
-  "Along the way: first of [250+ teams] at IIT Roorkee's InnoQuest, and [Top 15] nationally at AMEX.";
-
-const MANIFESTO_WORDS = (ABOUT_MANIFESTO.match(/\[[^\]]+\]|\S+/g) ?? []).flatMap((tok) =>
-  tok.startsWith("[")
-    ? tok.slice(1, -1).split(" ").map((w) => ({ w, key: true }))
-    : [{ w: tok, key: false }],
-);
-
 const HERO_PROOF = [
   { k: "12,000+", v: "Helix registrations" },
   { k: "60%", v: "participation lift at Talkeys" },
@@ -556,32 +541,23 @@ export default function Portfolio() {
       splits.push(split);
     });
 
-    // ── SECTION 2: About, a read-along manifesto ────────────────────────────
-    // Words light up one by one as you scroll, like karaoke lyrics. The route
-    // from Amritsar to Patiala fills at the same pace, so the distance
-    // travelled is literally your reading progress. Nothing is pinned, so it
-    // adds no scroll length.
-    const mfWords = gsap.utils.toArray<HTMLElement>(".mf-word");
-    const route = document.querySelector<HTMLElement>(".route");
-    if (mfWords.length) {
-      route?.style.setProperty("--p", "0");
-      const readTl: gsap.core.Timeline = gsap.timeline({
-        scrollTrigger: { trigger: ".manifesto", start: "top 78%", end: "bottom 45%", scrub: SCRUB },
-        onUpdate: () => route?.style.setProperty("--p", readTl.progress().toFixed(3)),
-      });
-      // Unread words sit at 0.5, the lowest that still passes WCAG contrast.
-      // Key words start cream and turn teal as you reach them (dim teal can't
-      // pass contrast at any useful opacity).
-      readTl.fromTo(mfWords, { opacity: 0.5, color: "#f5f0e8" }, {
-        opacity: 1,
-        color: (_: number, el: HTMLElement) => (el.classList.contains("mf-key") ? "#00b4d8" : "#f5f0e8"),
-        duration: 0.3, stagger: 0.1, ease: "none",
-      });
-    }
-    gsap.fromTo(".about-photo",
-      { opacity: 0, y: 40, rotate: -6 },
-      { opacity: 1, y: 0, rotate: 0, duration: DUR.slow, ease: EASE.out,
-        scrollTrigger: { trigger: ".about-section", start: "top 75%" } });
+    // ── SECTION 2: Hello I'm Arsh ───────────────────────────────────────────
+    gsap.fromTo(".about-left",
+      { opacity: 0, x: -50 },
+      { opacity: 1, x: 0, duration: 0.9, scrollTrigger: { trigger: ".about-section", start: "top 70%" } }
+    );
+    // Polaroid bounce
+    gsap.fromTo(".about-right",
+      { opacity: 0, y: -60 },
+      { opacity: 1, y: 0, duration: 1.1, ease: "back.out(2)", scrollTrigger: { trigger: ".about-section", start: "top 70%" } }
+    );
+    // Journey lines: left border grows then text fades in
+    document.querySelectorAll<HTMLElement>(".journey-line").forEach((el, i) => {
+      const border = el.querySelector<HTMLElement>(".jl-border");
+      const tl = gsap.timeline({ scrollTrigger: { trigger: ".journey-lines", start: "top 80%" }, delay: i * 0.22 });
+      if (border) tl.fromTo(border, { scaleY: 0, transformOrigin: "top center" }, { scaleY: 1, duration: 0.35, ease: "power2.out" });
+      tl.fromTo(el.querySelector(".jl-text"), { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.45, ease: "power2.out" }, "-=0.1");
+    });
 
     // ── SECTION 3: PM Questions ─────────────────────────────────────────────
     gsap.fromTo(".monkey-left",
@@ -774,6 +750,30 @@ export default function Portfolio() {
       };
       gsap.ticker.add(marquee);
       tickers.push(marquee);
+    }
+
+    // ── Journey path drawn on scroll, with a travelling marker ──────────────
+    const path = document.querySelector<SVGPathElement>(".journey-path");
+    const marker = document.querySelector<SVGCircleElement>(".journey-dot");
+    if (path) {
+      path.style.animation = "none";
+      const len = path.getTotalLength();
+      gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.to(path, {
+        strokeDashoffset: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".journey-map",
+          start: "top 85%",
+          end: "bottom 60%",
+          scrub: 0.8,
+          onUpdate: (self) => {
+            if (!marker) return;
+            const pt = path.getPointAtLength(len * self.progress);
+            gsap.set(marker, { attr: { cx: pt.x, cy: pt.y }, opacity: self.progress > 0.02 ? 1 : 0 });
+          },
+        },
+      });
     }
 
     // ── Venn: parallax to pointer, isolate a lobe on hover ──────────────────
@@ -1002,55 +1002,91 @@ export default function Portfolio() {
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 2 — HELLO I'M ARSH                                          */}
       {/* ════════════════════════════════════════════════════════════════════ */}
-      <section id="about" className="about-section skewable section-pad">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-start justify-between gap-[var(--space-stack)]">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-[#00B4D8]">About</p>
-              <div className="reveal-wrap overflow-hidden mt-3">
-                <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "var(--step-h2)", lineHeight: 0.95 }}>
-                  Hello,<br />I&apos;m Arsh
-                </h2>
-              </div>
+      <section id="about" className="about-section skewable section-pad max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-[var(--space-block)] items-center">
+          {/* LEFT */}
+          <div className="about-left opacity-0">
+            <div className="reveal-wrap overflow-hidden">
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2.5rem, 6vw, 5rem)", lineHeight: 1.1 }}>
+                HELLO<br />I'M ARSH
+              </h2>
             </div>
-            <div className="about-photo shrink-0 w-[clamp(7rem,28vw,16rem)]">
-              <img
-                src={arshCrossedArm}
-                width={528}
-                height={660}
-                alt="Arsh Chatrath, arms crossed"
-                className="w-full h-auto rotate-[-4deg] drop-shadow-[0_20px_50px_rgba(0,180,216,0.12)]"
-                loading="lazy"
-                decoding="async"
-              />
+            <p className="text-[#00B4D8] font-mono text-xs uppercase tracking-[0.3em] mt-4 mb-6">
+              Thapar Institute, Patiala
+            </p>
+            <p className="reveal-copy text-[#f5f0e8]/70 leading-relaxed mb-8" style={{ fontFamily: "var(--ff-body)" }}>
+              Most of what I have built started as something that annoyed me. A community
+              nobody was showing up to. A capstone scramble spread across WhatsApp groups.
+              A job hunt eating an hour every morning. I research it, test it, measure it,
+              and ship. Then I do it again. First of 250+ teams at IIT Roorkee's
+              InnoQuest, Top 15 nationally at AMEX, and in the top 1% picked for
+              Amazon ML School.
+            </p>
+
+            {/* Journey lines */}
+            <div className="journey-lines flex flex-col gap-4">
+              {[
+                ["Started as:", "Freshman with curiosity and ambition"],
+                ["Turned into:", "A builder who ships products and leads winning teams"],
+                ["Currently:", "Creating real-world impact through technology"],
+              ].map(([label, text]) => (
+                <div key={label} className="journey-line flex gap-3 items-stretch relative pl-4">
+                  <div className="jl-border absolute left-0 top-0 w-0.5 bg-[#00B4D8]" style={{ height: "100%" }} />
+                  <div className="jl-text flex gap-3 items-start opacity-0">
+                    <span className="text-[#00B4D8] font-mono text-xs shrink-0 mt-1 uppercase tracking-wider">{label}</span>
+                    <span className="text-[#f5f0e8]/80" style={{ fontFamily: "var(--ff-body)" }}>{text}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="mt-[var(--space-block)] grid gap-[var(--space-block)] lg:grid-cols-[5.5rem_minmax(0,1fr)]">
-            {/* Amritsar to Patiala: fills as you read (see .route in the styles).
-                Vertical beside the text on desktop, a short line under it on phones. */}
-            <div className="route order-2 lg:order-1">
-              <figure className="route-end">
-                <img src={goldenTemple} width={368} height={460} alt="Golden Temple, Amritsar" loading="lazy" decoding="async" />
-                <figcaption>Amritsar</figcaption>
-              </figure>
-              <div className="route-track" aria-hidden="true">
-                <span className="route-fill" />
-                <span className="route-dot" />
+          {/* RIGHT: photo, with the Amritsar to Patiala map right under it
+              (fills the space the photo leaves beside the longer text) */}
+          <div className="flex flex-col items-center gap-[var(--space-stack)]">
+            <div className="about-right opacity-0 flex justify-center">
+              <div style={{ transform: "rotate(-3deg)", filter: "drop-shadow(0 20px 50px rgba(0,180,216,0.12))" }}>
+                <img src={arshCrossedArm} width={528} height={660} alt="Arsh Chatrath, arms crossed" className="w-[min(16rem,62vw)] md:w-80 h-auto object-contain" loading="lazy" decoding="async" />
               </div>
-              <figure className="route-end">
-                <img src={thaparUniversity} width={368} height={460} alt="Thapar University, Patiala" loading="lazy" decoding="async" />
-                <figcaption>Patiala</figcaption>
-              </figure>
             </div>
 
-            <p className="manifesto order-1 lg:order-2 max-w-[68rem]" style={{ fontFamily: "var(--ff-body)" }}>
-              {MANIFESTO_WORDS.map((t, i) => (
-                <Fragment key={i}>
-                  <span className={t.key ? "mf-word mf-key" : "mf-word"}>{t.w}</span>{" "}
-                </Fragment>
-              ))}
-            </p>
+            {/* Journey map */}
+            <div className="journey-map w-full max-w-[34rem] flex items-end justify-between gap-[var(--space-stack)] relative">
+              {/* Amritsar */}
+              <div className="flex flex-col items-center gap-3 fade-up">
+                <img src={goldenTemple} width={368} height={460} alt="Golden Temple, Amritsar" className="w-[clamp(6rem,11vw,10rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+                <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
+              </div>
+
+              {/* Traveling dashed SVG arrow */}
+              <div className="flex-1 min-w-0 relative h-20 md:h-24">
+                <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
+                  <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                      <polygon points="0 0, 10 3.5, 0 7" fill="#00B4D8" />
+                    </marker>
+                  </defs>
+                  <path
+                    className="journey-path"
+                    d="M 10 78 Q 150 44 292 78"
+                    fill="none"
+                    stroke="#00B4D8"
+                    strokeWidth="2.5"
+                    strokeDasharray="12 8"
+                    strokeLinecap="round"
+                    markerEnd="url(#arrowhead)"
+                  />
+                  <circle className="journey-dot" r="4" fill="#00B4D8" opacity="0"
+                    style={{ filter: "drop-shadow(0 0 6px rgba(0,180,216,0.9))" }} />
+                </svg>
+              </div>
+
+              {/* Thapar */}
+              <div className="flex flex-col items-center gap-3 fade-up">
+                <img src={thaparUniversity} width={368} height={460} alt="Thapar University, Patiala" className="w-[clamp(6rem,11vw,10rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+                <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1585,24 +1621,11 @@ export default function Portfolio() {
           .hero-inner::after { content: ""; display: block; clear: both; }
         }
 
-        /* About: the manifesto and the Amritsar to Patiala route. --p (0..1) is
-           written by the scroll animation; it defaults to 1 so the route shows
-           complete for reduced motion or before the animation is built. */
-        .manifesto { font-size: clamp(1.35rem, 0.9rem + 2.1vw, 3.1rem); line-height: 1.32; font-weight: 500; letter-spacing: -0.01em; color: #f5f0e8; }
-        .mf-key { color: #00b4d8; }
-        .route { --p: 1; display: flex; align-items: center; gap: 0.75rem; }
-        .route-end { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; margin: 0; }
-        .route-end img { width: 2.75rem; height: auto; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.6)); }
-        .route-end figcaption { font: 12px/1 var(--ff-mono); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(245,240,232,0.55); }
-        .route-track { position: relative; flex: 1; height: 2px; border-radius: 2px; background: rgba(245,240,232,0.12); }
-        .route-fill { position: absolute; inset: 0; border-radius: inherit; background: #00b4d8; transform-origin: left center; transform: scaleX(var(--p)); box-shadow: 0 0 12px rgba(0,180,216,0.5); }
-        .route-dot { position: absolute; top: 50%; left: calc(var(--p) * 100%); width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #00b4d8; box-shadow: 0 0 14px rgba(0,180,216,0.9); }
-        @media (min-width: 1024px) {
-          .route { flex-direction: column; align-self: stretch; }
-          .route-end img { width: 4rem; }
-          .route-track { width: 2px; height: auto; }
-          .route-fill { transform-origin: center top; transform: scaleY(var(--p)); }
-          .route-dot { left: 50%; top: calc(var(--p) * 100%); }
+        /* Journey path traveling dash */
+        .journey-path { animation: travelDash 1.2s linear infinite; }
+        @keyframes travelDash {
+          from { stroke-dashoffset: 0; }
+          to   { stroke-dashoffset: -20; }
         }
 
         /* Marquee ticker */
@@ -1705,7 +1728,7 @@ export default function Portfolio() {
 
         /* Respect the OS reduced-motion setting */
         @media (prefers-reduced-motion: reduce) {
-          .hero-glow-bg, .ticker-track, .venn-photo {
+          .hero-glow-bg, .journey-path, .ticker-track, .venn-photo {
             animation: none !important;
           }
           * { scroll-behavior: auto !important; }

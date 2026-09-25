@@ -100,6 +100,8 @@ export default function Neko() {
     if (typeof window === "undefined") return;
     // No pointer to chase, and it would sit stranded in a corner.
     if (window.matchMedia("(pointer: coarse)").matches) return;
+    // Phone-sized screens get a floating Resume button in this corner instead.
+    if (window.matchMedia("(max-width: 639px)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setEnabled(true);
 

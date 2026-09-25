@@ -333,6 +333,15 @@ export default function Portfolio() {
   const [intro, setIntro] = useState(false);
   // phone menu (the section links don't fit in the bar on phones)
   const [menuOpen, setMenuOpen] = useState(false);
+  // phones: a floating Resume button, once the hero's own link is off screen
+  const [showResumeFab, setShowResumeFab] = useState(false);
+  useEffect(() => {
+    const cta = document.querySelector(".hero-cta");
+    if (!cta) return;
+    const io = new IntersectionObserver(([e]) => setShowResumeFab(!e.isIntersecting));
+    io.observe(cta);
+    return () => io.disconnect();
+  }, []);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   // true when the laser opening has already put the name on screen
   const nameEngraved = useRef(false);
@@ -1178,6 +1187,18 @@ export default function Portfolio() {
           </button>
         </div>
       </nav>
+
+      {/* Phones: a floating Resume button in the bottom-right corner (where
+          the cat switch sits on bigger screens). Shows once the hero's own
+          Resume link has scrolled away; hidden while the menu is open. */}
+      <a
+        href="/resume"
+        className={`resume-fab${showResumeFab && !menuOpen ? " on" : ""}`}
+        tabIndex={showResumeFab && !menuOpen ? 0 : -1}
+        aria-hidden={!(showResumeFab && !menuOpen)}
+      >
+        Resume <span aria-hidden="true">↗</span>
+      </a>
 
       {/* Phone menu: every section, the resume and the Figma file, big and
           easy to tap. Under the bar, so the button stays reachable. */}
@@ -2101,6 +2122,13 @@ export default function Portfolio() {
         @media (prefers-reduced-motion: reduce) {
           .faq-card, .faq-card span, .faq-card::after { transition: none !important; }
         }
+
+        /* Floating Resume button on phones */
+        .resume-fab { position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 38; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.15rem; border-radius: 999px; background: #00b4d8; color: #0a0a0a; font-family: var(--ff-mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; box-shadow: 0 10px 30px -6px rgba(0, 180, 216, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateY(14px) scale(0.96); pointer-events: none; transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .resume-fab.on { opacity: 1; transform: none; pointer-events: auto; }
+        /* phones only (plain CSS here outranks Tailwind's sm:hidden) */
+        @media (min-width: 640px) { .resume-fab { display: none; } }
+        @media (prefers-reduced-motion: reduce) { .resume-fab { transition: opacity 0.2s linear; transform: none; } }
 
         /* Phone menu (below sm): a full-screen list under the nav bar */
         .phone-menu { position: fixed; inset: 0; z-index: 39; display: flex; flex-direction: column; justify-content: space-between; padding: calc(4rem + 2.5rem) var(--gutter) 2.5rem; background: rgba(8, 9, 10, 0.97); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }

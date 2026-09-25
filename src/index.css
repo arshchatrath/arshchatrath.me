@@ -131,6 +131,27 @@
   margin-bottom: var(--space-block);
 }
 
+/* Image hover: a laser line sweeps down the picture once, then a soft
+   highlight follows the pointer (ImageScan.tsx). The overlay is masked by
+   the image, so it follows cut-out silhouettes. */
+.img-scan-host,
+.img-scan { transition: scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.img-scan {
+  --scan: -12%;
+  --mx: 50%;
+  --my: 50%;
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition-property: opacity, scale, translate;
+  transition-duration: 0.35s, 0.7s, 0.7s;
+  background:
+    linear-gradient(to bottom, transparent calc(var(--scan) - 24%), rgba(0, 180, 216, 0.16) calc(var(--scan) - 4%), rgba(120, 225, 255, 0.5) calc(var(--scan) - 0.8%), rgba(235, 252, 255, 0.95) var(--scan), transparent calc(var(--scan) + 0.6%)),
+    radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.14), transparent 45%);
+}
+.img-scan.on { opacity: 1; }
+
 /* The laser-engraving opening (Preloader.tsx). Stroke widths are set in
    the script, in the letters' own units, so the dash that draws each letter
    is measured in the same units as the letter (non-scaling strokes measured

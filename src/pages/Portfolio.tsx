@@ -40,6 +40,8 @@ const HERO_LEAD_WORDS = HERO_LEAD.split(" ").map((w) =>
 // What the name flickers through before it settles (kept to narrowish glyphs,
 // so a letter's slot never has to hold a W).
 const NAME_NOISE = "ABCDEFGHKLNOPRSTUVXYZ0123456789#%&*";
+// What the intro flickers through before it settles.
+const LEAD_NOISE = "01{}[]<>/\\|=+*-_:;#%&?";
 // Water-drop hover: a displacement map for a round lens, drawn once. Red and
 // green hold how far to pull each pixel towards the centre (128 = stay put),
 // fading to nothing at the rim, so the edge of the drop is seamless.
@@ -484,6 +486,42 @@ export default function Portfolio() {
       };
       if (!engraved) scrambleStep();
 
+      // The intro under the name decodes the same way: every character starts
+      // as random ASCII and settles into place, left to right. Word widths
+      // are pinned meanwhile, so the lines never reflow.
+      const leadEls = gsap.utils.toArray<HTMLElement>(".lead-word");
+      const leadFinal = leadEls.map((el) => el.textContent ?? "");
+      const leadLen = leadFinal.reduce((n, w) => n + w.length, 0) || 1;
+      leadEls.forEach((el) => {
+        el.style.width = `${el.getBoundingClientRect().width}px`;
+        el.style.whiteSpace = "nowrap";
+      });
+      const decode = { t: 0 };
+      let lastDecode = -1;
+      const decodeStep = () => {
+        const flick = Math.floor(decode.t * 26);
+        if (flick === lastDecode) return;
+        lastDecode = flick;
+        let k = 0;
+        leadEls.forEach((el, wi) => {
+          const w = leadFinal[wi];
+          let out = "";
+          for (let c = 0; c < w.length; c++, k++) {
+            const settles = 0.1 + (k / leadLen) * 0.8;
+            out += decode.t >= settles ? w[c] : LEAD_NOISE[(Math.random() * LEAD_NOISE.length) | 0];
+          }
+          el.textContent = out;
+        });
+      };
+      const settleLead = () => {
+        leadEls.forEach((el, i) => {
+          el.textContent = leadFinal[i];
+          el.style.width = "";
+          el.style.whiteSpace = "";
+        });
+      };
+      decodeStep();
+
       const heroTl = gsap.timeline({ defaults: { ease: EASE.out } });
       heroTl.fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0);
       if (engraved) {
@@ -497,6 +535,7 @@ export default function Portfolio() {
         // the one allowed overshoot on the page: the stamp lands
         .fromTo(".hero-stamp", { scale: 1.14, rotate: 6 }, { scale: 1, rotate: 0, duration: 0.8, ease: EASE.pop }, 0.3)
         .fromTo(".hero-lead", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DUR.base }, 0.45)
+        .to(decode, { t: 1, duration: 1.3, ease: "none", onUpdate: decodeStep, onComplete: settleLead }, 0.45)
         // the numbers rise out of their rule, like the letters of the name
         .fromTo(".hero-stats", { opacity: 0 }, { opacity: 1, duration: DUR.fast }, 0.55)
         .fromTo(".stat-num > span", { yPercent: 105 }, { yPercent: 0, duration: DUR.base, stagger: STAGGER.loose }, 0.55)
@@ -657,6 +696,7 @@ export default function Portfolio() {
         tagEl?.removeEventListener("pointerenter", onTagEnter);
         ripple?.kill();
         settleName();
+        settleLead();
         if (nameEl) nameEl.style.filter = "";
         heroST.kill();
         heroTl.kill();
@@ -1157,8 +1197,8 @@ export default function Portfolio() {
               fetchPriority="high"
               decoding="async"
             />
-            {/* Postmark: says "open to internships" in the stamp's own
-                language. Decorative; the intro says the same in plain text. */}
+            {/* Postmark: first class, ships fast (mail, and products), from
+                Patiala, with its PIN in the middle. Decorative. */}
             <svg className="hero-postmark opacity-0" viewBox="0 0 240 120" aria-hidden="true">
               <defs>
                 <path id="pm-ring" d="M 60 60 m -41 0 a 41 41 0 1 1 82 0 a 41 41 0 1 1 -82 0" />
@@ -1172,7 +1212,7 @@ export default function Portfolio() {
                 <circle cx="60" cy="60" r="54" strokeWidth="3" />
                 <circle cx="60" cy="60" r="31" strokeWidth="1.5" />
                 <text fill="currentColor" stroke="none" fontSize="10.5" letterSpacing="1.6" style={{ fontFamily: "var(--ff-mono)" }}>
-                  <textPath href="#pm-ring" textLength="252" lengthAdjust="spacing">OPEN TO INTERNSHIPS · PATIALA · INDIA ·</textPath>
+                  <textPath href="#pm-ring" textLength="252" lengthAdjust="spacing">FIRST CLASS · SHIPS FAST · PATIALA · INDIA ·</textPath>
                 </text>
                 <text x="60" y="57" textAnchor="middle" fill="currentColor" stroke="none" fontSize="12" style={{ fontFamily: "var(--ff-mono)" }}>PB</text>
                 <text x="60" y="72" textAnchor="middle" fill="currentColor" stroke="none" fontSize="11" style={{ fontFamily: "var(--ff-mono)" }}>147004</text>
@@ -1189,11 +1229,14 @@ export default function Portfolio() {
               className="hero-lead opacity-0 leading-snug text-[#f5f0e8] max-w-[36rem]"
               style={{ fontFamily: "var(--ff-body)" }}
             >
-              {HERO_LEAD_WORDS.map((t, i) => (
-                <Fragment key={i}>
-                  <span className={t.em ? "lead-word em" : "lead-word"}>{t.w}</span>{" "}
-                </Fragment>
-              ))}
+              <span className="sr-only">{HERO_LEAD.replace(/[[\]]/g, "")}</span>
+              <span aria-hidden="true">
+                {HERO_LEAD_WORDS.map((t, i) => (
+                  <Fragment key={i}>
+                    <span className={t.em ? "lead-word em" : "lead-word"}>{t.w}</span>{" "}
+                  </Fragment>
+                ))}
+              </span>
             </p>
 
             {/* A scoreboard, not badges: big numbers in the headline face,

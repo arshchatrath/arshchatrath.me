@@ -12,7 +12,7 @@ import { NAME_GLYPHS, NAME_UPM } from "./nameGlyphs";
  *  2. One laser per letter, all at once: each tip slowly works its way round
  *     its own letter's outline (hot trail behind it, sparks off it), so the
  *     whole name is cut in about two seconds.
- *  3. The beams switch off and the engraving pulses bright blue.
+ *  3. The beams fade out.
  *  4. The name glides from the centre to its place in the hero, the black
  *     lifts, and the real name is already sitting inside the outline (the
  *     outlines are built on the real letters' measured positions), so the
@@ -324,18 +324,16 @@ export default function Preloader({
       });
       tl.to(hintRef.current, { opacity: 1, duration: 0.5 }, 1)
         .add(cutAll, buildEnd)
-        // 3. the beams switch off and the engraving pulses bright blue
+        // 3. the beams fade out...
         .to(beams, { on: 0, duration: 0.3, ease: EASE.in }, buildEnd)
-        .to(".pl-cut", { stroke: "rgba(225, 250, 255, 1)", duration: 0.18, yoyo: true, repeat: 1, ease: "sine.inOut" }, buildEnd + 0.05)
-        .to(".pl-glow", { attr: { "stroke-width": 16 / scale }, stroke: "rgba(120, 215, 255, 0.35)", duration: 0.18, yoyo: true, repeat: 1, ease: "sine.inOut" }, buildEnd + 0.05)
-        // 4. the name glides from the centre to its place in the hero...
-        .to(stagePos, { k: 0, duration: 0.85, ease: EASE.inOut, onUpdate: placeStage }, buildEnd + 0.35)
-        .to(hintRef.current, { opacity: 0, duration: 0.2 }, buildEnd + 0.35)
+        // 4. ...the name glides from the centre to its place in the hero...
+        .to(stagePos, { k: 0, duration: 0.85, ease: EASE.inOut, onUpdate: placeStage }, buildEnd + 0.15)
+        .to(hintRef.current, { opacity: 0, duration: 0.2 }, buildEnd + 0.15)
         // ...and the page comes up around it, the real name already in place
-        .add(reveal, buildEnd + 1.12)
-        .to(bgRef.current, { opacity: 0, duration: 0.6, ease: EASE.out }, buildEnd + 1.12)
-        .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, buildEnd + 1.12)
-        .to(svg, { opacity: 0, duration: 0.5, ease: EASE.in }, buildEnd + 1.3)
+        .add(reveal, buildEnd + 0.92)
+        .to(bgRef.current, { opacity: 0, duration: 0.6, ease: EASE.out }, buildEnd + 0.92)
+        .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, buildEnd + 0.92)
+        .to(svg, { opacity: 0, duration: 0.5, ease: EASE.in }, buildEnd + 1.1)
         .set(root, { autoAlpha: 0 });
     };
 

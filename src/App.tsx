@@ -7,6 +7,7 @@ import Figma from "@/pages/Figma";
 import Cursor from "@/components/Cursor";
 import RouteTransition from "@/components/RouteTransition";
 import Neko from "@/components/Neko";
+import ImageScan from "@/components/ImageScan";
 
 // The WebGL background (and OGL) loads as its own chunk after first paint.
 const AmbientField = lazy(() => import("@/gl/AmbientField"));
@@ -39,6 +40,7 @@ export default function App() {
       </div>
       <Neko />
       <Cursor />
+      <ImageScan />
       <RouteTransition />
     </WouterRouter>
   );

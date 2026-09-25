@@ -1392,17 +1392,16 @@ export default function Portfolio() {
                   className="story-img" loading="lazy" decoding="async" />
               </div>
             </div>
+
+            {/* in the same screen as the lessons, right under them */}
+            <p className="proof-callout opacity-0 mt-[clamp(1rem,3svh,2rem)] text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
+              style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.1rem, 2.3vw, 2rem)" }}>
+              THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
+              AND HERE'S THE PROOF…
+            </p>
           </section>
         }
       />
-
-      <div className="gutter-x pb-[var(--space-section)] pt-[var(--space-block)]">
-        <p className="proof-callout opacity-0 text-center font-bold text-[#f5f0e8] leading-tight max-w-4xl mx-auto"
-          style={{ fontFamily: "var(--ff-display)", fontSize: "clamp(1.2rem, 2.8vw, 2.2rem)" }}>
-          THESE WEREN'T JUST REALIZATIONS. THESE WERE BATTLE TESTED LESSONS.
-          AND HERE'S THE PROOF…
-        </p>
-      </div>
 
 
       {/* ════════════════════════════════════════════════════════════════════ */}
@@ -1731,8 +1730,8 @@ export default function Portfolio() {
           containerClassName="hire-wash"
           Breathing={!reduceMotion}
           startingGap={125}
-          breathingRange={9}
-          animationSpeed={0.02}
+          breathingRange={16}
+          animationSpeed={1}
           gradientColors={[
             "#0a0a0a",
             "#08222a",
@@ -1994,7 +1993,7 @@ export default function Portfolio() {
         @media (min-width: 768px) {
           .story-grid { grid-template-columns: auto minmax(0, 36rem); justify-content: center; grid-template-areas: "head head" "art text"; column-gap: clamp(2rem, 4vw, 4rem); }
           .story-grid--flip { grid-template-columns: minmax(0, 36rem) auto; grid-template-areas: "head head" "text art"; }
-          .sg-art .story-img { height: clamp(12rem, min(54svh, 48vw), 32rem); }
+          .sg-art .story-img { height: clamp(11rem, min(46svh, 44vw), 30rem); }
         }
         /* held: a frame the height of the screen below the nav sticks while
            the scene plays. Content sits at the top of it, so the heading

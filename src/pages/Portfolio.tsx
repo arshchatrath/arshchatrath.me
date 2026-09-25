@@ -1382,9 +1382,9 @@ export default function Portfolio() {
       {/* SECTION 6 — THE X-FACTOR                                            */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="xfactor" className="venn-section skewable section-pad overflow-hidden">
-        <div className="max-w-7xl mx-auto">
+        <div className="xf-grid max-w-7xl mx-auto">
 
-          <div className="text-center block-gap">
+          <div className="xf-head">
             <p className="font-mono text-xs tracking-[0.3em] uppercase text-[#00B4D8] mb-3 fade-up">What sets me apart</p>
             <div className="reveal-wrap overflow-hidden">
               <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 700, fontSize: "clamp(2rem, 4.5vw, 4rem)" }}>
@@ -1396,10 +1396,8 @@ export default function Portfolio() {
             </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-4">
-
-            {/* LEFT — SVG Venn diagram */}
-            <div className="w-full lg:w-[52%] flex justify-center items-center">
+            {/* Venn diagram, under the header */}
+            <div className="xf-venn flex justify-center items-center">
               <svg viewBox="0 0 420 400" className="venn-svg w-full max-w-md" style={{ overflow: "visible" }}>
                 <defs>
                   <radialGradient id="vg1" cx="50%" cy="50%" r="50%">
@@ -1480,37 +1478,32 @@ export default function Portfolio() {
               </svg>
             </div>
 
-            {/* RIGHT — Photo + trait cards */}
-            <div className="w-full lg:w-[48%] flex flex-col items-center gap-8">
-
-              {/* Photo with pulsing shadow */}
-              <div className="relative">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none"
+              {/* Photo, up beside the header */}
+              <div className="xf-photo relative">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(18rem,120%)] aspect-square rounded-full pointer-events-none"
                   style={{ background: "radial-gradient(circle, rgba(0,180,216,0.10) 0%, transparent 70%)" }} />
                 <img
                   src={arshHalftone} width={680} height={850}
                   alt="Arsh Chatrath"
-                  className="h-72 md:h-80 lg:h-[26rem] object-contain relative z-10 venn-photo"
+                  className="w-full h-auto object-contain relative z-10 venn-photo"
                   loading="lazy"
                   decoding="async"
                 />
               </div>
 
-              {/* 3 trait cards */}
-              <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
+              {/* 3 trait cards, under the photo */}
+              <div className="xf-cards grid grid-cols-3 gap-3 w-full max-w-sm">
                 {[
                   { label: "Technical", color: "#00B4D8", desc: "Full-stack + systems thinking" },
                   { label: "Product",   color: "rgba(200,200,215,0.85)", desc: "User-first, data-driven" },
                   { label: "Leader",    color: "rgba(0,180,216,0.75)", desc: "Aligns teams, ships fast" },
                 ].map(({ label, color, desc }) => (
-                  <div key={label} className="border border-white/8 rounded p-3 bg-white/[0.03]">
-                    <div className="font-mono text-xs uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
+                  <div key={label} className="border border-white/8 rounded p-2.5 lg:p-3 bg-white/[0.03]">
+                    <div className="font-mono text-xs uppercase tracking-normal lg:tracking-widest mb-1" style={{ color }}>{label}</div>
                     <div className="text-[#f5f0e8]/50 text-xs leading-snug" style={{ fontFamily: "var(--ff-body)" }}>{desc}</div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1556,8 +1549,11 @@ export default function Portfolio() {
       {/* SECTION 8 — HIRE ME                                                 */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="hire" className="hire-section flex items-center justify-center relative overflow-hidden section-y">
-        {/* Animated gradient wash behind the sign-off */}
+        {/* Animated gradient wash behind the sign-off. Its top edge fades out
+            (.hire-wash) so it melts into the page instead of starting on a
+            hard line. */}
         <AnimatedGradientBackground
+          containerClassName="hire-wash"
           Breathing={!reduceMotion}
           startingGap={125}
           breathingRange={9}
@@ -1754,6 +1750,22 @@ export default function Portfolio() {
         @media (prefers-reduced-motion: reduce) {
           .faq-card, .faq-card span, .faq-card::after { transition: none !important; }
         }
+
+        /* X-Factor: header top-left, photo beside it, Venn under the header,
+           cards under the photo */
+        .xf-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(8.5rem, 38vw, 13rem); grid-template-areas: "head photo" "venn venn" "cards cards"; column-gap: 1rem; row-gap: var(--space-stack); align-items: center; }
+        .xf-head { grid-area: head; }
+        .xf-venn { grid-area: venn; }
+        .xf-photo { grid-area: photo; }
+        .xf-cards { grid-area: cards; justify-self: center; }
+        .venn-arrow { display: none; }
+        @media (min-width: 768px) {
+          .xf-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); grid-template-areas: "head photo" "venn photo" "venn cards"; column-gap: var(--space-block); align-items: start; }
+          .xf-photo { justify-self: center; width: min(100%, 22rem); }
+          .venn-arrow { display: inline; }
+        }
+        @media (min-width: 1024px) { .xf-photo { width: min(100%, 27rem); } }
+        .hire-wash { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 38%); mask-image: linear-gradient(to bottom, transparent, #000 38%); }
 
         /* ASCII morph stage */
         .ascii-stage .ascii-pre {

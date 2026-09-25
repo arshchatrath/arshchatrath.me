@@ -922,7 +922,7 @@ export default function Portfolio() {
             Product &amp; Growth Builder
           </p>
 
-          {/* Sized in CSS to fill the width exactly (see .hero-inner). The
+          {/* Sized in CSS from the width and the height (see .hero-inner). The
               h1's aria-label carries the name; the letters are presentational. */}
           <h1
             data-wire="H1 / name"
@@ -987,7 +987,7 @@ export default function Portfolio() {
           <div className="hero-copy">
             <p
               data-wire="Text / intro"
-              className="hero-lead opacity-0 text-[length:var(--step-lead)] leading-snug text-[#f5f0e8]/75 max-w-[38rem]"
+              className="hero-lead opacity-0 leading-snug text-[#f5f0e8]/75 max-w-[38rem]"
               style={{ fontFamily: "var(--ff-body)" }}
             >
               Founding Product &amp; Growth Associate at <span className="text-[#f5f0e8]">Talkeys</span>,
@@ -997,7 +997,7 @@ export default function Portfolio() {
 
             {/* A scoreboard, not badges: big numbers in the headline face,
                 a hairline above, a plain label under each. */}
-            <ul data-wire="List / proof" className="hero-stats opacity-0 mt-[var(--space-stack)] grid grid-cols-3 max-w-[38rem] border-t border-white/20">
+            <ul data-wire="List / proof" className="hero-stats opacity-0 grid grid-cols-3 max-w-[38rem] border-t border-white/20">
               {HERO_PROOF.map((p) => (
                 <li key={p.v} className="hero-stat pt-3 pr-2 [&+&]:border-l [&+&]:border-white/10 [&+&]:pl-3 md:[&+&]:pl-5">
                   <span className="stat-num block overflow-hidden">
@@ -1010,7 +1010,7 @@ export default function Portfolio() {
               ))}
             </ul>
 
-            <div data-wire="Button / CTA" className="hero-cta opacity-0 mt-[var(--space-block)] flex flex-wrap items-center gap-x-7 gap-y-3" style={{ fontFamily: "var(--ff-body)" }}>
+            <div data-wire="Button / CTA" className="hero-cta opacity-0 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover
@@ -1630,31 +1630,41 @@ export default function Portfolio() {
            "CHATRATH" 3.18em (width axis 75). The 0.93 leaves room for letters
            to widen under the cursor. Portrait phones and tablets stack it on
            two lines; wide or landscape screens set it on one. */
-        .hero-inner { --name-fs: calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.93 / 3.1753); }
+        /* The hero, buttons included, must fit the first screen. So the name
+           is sized from the width (a share of it) and capped by the height,
+           and the gaps shrink on short screens. 3.1753em and 5.1025em are the
+           measured widths of "CHATRATH" and "ARSH CHATRATH". */
+        .hero-inner { --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.72 / 3.1753), 11svh); }
         .hero-name { font-size: var(--name-fs); }
         .name-line { display: block; overflow: hidden; padding-bottom: 0.04em; }
         .name-gap { display: none; }
         .hero-char { font-variation-settings: "wdth" 75, "wght" 760; }
-        .hero-stamp { position: relative; z-index: 2; width: clamp(150px, 42vw, 300px); margin: calc(var(--name-fs) * -0.28) 0 0 auto; }
-        .hero-copy { margin-top: var(--space-stack); }
-        .stat-num { font-family: var(--ff-display); font-size: clamp(1.55rem, 0.85rem + 3vw, 3.4rem); line-height: 0.95; letter-spacing: -0.01em; color: #f5f0e8; font-variation-settings: "wdth" 75, "wght" 760; }
+        .hero-stamp { position: relative; z-index: 2; width: clamp(110px, min(34vw, 23svh), 240px); margin: calc(var(--name-fs) * -0.3) 0 0 auto; }
+        .hero-copy { margin-top: clamp(0.75rem, 2.5svh, 1.5rem); }
+        .hero-lead { font-size: clamp(1.02rem, 0.9rem + 0.55vw, 1.4rem); }
+        .hero-stats { margin-top: clamp(0.75rem, 2.5svh, 1.5rem); }
+        .hero-cta { margin-top: clamp(1rem, 3.5svh, 2.25rem); }
+        .stat-num { font-family: var(--ff-display); font-size: clamp(1.45rem, 0.8rem + 2.4vw, 2.75rem); line-height: 0.95; letter-spacing: -0.01em; color: #f5f0e8; font-variation-settings: "wdth" 75, "wght" 760; }
         .hero-btn { transition: background-color .25s, box-shadow .25s; }
         .hero-btn:hover { background: #f5f0e8; box-shadow: 4px 4px 0 #00B4D8; }
-        .hero-postmark { position: absolute; left: -26%; bottom: -9%; width: 88%; color: rgba(0, 180, 216, 0.92); pointer-events: none; transform: rotate(-12deg); }
+        .hero-postmark { position: absolute; left: -34%; bottom: 8%; width: 80%; color: rgba(0, 180, 216, 0.92); pointer-events: none; transform: rotate(-12deg); }
         @media (min-width: 1024px), (orientation: landscape) {
-          .hero-inner { --name-fs: calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.93 / 5.1025); }
+          .hero-inner { --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.7 / 5.1025), 19svh); --stamp-w: clamp(170px, min(21vw, 36svh), 320px); }
           .name-line { display: inline-block; vertical-align: top; }
           .name-gap { display: inline-block; width: 0.22em; }
-          .hero-stamp { position: absolute; right: 0; top: calc(2rem + var(--name-fs) * 0.55); width: clamp(190px, 22vw, 340px); margin: 0; }
-          .hero-copy { max-width: min(58%, 40rem); margin-top: var(--space-block); }
+          /* the stamp lands on the end of the name, like on an envelope */
+          .hero-stamp { position: absolute; left: calc(var(--name-fs) * 4.7); top: calc(2rem + var(--name-fs) * 0.55); width: var(--stamp-w); margin: 0; }
+          /* the copy stops short of the stamp and its postmark */
+          .hero-copy { max-width: min(58%, 40rem, calc(var(--name-fs) * 4.7 - var(--stamp-w) * 0.3 - 1.5rem)); margin-top: clamp(1rem, 4svh, 3rem); }
+          .hero-postmark { left: -26%; bottom: -9%; width: 88%; }
         }
         /* Portrait tablets: the intro wraps beside the stamp, magazine style,
            instead of leaving a blank block to its left. */
         @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
-          .hero-stamp { float: right; width: clamp(200px, 36vw, 320px); margin: calc(var(--name-fs) * -0.28) 0 1rem 2rem; }
+          .hero-stamp { float: right; width: clamp(180px, min(34vw, 26svh), 300px); margin: calc(var(--name-fs) * -0.28) 0 1rem 2rem; }
           /* the intro wraps beside the stamp here, so keep the postmark on it */
           .hero-postmark { left: -10%; bottom: -5%; width: 66%; }
-          .hero-copy { margin-top: var(--space-block); }
+          .hero-copy { margin-top: clamp(1rem, 3svh, 2rem); }
           .hero-inner::after { content: ""; display: block; clear: both; }
         }
 

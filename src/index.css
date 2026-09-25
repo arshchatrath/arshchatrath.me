@@ -131,12 +131,10 @@
   margin-bottom: var(--space-block);
 }
 
-/* Labels on the loader's wireframe boxes (created by Preloader.tsx). */
-.pl-tag {
-  position: absolute;
-  font: 12px/1 var(--ff-mono);
-  letter-spacing: 0.08em;
-  color: rgba(0, 180, 216, 0.9);
-  white-space: nowrap;
-  opacity: 0;
-}
+/* The laser-engraving opening (Preloader.tsx). Strokes stay hairline at any
+   size: the letters are drawn in font units and scaled down. The glow is a
+   wide faint stroke under the line, not a filter: a filter would be redrawn
+   over the whole screen on every frame of the cut. */
+.pl-cut { stroke: rgba(196, 240, 255, 0.85); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.pl-glow { stroke: rgba(120, 215, 255, 0.16); stroke-width: 6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.pl-hot { stroke: #fff; stroke-width: 2.2; vector-effect: non-scaling-stroke; }

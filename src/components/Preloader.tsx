@@ -2,39 +2,43 @@ import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { EASE, prefersReducedMotion } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
+import { NAME_GLYPHS, NAME_UPM } from "./nameGlyphs";
 
 /**
- * The opening: sketch to shipped.
+ * The opening: a laser engraves the name.
  *
- * The loader reads the real hero's boxes from the page (every element marked
- * `data-wire`), draws their outlines like a Figma frame with a small label on
- * each, and runs a build log. Then its background fades away so the real
- * content appears inside the outlines as the hero animates in, and the
- * outlines dissolve. It never lifts off the page: it becomes the page.
+ * On black, a laser tip traces the outline of every letter of the hero name,
+ * one after another, leaving a very light blue hairline. The stretch just
+ * behind the tip glows hotter and cools as it moves on; a faint beam comes
+ * down to the tip and a few sparks spray off it. Once the name is cut, the
+ * outline flashes, the black lifts, and the real name is already sitting
+ * inside the engraving (the outlines are drawn over the real letters'
+ * measured positions), so the hand-off has no jump.
  *
- * Because the outlines are measured from the live layout, they match the
- * phone layout on a phone and the desktop layout on a desktop.
+ * The letter shapes are the font's real outlines (see nameGlyphs.ts). Any
+ * click, key or scroll fast-forwards it; repeat visits and reduced motion
+ * skip it.
  *
  * Rules carried over from the earlier glitch fixes:
- *  - start states are applied before the first paint (layout effect), and
- *    only `.to()` tweens follow, so nothing renders a start state out of turn
+ *  - start states are applied before the first paint (layout effect)
  *  - the sequence runs once per mount; callbacks are read through a ref
  */
 
-const LOG = ["v0.1  layout", "v0.4  copy", "v0.8  proof", "v1.0  shipped"];
+const ENGRAVE_S = 1.5; // time to cut the whole name
+const HOT_UNITS = 140; // length of the glowing stretch behind the tip, font units
 
 export default function Preloader({
   onReveal,
   onDone,
 }: {
-  onReveal: () => void;
+  /** `engraved`: the name is already on screen, so the hero shouldn't animate it in again */
+  onReveal: (engraved: boolean) => void;
   onDone: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const labelsRef = useRef<HTMLDivElement>(null);
-  const logRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const cb = useRef({ onReveal, onDone });
   useLayoutEffect(() => {
@@ -44,17 +48,18 @@ export default function Preloader({
   useLayoutEffect(() => {
     const root = rootRef.current;
     const svg = svgRef.current;
-    const labels = labelsRef.current;
-    const log = logRef.current;
-    if (!root || !svg || !labels || !log) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!root || !svg || !canvas || !ctx) return;
 
     document.body.style.overflow = "hidden";
     let revealed = false;
     let finished = false;
+    let engraved = false;
     const reveal = () => {
       if (revealed) return;
       revealed = true;
-      cb.current.onReveal();
+      cb.current.onReveal(engraved);
     };
     const release = () => {
       if (finished) return;
@@ -83,80 +88,210 @@ export default function Preloader({
       return;
     }
 
-    // ── Measure the real hero and draw its wireframe ─────────────────────────
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
-    const rects: SVGRectElement[] = [];
-    const tags: HTMLElement[] = [];
-    document.querySelectorAll<HTMLElement>("[data-wire]").forEach((el) => {
-      const r = el.getBoundingClientRect();
-      // Only boxes actually on screen (a page restored mid-scroll gets none).
-      if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > vh) return;
-      const pad = 6;
-      const x = Math.max(1, r.left - pad);
-      const y = Math.max(1, r.top - pad);
-      const w = Math.min(vw - 2, r.right + pad) - x;
-      const h = r.height + pad * 2;
-      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("x", String(x));
-      rect.setAttribute("y", String(y));
-      rect.setAttribute("width", String(w));
-      rect.setAttribute("height", String(h));
-      rect.setAttribute("rx", "6");
-      const perimeter = 2 * (w + h);
-      rect.style.strokeDasharray = String(perimeter);
-      rect.style.strokeDashoffset = String(perimeter);
-      svg.appendChild(rect);
-      rects.push(rect);
-
-      const tag = document.createElement("span");
-      tag.className = "pl-tag";
-      tag.textContent = el.dataset.wire ?? "";
-      // Tall boxes carry their label inside the top-left corner (like a
-      // Figma frame); short ones get it just above. Stops the labels of
-      // stacked boxes from colliding.
-      const inside = h > 44 || y <= 30;
-      tag.style.left = `${inside ? x + 8 : x}px`;
-      tag.style.top = `${inside ? y + 8 : y - 18}px`;
-      labels.appendChild(tag);
-      tags.push(tag);
-    });
-
-    // One status line that updates in place, like a build indicator in a
-    // toolbar. (Stacked lines collided with the button box on phones.)
-    const status = log.querySelector<HTMLElement>(".pl-status");
-    const step = (i: number) => () => {
-      if (status) status.textContent = LOG[i];
-    };
     fieldState.intensity = 0.25;
+    let disposed = false;
+    let tl: gsap.core.Timeline | null = null;
+    let raf = 0;
+    const made: Element[] = [];
 
-    const tl = gsap.timeline({ onComplete: release });
-    tl
-      // 1. the sketch draws itself
-      .to(rects, { strokeDashoffset: 0, duration: 0.65, ease: EASE.inOut, stagger: 0.08 }, 0)
-      .to(tags, { opacity: 1, duration: 0.3, stagger: 0.08 }, 0.1)
-      .call(step(1), [], 0.35)
-      .call(step(2), [], 0.6)
-      // 2. hand over: the hero starts animating in under the outlines
-      .add(reveal, 0.85)
-      // 3. the paper goes, and the real content fills the sketch
-      .to(bgRef.current, { opacity: 0, duration: 0.55, ease: EASE.out }, 0.9)
-      .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, 0.95)
-      // shipped at the hand-over, then the status steps aside before the
-      // real nav fades in underneath it
-      .call(step(3), [], 0.8)
-      .to(log, { color: "#00b4d8", duration: 0.15 }, 0.8)
-      .to(log, { opacity: 0, duration: 0.25, ease: EASE.in }, 0.95)
-      // 4. the sketch dissolves
-      .to([svg, labels], { opacity: 0, duration: 0.45, ease: EASE.in }, 1.3)
-      .set(root, { autoAlpha: 0 });
+    // Fast-forward on any sign of impatience.
+    const hurry = () => tl?.timeScale(6);
+    const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, hurry, { passive: true }));
+
+    const start = () => {
+      if (disposed) return;
+      const chars = [...document.querySelectorAll<HTMLElement>(".hero-char")];
+      if (!chars.length) {
+        tl = gsap.timeline({ onComplete: release }).to(root, { autoAlpha: 0, duration: 0.3 });
+        return;
+      }
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(vw * dpr);
+      canvas.height = Math.round(vh * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Where each real letter sits: its box's left edge is the glyph origin,
+      // and a zero-size probe on the line gives the exact baseline.
+      const scale = parseFloat(getComputedStyle(chars[0]).fontSize) / NAME_UPM;
+      const baselines = new Map<Element, number>();
+      const baselineOf = (line: Element) => {
+        let y = baselines.get(line);
+        if (y === undefined) {
+          const probe = document.createElement("span");
+          probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+          line.appendChild(probe);
+          y = probe.getBoundingClientRect().top;
+          probe.remove();
+          baselines.set(line, y);
+        }
+        return y;
+      };
+
+      const NS = "http://www.w3.org/2000/svg";
+      type Glyph = { cut: SVGPathElement; glow: SVGPathElement; hot: SVGPathElement; len: number; x: number; y: number };
+      const glyphs: Glyph[] = [];
+      chars.forEach((el) => {
+        const d = NAME_GLYPHS[el.textContent ?? ""];
+        if (!d || !el.parentElement) return;
+        const x = el.getBoundingClientRect().left;
+        const y = baselineOf(el.parentElement);
+        const g = document.createElementNS(NS, "g");
+        g.setAttribute("transform", `translate(${x} ${y}) scale(${scale} ${-scale})`);
+        const cut = document.createElementNS(NS, "path");
+        const glow = document.createElementNS(NS, "path");
+        const hot = document.createElementNS(NS, "path");
+        [cut, glow, hot].forEach((el) => el.setAttribute("d", d));
+        cut.setAttribute("class", "pl-cut");
+        glow.setAttribute("class", "pl-glow");
+        hot.setAttribute("class", "pl-hot");
+        g.append(glow, cut, hot);
+        svg.appendChild(g);
+        made.push(g);
+        const len = cut.getTotalLength();
+        cut.style.strokeDasharray = glow.style.strokeDasharray = `${len}`;
+        cut.style.strokeDashoffset = glow.style.strokeDashoffset = `${len}`;
+        hot.style.strokeDasharray = `${HOT_UNITS} ${len + HOT_UNITS}`;
+        hot.style.strokeDashoffset = `${HOT_UNITS}`;
+        glyphs.push({ cut, glow, hot, len, x, y });
+      });
+      const starts: number[] = [];
+      let total = 0;
+      glyphs.forEach((g) => {
+        starts.push(total);
+        total += g.len;
+      });
+
+      // The laser: where the tip is, whether it's cutting, and its sparks.
+      const tip = { x: vw / 2, y: -40, on: false };
+      type Spark = { x: number; y: number; vx: number; vy: number; life: number; max: number };
+      const sparks: Spark[] = [];
+      let current = -1;
+
+      const engraveTo = (dist: number) => {
+        let i = current < 0 ? 0 : current;
+        while (i < glyphs.length - 1 && dist >= starts[i + 1]) i++;
+        // letters finished since the last frame are fully cut, their glow gone
+        for (let k = Math.max(0, current); k < i; k++) {
+          glyphs[k].cut.style.strokeDashoffset = glyphs[k].glow.style.strokeDashoffset = "0";
+          glyphs[k].hot.style.opacity = "0";
+        }
+        current = i;
+        const g = glyphs[i];
+        const local = Math.min(g.len, dist - starts[i]);
+        g.cut.style.strokeDashoffset = g.glow.style.strokeDashoffset = `${g.len - local}`;
+        g.hot.style.strokeDashoffset = `${HOT_UNITS - local}`;
+        const p = g.cut.getPointAtLength(local);
+        tip.x = g.x + p.x * scale;
+        tip.y = g.y - p.y * scale;
+        tip.on = true;
+      };
+
+      const draw = () => {
+        raf = requestAnimationFrame(draw);
+        ctx.clearRect(0, 0, vw, vh);
+        if (tip.on) {
+          // faint beam from above
+          const beam = ctx.createLinearGradient(tip.x, 0, tip.x, tip.y);
+          beam.addColorStop(0, "rgba(160, 230, 255, 0)");
+          beam.addColorStop(1, "rgba(190, 240, 255, 0.35)");
+          ctx.strokeStyle = beam;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(tip.x, 0);
+          ctx.lineTo(tip.x, tip.y);
+          ctx.stroke();
+          // the tip's glow
+          const glow = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 16);
+          glow.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+          glow.addColorStop(0.25, "rgba(190, 240, 255, 0.55)");
+          glow.addColorStop(1, "rgba(0, 180, 216, 0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(tip.x, tip.y, 16, 0, Math.PI * 2);
+          ctx.fill();
+          for (let n = 0; n < 3; n++) {
+            sparks.push({
+              x: tip.x,
+              y: tip.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -Math.random() * 3.2 - 0.4,
+              life: 0,
+              max: 14 + Math.random() * 20,
+            });
+          }
+        }
+        // sparks: short streaks that arc down and fade
+        ctx.lineWidth = 1;
+        for (let s = sparks.length - 1; s >= 0; s--) {
+          const k = sparks[s];
+          k.life += 1;
+          if (k.life > k.max) {
+            sparks.splice(s, 1);
+            continue;
+          }
+          k.vy += 0.22;
+          k.x += k.vx;
+          k.y += k.vy;
+          ctx.strokeStyle = `rgba(210, 245, 255, ${(1 - k.life / k.max).toFixed(2)})`;
+          ctx.beginPath();
+          ctx.moveTo(k.x, k.y);
+          ctx.lineTo(k.x - k.vx * 1.6, k.y - k.vy * 1.6);
+          ctx.stroke();
+        }
+        if (!tip.on && !sparks.length) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+      };
+      raf = requestAnimationFrame(draw);
+
+      const cutAll = () => {
+        glyphs.forEach((g) => {
+          g.cut.style.strokeDashoffset = g.glow.style.strokeDashoffset = "0";
+          g.hot.style.opacity = "0";
+        });
+        tip.on = false;
+        engraved = true;
+      };
+
+      const pos = { d: 0 };
+      tl = gsap.timeline({ onComplete: release });
+      tl
+        // 1. the laser cuts the name, letter by letter
+        .to(pos, { d: total, duration: ENGRAVE_S, ease: "none", onUpdate: () => engraveTo(pos.d) })
+        .add(cutAll)
+        // 2. the finished engraving flashes once...
+        .to(".pl-cut", { stroke: "rgba(235, 251, 255, 1)", duration: 0.14, yoyo: true, repeat: 1, ease: "sine.inOut" })
+        // 3. ...and the page comes up under it, the real name already in place
+        .add(reveal, "-=0.05")
+        .to(bgRef.current, { opacity: 0, duration: 0.6, ease: EASE.out }, "<")
+        .to(svg, { opacity: 0, duration: 0.55, ease: EASE.in }, "<0.2")
+        .to({}, { duration: 0.01, onStart: () => { fieldState.intensity = 1; } }, "<")
+        .set(root, { autoAlpha: 0 });
+    };
+
+    // Measure only once the headline font is in, or the outline would be
+    // placed against the fallback font's letters.
+    const fontReady = document.fonts?.load
+      ? Promise.race([
+          document.fonts.load(`100px "Bricolage Grotesque"`),
+          new Promise((r) => setTimeout(r, 1500)),
+        ])
+      : Promise.resolve();
+    fontReady.then(start, start);
 
     return () => {
-      tl.kill();
+      disposed = true;
+      tl?.kill();
+      cancelAnimationFrame(raf);
+      events.forEach((e) => window.removeEventListener(e, hurry));
       document.body.style.overflow = "";
-      rects.forEach((r) => r.remove());
-      tags.forEach((t) => t.remove());
+      made.forEach((g) => g.remove());
     };
   }, []);
 
@@ -167,26 +302,9 @@ export default function Preloader({
       role="status"
       aria-label="Loading"
     >
-      <div ref={bgRef} className="absolute inset-0 bg-[#0a0a0a]" />
-      <svg
-        ref={svgRef}
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full"
-        fill="none"
-        stroke="rgba(0,180,216,0.85)"
-        strokeWidth="1"
-      />
-      <div ref={labelsRef} aria-hidden="true" className="absolute inset-0" />
-      {/* Build status, top corner (the nav is hidden under the loader, so this
-          spot is always free). Visible from the first frame. */}
-      <div
-        ref={logRef}
-        aria-hidden="true"
-        className="absolute top-[26px] right-[var(--gutter)] flex items-center gap-2 font-mono text-xs tracking-[0.18em] text-[#f5f0e8]/55"
-      >
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#00b4d8]" />
-        <span className="pl-status">{LOG[0]}</span>
-      </div>
+      <div ref={bgRef} className="absolute inset-0 bg-[#050606]" />
+      <svg ref={svgRef} aria-hidden="true" className="pl-engraving absolute inset-0 h-full w-full" fill="none" />
+      <canvas ref={canvasRef} aria-hidden="true" className="absolute inset-0 h-full w-full" />
     </div>
   );
 }

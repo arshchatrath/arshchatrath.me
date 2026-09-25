@@ -329,6 +329,8 @@ export default function Portfolio() {
   const progressRef   = useRef<HTMLDivElement>(null);
   const lenisRef      = useRef<Lenis | null>(null);
   const [intro, setIntro] = useState(false);
+  // true when the laser opening has already put the name on screen
+  const nameEngraved = useRef(false);
   // Separate from `intro`: the hero starts at the loader's snap, but the
   // overlay has to stay mounted until its columns have finished lifting.
   const [loaderGone, setLoaderGone] = useState(false);
@@ -356,7 +358,7 @@ export default function Portfolio() {
     const t = setTimeout(() => {
       setIntro(true);
       setLoaderGone(true);
-    }, 4500);
+    }, 6500);
     return () => clearTimeout(t);
   }, []);
 
@@ -452,11 +454,16 @@ export default function Portfolio() {
       // character, flickers through a few more, and settles into place, left
       // to right. Each letter's slot is pinned to its final width meanwhile,
       // so the line doesn't jitter as the glyphs change.
+      // (Skipped on a first visit: the laser opening has already engraved the
+      // name in place, so it just appears inside its outline.)
+      const engraved = nameEngraved.current;
       const finals = heroChars.map((el) => el.textContent ?? "");
-      heroChars.forEach((el) => {
-        el.style.width = `${el.getBoundingClientRect().width}px`;
-        el.style.textAlign = "center";
-      });
+      if (!engraved) {
+        heroChars.forEach((el) => {
+          el.style.width = `${el.getBoundingClientRect().width}px`;
+          el.style.textAlign = "center";
+        });
+      }
       const scramble = { t: 0 };
       let lastFlick = -1;
       const scrambleStep = () => {
@@ -475,13 +482,18 @@ export default function Portfolio() {
           el.style.textAlign = "";
         });
       };
-      scrambleStep();
+      if (!engraved) scrambleStep();
 
       const heroTl = gsap.timeline({ defaults: { ease: EASE.out } });
+      heroTl.fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0);
+      if (engraved) {
+        heroTl.set(heroChars, { yPercent: 0, opacity: 1 }, 0);
+      } else {
+        heroTl
+          .fromTo(heroChars, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.9, stagger: STAGGER.tight }, 0.05)
+          .to(scramble, { t: 1, duration: 1.15, ease: "none", onUpdate: scrambleStep, onComplete: settleName }, 0.05);
+      }
       heroTl
-        .fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0)
-        .fromTo(heroChars, { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.9, stagger: STAGGER.tight }, 0.05)
-        .to(scramble, { t: 1, duration: 1.15, ease: "none", onUpdate: scrambleStep, onComplete: settleName }, 0.05)
         // the one allowed overshoot on the page: the stamp lands
         .fromTo(".hero-stamp", { scale: 1.14, rotate: 6 }, { scale: 1, rotate: 0, duration: 0.8, ease: EASE.pop }, 0.3)
         .fromTo(".hero-lead", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DUR.base }, 0.45)
@@ -1010,7 +1022,13 @@ export default function Portfolio() {
   return (
     <>
       {!loaderGone && (
-        <Preloader onReveal={() => setIntro(true)} onDone={() => setLoaderGone(true)} />
+        <Preloader
+          onReveal={(engraved) => {
+            nameEngraved.current = engraved;
+            setIntro(true);
+          }}
+          onDone={() => setLoaderGone(true)}
+        />
       )}
 
       <div
@@ -1094,7 +1112,7 @@ export default function Portfolio() {
         </svg>
 
         <div className="hero-inner relative w-full max-w-[1600px] mx-auto">
-          <p data-wire="Text / kicker" className="hero-kicker opacity-0 w-fit font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
+          <p className="hero-kicker opacity-0 w-fit font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
             <span className="sr-only">{HERO_TAGLINE}</span>
             <span aria-hidden="true">
               {HERO_TAGLINE.split("").map((c, i) => (
@@ -1106,7 +1124,7 @@ export default function Portfolio() {
           {/* Sized in CSS from the width and the height (see .hero-inner). The
               h1's aria-label carries the name; the letters are presentational. */}
           <h1
-            data-wire="H1 / name"
+           
             aria-label="Arsh Chatrath"
             className="hero-name mt-3 w-fit whitespace-nowrap"
             style={{ fontFamily: "var(--ff-display)", fontWeight: 800, lineHeight: 0.82, letterSpacing: "-0.02em" }}
@@ -1127,7 +1145,7 @@ export default function Portfolio() {
 
           {/* The stamp: overlaps the name like a stamp on an envelope. Visible
               from the first frame (it is the page's largest element). */}
-          <div data-wire="Image / portrait" className="hero-stamp">
+          <div className="hero-stamp">
             <img
               src="/img/hero-800.webp"
               srcSet="/img/hero-320.webp 320w, /img/hero-480.webp 480w, /img/hero-800.webp 800w, /img/hero-1080.webp 1080w"
@@ -1167,7 +1185,7 @@ export default function Portfolio() {
 
           <div className="hero-copy">
             <p
-              data-wire="Text / intro"
+             
               className="hero-lead opacity-0 leading-snug text-[#f5f0e8] max-w-[36rem]"
               style={{ fontFamily: "var(--ff-body)" }}
             >
@@ -1180,7 +1198,7 @@ export default function Portfolio() {
 
             {/* A scoreboard, not badges: big numbers in the headline face,
                 a hairline above, a plain label under each. */}
-            <ul data-wire="List / proof" className="hero-stats opacity-0 grid grid-cols-3 max-w-[38rem] border-t border-white/20">
+            <ul className="hero-stats opacity-0 grid grid-cols-3 max-w-[38rem] border-t border-white/20">
               {HERO_PROOF.map((p) => (
                 <li key={p.v} className="hero-stat pt-3 pr-2 [&+&]:border-l [&+&]:border-white/10 [&+&]:pl-3 md:[&+&]:pl-5">
                   <span className="stat-num block overflow-hidden">
@@ -1193,7 +1211,7 @@ export default function Portfolio() {
               ))}
             </ul>
 
-            <div data-wire="Button / CTA" className="hero-cta opacity-0 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ fontFamily: "var(--ff-body)" }}>
+            <div className="hero-cta opacity-0 flex flex-wrap items-center gap-x-7 gap-y-3" style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover

@@ -28,10 +28,11 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
+// Three numbers under the intro. `s` is the suffix, drawn in teal.
 const HERO_PROOF = [
-  { k: "12,000+", v: "Helix registrations" },
-  { k: "60%", v: "participation lift at Talkeys" },
-  { k: "Top 1%", v: "Amazon ML School '25" },
+  { n: "8,000", s: "+", v: "users on Talkeys" },
+  { n: "12,000", s: "+", v: "Helix signups" },
+  { n: "Top 1", s: "%", v: "Amazon ML School '25" },
 ];
 const PM_QUESTIONS = [
   "How do I know I'm solving the right problem?",
@@ -398,8 +399,13 @@ export default function Portfolio() {
         // the one allowed overshoot on the page: the stamp lands
         .fromTo(".hero-stamp", { scale: 1.14, rotate: 6 }, { scale: 1, rotate: 0, duration: 0.8, ease: EASE.pop }, 0.3)
         .fromTo(".hero-lead", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: DUR.base }, 0.45)
-        .fromTo(".hero-chip", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.fast, stagger: 0.08 }, 0.55)
+        // the numbers rise out of their rule, like the letters of the name
+        .fromTo(".hero-stats", { opacity: 0 }, { opacity: 1, duration: DUR.fast }, 0.55)
+        .fromTo(".stat-num > span", { yPercent: 105 }, { yPercent: 0, duration: DUR.base, stagger: STAGGER.loose }, 0.55)
         .fromTo(".hero-cta", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: DUR.base }, 0.7)
+        // and the postmark is struck over the stamp's corner
+        .fromTo(".hero-postmark", { opacity: 0, scale: 1.45, rotate: -24 }, { opacity: 1, scale: 1, rotate: -12, duration: 0.32, ease: "power4.in" }, 0.95)
+        .fromTo(".hero-stamp img", { y: 0 }, { y: 3, duration: 0.07, yoyo: true, repeat: 1, ease: "power1.out" }, 1.27)
         .add(cacheHeroCenters)
         // one breath through the letters, so the name reads as alive before
         // anyone touches it (and on phones, where nobody can hover)
@@ -952,46 +958,75 @@ export default function Portfolio() {
               fetchPriority="high"
               decoding="async"
             />
+            {/* Postmark: says "open to internships" in the stamp's own
+                language. Decorative; the intro says the same in plain text. */}
+            <svg className="hero-postmark opacity-0" viewBox="0 0 240 120" aria-hidden="true">
+              <defs>
+                <path id="pm-ring" d="M 60 60 m -41 0 a 41 41 0 1 1 82 0 a 41 41 0 1 1 -82 0" />
+                <filter id="pm-ink" x="-5%" y="-5%" width="110%" height="110%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" />
+                  <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.7" />
+                  <feComposite in="SourceGraphic" operator="in" />
+                </filter>
+              </defs>
+              <g filter="url(#pm-ink)" fill="none" stroke="currentColor">
+                <circle cx="60" cy="60" r="54" strokeWidth="3" />
+                <circle cx="60" cy="60" r="31" strokeWidth="1.5" />
+                <text fill="currentColor" stroke="none" fontSize="10.5" letterSpacing="1.6" style={{ fontFamily: "var(--ff-mono)" }}>
+                  <textPath href="#pm-ring" textLength="252" lengthAdjust="spacing">OPEN TO INTERNSHIPS · PATIALA · INDIA ·</textPath>
+                </text>
+                <text x="60" y="57" textAnchor="middle" fill="currentColor" stroke="none" fontSize="12" style={{ fontFamily: "var(--ff-mono)" }}>PB</text>
+                <text x="60" y="72" textAnchor="middle" fill="currentColor" stroke="none" fontSize="11" style={{ fontFamily: "var(--ff-mono)" }}>147004</text>
+                {[34, 48, 62, 76, 90].map((y) => (
+                  <path key={y} strokeWidth="2.5" d={`M 122 ${y} q 14 -8 28 0 t 28 0 t 28 0 t 28 0`} />
+                ))}
+              </g>
+            </svg>
           </div>
 
           <div className="hero-copy">
             <p
               data-wire="Text / intro"
-              className="hero-lead opacity-0 text-[length:var(--step-lead)] leading-snug text-[#f5f0e8]/80 max-w-[36rem]"
+              className="hero-lead opacity-0 text-[length:var(--step-lead)] leading-snug text-[#f5f0e8]/75 max-w-[38rem]"
               style={{ fontFamily: "var(--ff-body)" }}
             >
-              Founding Product &amp; Growth Associate at <span className="text-[#f5f0e8]">Talkeys</span>.
-              {" "}I find broken user experiences and fix them, systematically.
+              Founding Product &amp; Growth Associate at <span className="text-[#f5f0e8]">Talkeys</span>,
+              studying CS &amp; Business Systems at <span className="text-[#f5f0e8]">Thapar</span>.
+              Looking for product and growth internships.
             </p>
 
-            <ul data-wire="List / proof" className="mt-[var(--space-stack)] flex flex-wrap gap-2 font-mono">
+            {/* A scoreboard, not badges: big numbers in the headline face,
+                a hairline above, a plain label under each. */}
+            <ul data-wire="List / proof" className="hero-stats opacity-0 mt-[var(--space-stack)] grid grid-cols-3 max-w-[38rem] border-t border-white/20">
               {HERO_PROOF.map((p) => (
-                <li
-                  key={p.v}
-                  className="hero-chip opacity-0 rounded-full border border-white/15 px-3 py-1.5 text-xs uppercase tracking-[0.12em] text-[#f5f0e8]/72"
-                >
-                  <span className="text-[#00B4D8]">{p.k}</span> {p.v}
+                <li key={p.v} className="hero-stat pt-3 pr-2 [&+&]:border-l [&+&]:border-white/10 [&+&]:pl-3 md:[&+&]:pl-5">
+                  <span className="stat-num block overflow-hidden">
+                    <span className="block">
+                      {p.n}<span className="text-[#00B4D8]">{p.s}</span>
+                    </span>
+                  </span>
+                  <span className="mt-1.5 block font-mono text-xs uppercase leading-snug tracking-[0.08em] text-[#f5f0e8]/60">{p.v}</span>
                 </li>
               ))}
             </ul>
 
-            <div data-wire="Button / CTA" className="hero-cta opacity-0 mt-[var(--space-block)] flex flex-wrap items-center gap-3" style={{ fontFamily: "var(--ff-body)" }}>
+            <div data-wire="Button / CTA" className="hero-cta opacity-0 mt-[var(--space-block)] flex flex-wrap items-center gap-x-7 gap-y-3" style={{ fontFamily: "var(--ff-body)" }}>
               <a
                 href="#hire"
                 data-hover
                 data-magnetic
                 onClick={(e) => { e.preventDefault(); lenisRef.current?.scrollTo("#hire", { offset: -72 }); }}
-                className="lets-talk-btn inline-flex items-center gap-2 text-[#0a0a0a] font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full"
-                style={{ background: "#00B4D8", boxShadow: "0 0 30px rgba(0,180,216,0.35)" }}
+                className="hero-btn group inline-flex items-center gap-3 rounded-[3px] bg-[#00B4D8] px-5 py-3 text-base font-semibold text-[#0a0a0a]"
               >
-                Hire me <span aria-hidden="true">→</span>
+                Hire me
+                <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </a>
               <a
                 href="/resume"
                 data-hover
-                className="inline-flex items-center gap-2 border border-white/20 text-[#f5f0e8]/85 font-bold text-sm uppercase tracking-widest px-6 py-3.5 rounded-full hover:border-[#00B4D8] hover:text-[#00B4D8] transition-colors"
+                className="text-base font-medium text-[#f5f0e8]/85 underline decoration-[#f5f0e8]/30 decoration-1 underline-offset-[7px] transition-colors hover:text-[#00B4D8] hover:decoration-[#00B4D8]"
               >
-                View resume
+                Resume <span aria-hidden="true">↗</span>
               </a>
             </div>
           </div>
@@ -1606,6 +1641,10 @@ export default function Portfolio() {
         .hero-char { font-variation-settings: "wdth" 75, "wght" 760; }
         .hero-stamp { position: relative; z-index: 2; width: clamp(150px, 42vw, 300px); margin: calc(var(--name-fs) * -0.28) 0 0 auto; }
         .hero-copy { margin-top: var(--space-stack); }
+        .stat-num { font-family: var(--ff-display); font-size: clamp(1.55rem, 0.85rem + 3vw, 3.4rem); line-height: 0.95; letter-spacing: -0.01em; color: #f5f0e8; font-variation-settings: "wdth" 75, "wght" 760; }
+        .hero-btn { transition: background-color .25s, box-shadow .25s; }
+        .hero-btn:hover { background: #f5f0e8; box-shadow: 4px 4px 0 #00B4D8; }
+        .hero-postmark { position: absolute; left: -26%; bottom: -9%; width: 88%; color: rgba(0, 180, 216, 0.92); pointer-events: none; transform: rotate(-12deg); }
         @media (min-width: 1024px), (orientation: landscape) {
           .hero-inner { --name-fs: calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.93 / 5.1025); }
           .name-line { display: inline-block; vertical-align: top; }
@@ -1617,6 +1656,8 @@ export default function Portfolio() {
            instead of leaving a blank block to its left. */
         @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
           .hero-stamp { float: right; width: clamp(200px, 36vw, 320px); margin: calc(var(--name-fs) * -0.28) 0 1rem 2rem; }
+          /* the intro wraps beside the stamp here, so keep the postmark on it */
+          .hero-postmark { left: -10%; bottom: -5%; width: 66%; }
           .hero-copy { margin-top: var(--space-block); }
           .hero-inner::after { content: ""; display: block; clear: both; }
         }

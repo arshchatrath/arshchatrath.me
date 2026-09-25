@@ -10,7 +10,7 @@ interface AnimatedGradientBackgroundProps {
   gradientColors?: string[];
   /** Percentage stops (0-100) matching `gradientColors`. */
   gradientStops?: number[];
-  /** Speed of the breathing animation. Lower is slower. @default 0.02 */
+  /** Speed of the breathing and drifting, as a multiplier of real time. @default 1 */
   animationSpeed?: number;
   /** How far the gradient expands and contracts, in percentage points. @default 5 */
   breathingRange?: number;
@@ -45,7 +45,7 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
     "#3D5AFE",
   ],
   gradientStops = [35, 50, 60, 70, 80, 90, 100],
-  animationSpeed = 0.02,
+  animationSpeed = 1,
   breathingRange = 5,
   containerStyle = {},
   topOffset = 0,
@@ -79,11 +79,11 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
       .map((stop, index) => `${gradientColors[index]} ${stop}%`)
       .join(", ");
 
-    const paint = (width: number) => {
+    const paint = (width: number, x = 50, y = 20) => {
       if (containerRef.current) {
         containerRef.current.style.background = `radial-gradient(${width}% ${
           width + topOffset
-        }% at 50% 20%, ${stops})`;
+        }% at ${x}% ${y}%, ${stops})`;
       }
     };
 
@@ -93,20 +93,37 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
       return;
     }
 
-    let animationFrame: number;
-    let width = startingGap;
-    let directionWidth = 1;
-
-    const animateGradient = () => {
-      if (width >= startingGap + breathingRange) directionWidth = -1;
-      if (width <= startingGap - breathingRange) directionWidth = 1;
-      width += directionWidth * animationSpeed;
-      paint(width);
+    // Breathing: the glow swells and shrinks every few seconds and drifts
+    // around on its own looping path. Two sines per value, with random
+    // phases each visit, so it never reads as a simple back-and-forth.
+    const ph = Array.from({ length: 6 }, () => Math.random() * Math.PI * 2);
+    let animationFrame = 0;
+    let visible = false;
+    const t0 = performance.now();
+    const animateGradient = (now: number) => {
       animationFrame = requestAnimationFrame(animateGradient);
+      const t = ((now - t0) / 1000) * animationSpeed;
+      const width = startingGap + breathingRange * (0.65 * Math.sin(t * 1.3 + ph[0]) + 0.35 * Math.sin(t * 2.9 + ph[1]));
+      const x = 50 + 16 * Math.sin(t * 0.55 + ph[2]) + 6 * Math.sin(t * 1.7 + ph[3]);
+      const y = 20 + 10 * Math.sin(t * 0.8 + ph[4]) + 4 * Math.sin(t * 2.1 + ph[5]);
+      paint(width, x, y);
     };
 
-    animationFrame = requestAnimationFrame(animateGradient);
-    return () => cancelAnimationFrame(animationFrame);
+    // Only animate while it's on screen.
+    const seen = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !animationFrame) animationFrame = requestAnimationFrame(animateGradient);
+      if (!visible && animationFrame) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+      }
+    });
+    if (wrapperRef.current) seen.observe(wrapperRef.current);
+    paint(startingGap);
+    return () => {
+      seen.disconnect();
+      cancelAnimationFrame(animationFrame);
+    };
   }, [
     startingGap,
     Breathing,

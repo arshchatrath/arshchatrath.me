@@ -5,6 +5,13 @@ import { deviceTier } from "@/lib/motion";
 /**
  * Cursor system.
  *
+ * Over text, a highlighter grows out of the ring: a cream disc blended with
+ * "difference", so the letters under it invert (cream text turns dark on a
+ * light disc). It lives on its own layer that is always blended, so it can
+ * grow in and shrink away smoothly instead of switching; a short grace period
+ * keeps it from flickering across the gaps between words. Anywhere else the
+ * cursor is a plain teal ring. The dot stays teal.
+ *
  * Three behaviours the old dot didn't have:
  *  - magnetism: elements marked [data-magnetic] pull toward the pointer and the
  *    ring snaps to their centre
@@ -13,9 +20,43 @@ import { deviceTier } from "@/lib/motion";
  *
  * Skipped entirely on touch/low tier, where a custom cursor is dead weight.
  */
+/** Is the point over an actual glyph (not just inside a text element's box)? */
+function overText(x: number, y: number): boolean {
+  type CaretDoc = Document & {
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    caretRangeFromPoint?: (x: number, y: number) => Range | null;
+  };
+  const d = document as CaretDoc;
+  let node: Node | null = null;
+  let offset = 0;
+  if (d.caretPositionFromPoint) {
+    const p = d.caretPositionFromPoint(x, y);
+    node = p?.offsetNode ?? null;
+    offset = p?.offset ?? 0;
+  } else if (d.caretRangeFromPoint) {
+    const r = d.caretRangeFromPoint(x, y);
+    node = r?.startContainer ?? null;
+    offset = r?.startOffset ?? 0;
+  }
+  if (!node || node.nodeType !== Node.TEXT_NODE || !node.textContent?.trim()) return false;
+  // The caret lands next to the nearest letter even in empty space beside a
+  // line, so check the letters either side of it actually contain the point.
+  const len = node.textContent.length;
+  const range = document.createRange();
+  range.setStart(node, Math.max(0, offset - 1));
+  range.setEnd(node, Math.min(len, offset + 1));
+  const pad = 3;
+  return [...range.getClientRects()].some(
+    (r) => x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad,
+  );
+}
+
+const TEXT_GRACE_MS = 140;
+
 export default function Cursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -25,8 +66,9 @@ export default function Cursor() {
 
     const dot = dotRef.current;
     const ring = ringRef.current;
+    const fill = fillRef.current;
     const label = labelRef.current;
-    if (!dot || !ring || !label) return;
+    if (!dot || !ring || !fill || !label) return;
 
     document.documentElement.classList.add("has-custom-cursor");
 
@@ -38,10 +80,16 @@ export default function Cursor() {
     let prevY = my;
 
     let magnet: HTMLElement | null = null;
+    let onText = false;
+    let lastTextAt = -Infinity;
     let seen = false;
 
-    const setX = gsap.quickSetter(ring, "x", "px");
-    const setY = gsap.quickSetter(ring, "y", "px");
+    // Centre both on the pointer through GSAP itself. A CSS translate got
+    // folded into GSAP's transform when it first read each element, and the
+    // highlighter was 0px wide at that moment, so it lost its centring.
+    gsap.set([ring, fill], { xPercent: -50, yPercent: -50 });
+    const setX = gsap.quickSetter([ring, fill], "x", "px");
+    const setY = gsap.quickSetter([ring, fill], "y", "px");
     const setDotX = gsap.quickSetter(dot, "x", "px");
     const setDotY = gsap.quickSetter(dot, "y", "px");
 
@@ -58,30 +106,66 @@ export default function Cursor() {
         gsap.to([ring, dot], { opacity: 1, duration: 0.3, ease: "power2.out" });
       }
 
+      const now = performance.now();
+
       const el =
         (e.target as HTMLElement | null)?.closest<HTMLElement>(
           "[data-magnetic], a, button, [data-hover], [data-cursor]",
         ) ?? null;
+      const cursorLabel = el?.dataset.cursor ?? "";
+      // A labelled disc can't invert (its label would too).
+      const hit = !cursorLabel && overText(mx, my);
+      if (hit) lastTextAt = now;
+      // grace period: crossing the gap between two words isn't leaving text
+      const text = hit || (!cursorLabel && now - lastTextAt < TEXT_GRACE_MS);
 
-      if (el !== magnet) {
+      if (el !== magnet || text !== onText) {
         magnet = el;
-        const cursorLabel = el?.dataset.cursor ?? "";
+        onText = text;
         label.textContent = cursorLabel;
+        const size = cursorLabel ? 74 : text ? (el ? 58 : 40) : el ? 46 : 26;
         gsap.to(ring, {
-          width: cursorLabel ? 74 : el ? 46 : 26,
-          height: cursorLabel ? 74 : el ? 46 : 26,
-          borderColor: el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
-          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "transparent",
-          duration: 0.3,
+          width: size,
+          height: size,
+          borderColor: text ? "rgba(0,180,216,0)" : el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
+          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(0,180,216,0)",
+          duration: 0.55,
           ease: "power3.out",
+          overwrite: "auto",
         });
-        gsap.to(label, { opacity: cursorLabel ? 1 : 0, duration: 0.2 });
-        gsap.to(dot, { opacity: cursorLabel ? 0 : 1, duration: 0.2 });
+        // the highlighter grows out of the dot, or melts back into it
+        gsap.to(fill, {
+          width: text ? size : 0,
+          height: text ? size : 0,
+          opacity: text ? 1 : 0,
+          duration: text ? 0.7 : 0.6,
+          ease: text ? "power2.out" : "power2.inOut",
+          overwrite: "auto",
+        });
+        gsap.to(label, { opacity: cursorLabel ? 1 : 0, duration: 0.25 });
+        gsap.to(dot, { opacity: cursorLabel ? 0 : 1, duration: 0.25 });
       }
     };
 
+    // Resting on a gap between words sends no more pointer moves, so let the
+    // grace period run out on its own.
+    const graceCheck = window.setInterval(() => {
+      if (!onText || performance.now() - lastTextAt < TEXT_GRACE_MS) return;
+      if (overText(mx, my)) {
+        lastTextAt = performance.now();
+        return;
+      }
+      onText = false;
+      const size = magnet ? 46 : 26;
+      gsap.to(ring, { width: size, height: size, borderColor: magnet ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)", duration: 0.55, ease: "power3.out", overwrite: "auto" });
+      gsap.to(fill, { width: 0, height: 0, opacity: 0, duration: 0.6, ease: "power2.inOut", overwrite: "auto" });
+    }, 120);
+
     const onLeave = () => {
       gsap.to([ring, dot], { opacity: 0, duration: 0.2 });
+      onText = false;
+      lastTextAt = -Infinity;
+      gsap.to(fill, { width: 0, height: 0, opacity: 0, duration: 0.3, overwrite: "auto" });
     };
     const onEnter = () => {
       if (seen) gsap.to([ring, dot], { opacity: 1, duration: 0.2 });
@@ -106,7 +190,7 @@ export default function Cursor() {
       setDotY(my);
 
       // Stretch along the direction of travel.
-      gsap.set(ring, {
+      gsap.set([ring, fill], {
         rotate: angle,
         scaleX: 1 + speed * 0.012,
         scaleY: 1 - speed * 0.006,
@@ -157,6 +241,7 @@ export default function Cursor() {
       document.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("pointerenter", onEnter);
       gsap.ticker.remove(tick);
+      window.clearInterval(graceCheck);
     };
   }, []);
 
@@ -169,8 +254,6 @@ export default function Cursor() {
         style={{
           width: 26,
           height: 26,
-          marginLeft: -13,
-          marginTop: -13,
           borderColor: "rgba(0,180,216,0.45)",
           opacity: 0,
           willChange: "transform",
@@ -181,6 +264,21 @@ export default function Cursor() {
           className="font-mono text-[8px] uppercase tracking-[0.2em] text-[#00B4D8] opacity-0"
         />
       </div>
+      {/* The text highlighter: its own always-blended layer, so it can grow
+          and shrink smoothly. Sits under the ring and the dot. */}
+      <div
+        ref={fillRef}
+        aria-hidden="true"
+        className="pointer-events-none fixed left-0 top-0 z-[9998] rounded-full"
+        style={{
+          width: 0,
+          height: 0,
+          backgroundColor: "#f5f0e8",
+          mixBlendMode: "difference",
+          opacity: 0,
+          willChange: "transform",
+        }}
+      />
       <div
         ref={dotRef}
         aria-hidden="true"

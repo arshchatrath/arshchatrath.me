@@ -23,20 +23,20 @@ export default function NotFound() {
       </p>
       <h1
         className="mt-4 text-4xl md:text-6xl"
-        style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900 }}
+        style={{ fontFamily: "var(--ff-display)", fontWeight: 800 }}
       >
         This page doesn't exist
       </h1>
       <p
         className="mt-4 max-w-md text-[#f5f0e8]/60"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        style={{ fontFamily: "var(--ff-body)" }}
       >
         The link is broken or the page moved. Here's everything else worth seeing.
       </p>
 
       <nav
         className="mt-10 flex flex-wrap items-center justify-center gap-3"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        style={{ fontFamily: "var(--ff-body)" }}
       >
         {LINKS.map(({ href, label }) => (
           <a

@@ -1,3 +1,4 @@
+@import "./fonts.css";
 @import "tailwindcss";
 
 @theme inline {
@@ -17,11 +18,42 @@
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --font-sans: 'Space Grotesk', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-sans: var(--ff-body);
+  --font-mono: var(--ff-mono);
+  --font-display: var(--ff-display);
 }
 
 :root {
+  /* Type. Change a font here and it changes everywhere. */
+  --ff-display: 'Bricolage Grotesque', 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ff-body: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --ff-mono: 'Fragment Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Colour. Teal is building and thinking; gold appears only for wins. */
+  --ink: #0a0a0a;
+  --ink-raised: #121212;
+  --line: rgba(245, 240, 232, 0.12);
+  --paper: #f5f0e8;
+  --paper-2: rgba(245, 240, 232, 0.72); /* secondary text, ~7:1 on ink */
+  --paper-3: rgba(245, 240, 232, 0.55); /* labels, ~5.8:1 on ink */
+  --teal: #00b4d8;
+  --gold: #f2b544;
+
+  /* Space. Every value shrinks on small screens instead of staying at
+     desktop size, which is what left phones full of empty bands. */
+  --space-section: clamp(2.25rem, 1.25rem + 3vw, 4.5rem);
+  --space-block: clamp(1.5rem, 0.9rem + 2.2vw, 3rem);
+  --space-stack: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
+  --gutter: clamp(1.25rem, 0.5rem + 3.5vw, 4rem);
+  --nav-h: 4.5rem;
+
+  /* Type scale. Nothing on the page goes below 12px. */
+  --step-label: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+  --step-body: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-lead: clamp(1.25rem, 1rem + 1.2vw, 2rem);
+  --step-h3: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
+  --step-h2: clamp(2.25rem, 1.4rem + 4vw, 5rem);
+
   --background: 0 0% 4%;
   --foreground: 37 32% 94%;
   --border: 0 0% 15%;
@@ -43,6 +75,18 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Headlines use the display face condensed: fully for the name, a little
+     for section titles. The width axis is what the kinetic hero will drive;
+     body text has no such axis and is unaffected. The font is requested with
+     its optical size pinned to 96, its headline design (+2 KB); without it
+     the browser gets the plainer small-text design even at poster sizes. */
+  h1 {
+    font-stretch: 75%;
+  }
+  h2 {
+    font-stretch: 85%;
   }
 
   body {
@@ -70,3 +114,50 @@
     html { scroll-behavior: auto; }
   }
 }
+
+/* Layout utilities built on the spacing tokens. Sections use these instead of
+   fixed padding, so a phone gets phone-sized gaps. */
+@utility section-pad {
+  padding-block: var(--space-section);
+  padding-inline: var(--gutter);
+}
+@utility section-y {
+  padding-block: var(--space-section);
+}
+@utility gutter-x {
+  padding-inline: var(--gutter);
+}
+@utility block-gap {
+  margin-bottom: var(--space-block);
+}
+
+/* Image hover: a laser line sweeps down the picture once, then a soft
+   highlight follows the pointer (ImageScan.tsx). The overlay is masked by
+   the image, so it follows cut-out silhouettes. */
+.img-scan-host,
+.img-scan { transition: scale 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.img-scan {
+  --scan: -12%;
+  --mx: 50%;
+  --my: 50%;
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition-property: opacity, scale, translate;
+  transition-duration: 0.35s, 0.7s, 0.7s;
+  background:
+    linear-gradient(to bottom, transparent calc(var(--scan) - 24%), rgba(0, 180, 216, 0.16) calc(var(--scan) - 4%), rgba(120, 225, 255, 0.5) calc(var(--scan) - 0.8%), rgba(235, 252, 255, 0.95) var(--scan), transparent calc(var(--scan) + 0.6%)),
+    radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.14), transparent 45%);
+}
+.img-scan.on { opacity: 1; }
+
+/* The laser-engraving opening (Preloader.tsx). Stroke widths are set in
+   the script, in the letters' own units, so the dash that draws each letter
+   is measured in the same units as the letter (non-scaling strokes measured
+   dashes in screen pixels and letters finished far too early). The glow is a
+   wide faint stroke under the line, not a filter: a filter would be redrawn
+   over the whole screen on every frame of the cut. */
+.pl-cut { stroke: rgba(196, 240, 255, 0.85); }
+.pl-glow { stroke: rgba(120, 215, 255, 0.16); stroke-linejoin: round; }
+.pl-hot { stroke: #fff; }

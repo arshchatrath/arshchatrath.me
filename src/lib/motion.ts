@@ -7,28 +7,38 @@
  */
 
 export const EASE = {
-  /** Default for things entering. Decisive, no bounce. */
-  out: "power3.out",
+  /** Arrivals. Fast start, long soft landing: the site's signature feel. */
+  out: "expo.out",
   /** Things leaving, or collapsing inward. */
   in: "power2.in",
-  /** Scrubbed / two-way motion. */
-  inOut: "power2.inOut",
-  /** The one place we allow overshoot: an arrival that should feel physical. */
+  /** Transitions between states, and anything scrubbed. */
+  inOut: "expo.inOut",
+  /** Idle loops (floating, breathing). Never used for arrivals. */
+  ambient: "sine.inOut",
+  /** The one place overshoot is allowed: an arrival that should feel physical. */
   pop: "back.out(1.7)",
 } as const;
 
 export const DUR = {
   fast: 0.35,
   base: 0.7,
-  slow: 1.2,
+  slow: 1.1,
+  /** Ceiling for any single scene. Nothing on the site runs longer. */
+  scene: 1.6,
 } as const;
 
 /** Stagger presets, so sequencing is consistent across sections. */
 export const STAGGER = {
-  tight: 0.035,
-  base: 0.08,
-  loose: 0.14,
+  /** letters */
+  tight: 0.03,
+  /** words and lines */
+  base: 0.06,
+  /** cards, rows, items */
+  loose: 0.12,
 } as const;
+
+/** Scrubbed animations lag the scroll by this much, for weight without mush. */
+export const SCRUB = 0.6;
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&

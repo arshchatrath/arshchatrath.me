@@ -331,6 +331,9 @@ export default function Portfolio() {
   const progressRef   = useRef<HTMLDivElement>(null);
   const lenisRef      = useRef<Lenis | null>(null);
   const [intro, setIntro] = useState(false);
+  // phone menu (the section links don't fit in the bar on phones)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
   // true when the laser opening has already put the name on screen
   const nameEngraved = useRef(false);
   // Separate from `intro`: the hero starts at the loader's snap, but the
@@ -704,6 +707,40 @@ export default function Portfolio() {
     return heroCleanup;
   }, [intro]);
 
+  // Phone menu: freeze the page behind it, close on Escape, and hand focus
+  // back to the button when it closes.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const lenis = lenisRef.current;
+    lenis?.stop();
+    document.documentElement.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = "";
+      lenis?.start();
+      menuBtnRef.current?.focus({ preventScroll: true });
+    };
+  }, [menuOpen]);
+
+  // Work: jump to the first card of a category. The cards stack with CSS
+  // sticky, so their on-screen position isn't where they sit in the page;
+  // add up the cards before it instead, and stop where it would stick.
+  const jumpToCategory = (cat: string) => {
+    const cards = [...document.querySelectorAll<HTMLElement>(".work-card")];
+    const i = cards.findIndex((c) => c.dataset.cat === cat);
+    const list = cards[0]?.parentElement;
+    if (i < 0 || !list) return;
+    const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+    let y = list.getBoundingClientRect().top + window.scrollY;
+    for (let k = 0; k < i; k++) y += cards[k].offsetHeight + gap;
+    const cs = getComputedStyle(cards[i]);
+    const stick = cs.position === "sticky" ? parseFloat(cs.top) || 0 : 88;
+    if (lenisRef.current) lenisRef.current.scrollTo(y - stick, { duration: 1.2 });
+    else window.scrollTo({ top: y - stick, behavior: "smooth" });
+  };
+
   // Build the rest of the page once the loader has gone, in the browser's
   // next idle moment (with a ceiling, so a busy device still gets it soon).
   useEffect(() => {
@@ -907,8 +944,9 @@ export default function Portfolio() {
     );
 
     // Parallax (0.4 ratio — more pronounced)
-    gsap.to(".parallax-left",  { y: -130, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2 } });
-    gsap.to(".parallax-right", { y:  130, scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2 } });
+    const drift = () => (window.innerWidth < 768 ? 28 : 130);
+    gsap.to(".parallax-left",  { y: () => -drift(), scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2, invalidateOnRefresh: true } });
+    gsap.to(".parallax-right", { y: () =>  drift(), scrollTrigger: { trigger: ".hire-section", start: "top bottom", end: "bottom top", scrub: 1.2, invalidateOnRefresh: true } });
 
     // Contact details fade in. (They used to type out character by character,
     // which meant the phone and email were absent from the DOM until scrolled to.)
@@ -1081,7 +1119,7 @@ export default function Portfolio() {
       {/* ── Navbar ─────────────────────────────────────────────────────── */}
       <nav
         aria-label="Primary"
-        className="fixed top-0 left-0 w-full z-40 flex items-center justify-between gutter-x py-5 backdrop-blur-md bg-[#0a0a0a]/50 border-b border-white/5"
+        className="fixed top-0 left-0 w-full z-40 flex items-center justify-between gutter-x py-4 sm:py-5 backdrop-blur-md bg-[#0a0a0a]/70 sm:bg-[#0a0a0a]/50 border-b border-white/5"
       >
         <div className="flex items-center gap-5">
           <a
@@ -1113,7 +1151,7 @@ export default function Portfolio() {
             href="/resume"
             data-hover
             data-cursor="OPEN"
-            className="font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
+            className="hidden sm:inline font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/70 hover:text-[#00B4D8] transition-colors"
           >
             Resume
           </a>
@@ -1122,12 +1160,49 @@ export default function Portfolio() {
             data-hover
             data-magnetic
             data-cursor="OPEN"
-            className="font-mono text-xs tracking-[0.3em] uppercase text-[#0a0a0a] bg-[#00B4D8] px-4 py-2 rounded-full hover:scale-105 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.25)]"
+            className="hidden sm:inline-block font-mono text-xs tracking-[0.3em] uppercase text-[#0a0a0a] bg-[#00B4D8] px-4 py-2 rounded-full hover:scale-105 transition-transform duration-200 shadow-[0_0_20px_rgba(0,180,216,0.25)]"
           >
             Figma
           </a>
+          {/* Phones: one Menu button instead of a squashed row of links */}
+          <button
+            ref={menuBtnRef}
+            type="button"
+            aria-expanded={menuOpen}
+            aria-controls="phone-menu"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="menu-btn sm:hidden inline-flex items-center gap-3 font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/85"
+          >
+            {menuOpen ? "Close" : "Menu"}
+            <span className="menu-icon" aria-hidden="true"><i /><i /></span>
+          </button>
         </div>
       </nav>
+
+      {/* Phone menu: every section, the resume and the Figma file, big and
+          easy to tap. Under the bar, so the button stays reachable. */}
+      <div id="phone-menu" className={`phone-menu sm:hidden${menuOpen ? " open" : ""}`} inert={!menuOpen}>
+        <ul>
+          {[...NAV_LINKS, { href: "/resume", label: "Resume" }, { href: "/figma", label: "Figma" }].map((l, i) => (
+            <li key={l.href} style={{ transitionDelay: menuOpen ? `${90 + i * 45}ms` : "0ms" }}>
+              <a
+                href={l.href}
+                onClick={(e) => {
+                  setMenuOpen(false);
+                  if (!l.href.startsWith("#")) return;
+                  e.preventDefault();
+                  // after the page is unfrozen
+                  requestAnimationFrame(() => lenisRef.current?.scrollTo(l.href, { offset: -64 }));
+                }}
+              >
+                <span className="phone-menu-idx">{String(i + 1).padStart(2, "0")}</span>
+                {l.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a href="mailto:achatrath_be23@thapar.edu" className="phone-menu-mail">achatrath_be23@thapar.edu</a>
+      </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — HERO                                                    */}
@@ -1480,7 +1555,14 @@ export default function Portfolio() {
               {CATEGORIES.map((c) => {
                 const count = PROJECTS.filter((x) => x.category === c.name).length;
                 return (
-                  <div key={c.name} className="cat-item" data-cat={c.name}>
+                  <button
+                    key={c.name}
+                    type="button"
+                    data-hover
+                    onClick={() => jumpToCategory(c.name)}
+                    className="cat-item block w-full cursor-pointer text-left"
+                    data-cat={c.name}
+                  >
                     <div className="flex items-baseline gap-2">
                       <span className="cat-dot h-1.5 w-1.5 rounded-full bg-[#00B4D8]/30 transition-colors" />
                       <span className="cat-name font-mono text-xs uppercase tracking-[0.22em] text-[#f5f0e8]/55 transition-colors">
@@ -1491,12 +1573,26 @@ export default function Portfolio() {
                     <p className="cat-blurb mt-1 pl-3.5 text-xs leading-snug text-[#f5f0e8]/55 transition-colors">
                       {c.blurb}
                     </p>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </aside>
 
+          <div>
+          {/* Below desktop the rail is hidden: the same jumps as chips */}
+          <div className="work-chips lg:hidden mb-6 flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => jumpToCategory(c.name)}
+                className="rounded-full border border-white/15 px-3.5 py-2 font-mono text-xs uppercase tracking-[0.15em] text-[#f5f0e8]/80 transition-colors hover:border-[#00B4D8]/60 hover:text-[#00B4D8]"
+              >
+                {c.name} <span className="text-[#00B4D8]">{String(PROJECTS.filter((x) => x.category === c.name).length).padStart(2, "0")}</span>
+              </button>
+            ))}
+          </div>
           {/* The pile: each panel sticks a little lower than the last, so they
               stack into an ordered deck instead of scrolling past. */}
           <div className="flex flex-col gap-8">
@@ -1592,6 +1688,7 @@ export default function Portfolio() {
                 </div>
               </article>
             ))}
+          </div>
           </div>
         </div>
       </section>
@@ -1788,15 +1885,17 @@ export default function Portfolio() {
           ]}
           gradientStops={[35, 52, 64, 74, 84, 92, 100]}
         />
-        <div className="w-full max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 items-center gap-12 relative z-10">
+        <div className="w-full max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 items-center gap-x-3 gap-y-8 md:gap-12 relative z-10">
           
           {/* LEFT — Arsh with mic in audience */}
-          <div className="parallax-left hidden md:flex justify-end select-none h-[300px] pointer-events-none">
+          {/* Phones: the two photos sit side by side above the sign-off,
+              tilted towards each other; from tablet up they flank it. */}
+          <div className="parallax-left flex justify-end select-none h-[clamp(9rem,44vw,12rem)] md:h-[300px] pointer-events-none col-start-1 row-start-1 -rotate-3 md:rotate-0">
             <img src={arshAudience} width={496} height={620} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
           {/* CENTER — content */}
-          <div className="col-span-1 md:col-span-2 flex flex-col items-center text-center">
+          <div className="col-span-2 row-start-2 md:row-start-1 md:col-start-2 flex flex-col items-center text-center">
             <h2
               className="overflow-visible whitespace-nowrap"
               style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(2.5rem, 7vw, 7rem)", lineHeight: 1.1, letterSpacing: "-0.04em", perspective: "1200px" }}
@@ -1826,7 +1925,7 @@ export default function Portfolio() {
           </div>
 
           {/* RIGHT — Arsh thumbs up */}
-          <div className="parallax-right hidden md:flex justify-start select-none h-[300px] pointer-events-none">
+          <div className="parallax-right flex justify-start select-none h-[clamp(9rem,44vw,12rem)] md:h-[300px] pointer-events-none col-start-2 row-start-1 md:col-start-4 rotate-3 md:rotate-0">
             <img src={arshThumbsUp} width={496} height={620} alt="" aria-hidden="true" className="h-full w-auto object-contain" loading="lazy" decoding="async" />
           </div>
 
@@ -2003,6 +2102,23 @@ export default function Portfolio() {
           .faq-card, .faq-card span, .faq-card::after { transition: none !important; }
         }
 
+        /* Phone menu (below sm): a full-screen list under the nav bar */
+        .phone-menu { position: fixed; inset: 0; z-index: 39; display: flex; flex-direction: column; justify-content: space-between; padding: calc(4rem + 2.5rem) var(--gutter) 2.5rem; background: rgba(8, 9, 10, 0.97); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+        .phone-menu.open { opacity: 1; pointer-events: auto; }
+        .phone-menu ul { display: flex; flex-direction: column; gap: 0.35rem; }
+        .phone-menu li { opacity: 0; transform: translateY(18px); transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .phone-menu.open li { opacity: 1; transform: none; }
+        .phone-menu li a { display: flex; align-items: baseline; gap: 0.9rem; padding: 0.35rem 0; font-family: var(--ff-display); font-weight: 800; font-size: clamp(2.2rem, 11vw, 3rem); line-height: 1.05; letter-spacing: -0.01em; color: #f5f0e8; font-variation-settings: "wdth" 80; }
+        .phone-menu-idx { font-family: var(--ff-mono); font-size: 12px; font-weight: 400; letter-spacing: 0.2em; color: #00b4d8; }
+        .phone-menu-mail { font-family: var(--ff-mono); font-size: 12px; letter-spacing: 0.08em; color: rgba(245, 240, 232, 0.6); }
+        .menu-icon { position: relative; display: inline-block; width: 18px; height: 10px; }
+        .menu-icon i { position: absolute; left: 0; right: 0; height: 1.5px; background: currentColor; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .menu-icon i:first-child { top: 1px; }
+        .menu-icon i:last-child { top: 7.5px; }
+        .menu-btn[aria-expanded="true"] .menu-icon i:first-child { top: 4.25px; transform: rotate(45deg); }
+        .menu-btn[aria-expanded="true"] .menu-icon i:last-child { top: 4.25px; transform: rotate(-45deg); }
+        @media (prefers-reduced-motion: reduce) { .phone-menu, .phone-menu li, .menu-icon i { transition: none; } }
+
         /* X-Factor: header top-left, photo beside it, Venn under the header,
            cards under the photo */
         .xf-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(8.5rem, 38vw, 13rem); grid-template-areas: "head photo" "venn venn" "cards cards"; column-gap: 1rem; row-gap: var(--space-stack); align-items: center; }
@@ -2022,7 +2138,7 @@ export default function Portfolio() {
 
         /* Story scene (AsciiStory). Default is the stacked layout: reduced
            motion, short screens, and the moment before the fit check. */
-        .story { position: relative; --story-track: 180svh; }
+        .story { position: relative; --story-track: 110svh; }
         .story-click { width: fit-content; margin: 0 auto; font-family: var(--ff-mono); font-size: clamp(1rem, 0.8rem + 1.2vw, 1.75rem); letter-spacing: 0.08em; white-space: pre; color: #f2b544; }
         .story-curtain, .story-mark { display: none; }
         .story-img { display: block; width: auto; max-width: 100%; margin-inline: auto; object-fit: contain; filter: drop-shadow(0 0 40px rgba(0, 180, 216, 0.08)); }

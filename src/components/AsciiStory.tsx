@@ -7,8 +7,8 @@ import { prefersReducedMotion } from "@/lib/motion";
  * The story scene: the questions turn into the lessons.
  *
  * Both panels sit in one frame that holds still (CSS sticky) while you scroll.
- * The thinking monkey's ASCII spreads until a wall of characters covers the
- * whole screen, "then it clicked" decodes in the middle, the panels swap
+ * A wall of ASCII characters spreads out from the thinking monkey until it
+ * covers the whole screen, "then it clicked" decodes in the middle, the panels swap
  * underneath, and the wall pulls back into the realising monkey, leaving the
  * lessons behind.
  *
@@ -20,7 +20,6 @@ import { prefersReducedMotion } from "@/lib/motion";
  * stack in the page with a still "then it clicked" between them.
  */
 
-const RAMP = " .:-=+*#%@";
 const NOISE = "!<>-_/[]{}=+*^?#01\\";
 const CLICK = "then it clicked";
 
@@ -37,110 +36,6 @@ const INKS = ["rgba(0,180,216,0.2)", "rgba(0,180,216,0.38)", "rgba(0,180,216,0.6
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const smooth = (t: number) => t * t * (3 - 2 * t);
-
-const images = new Map<string, Promise<HTMLImageElement>>();
-function loadImage(src: string) {
-  let p = images.get(src);
-  if (!p) {
-    p = new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-    images.set(src, p);
-  }
-  return p;
-}
-
-/** Draw an image into an offscreen canvas and read back per-cell luminance. */
-function sampleImage(img: HTMLImageElement, cols: number, rows: number): Uint8Array {
-  const c = document.createElement("canvas");
-  c.width = cols;
-  c.height = rows;
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-  const out = new Uint8Array(cols * rows);
-  if (!ctx) return out;
-
-  // Contain the image in the grid so it isn't distorted.
-  const scale = Math.min(cols / img.width, rows / img.height);
-  const w = img.width * scale;
-  const h = img.height * scale;
-  ctx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
-
-  const { data } = ctx.getImageData(0, 0, cols, rows);
-  for (let i = 0; i < out.length; i++) {
-    const o = i * 4;
-    const alpha = data[o + 3] / 255;
-    const lum = (0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2]) / 255;
-    // These are dark cutouts on transparency: alpha carries the silhouette,
-    // luminance only modulates the detail inside it.
-    out[i] = Math.round(255 * alpha * (0.34 + 0.66 * Math.pow(lum, 0.75)));
-  }
-  return out;
-}
-
-/** A still ASCII rendering of an image, sized to its box (set in CSS). */
-export function AsciiArt({ src, className = "" }: { src: string; className?: string }) {
-  const ref = useRef<HTMLPreElement>(null);
-
-  useEffect(() => {
-    const pre = ref.current;
-    if (!pre) return;
-    let disposed = false;
-    let lastSize = "";
-
-    const build = async () => {
-      const w = pre.clientWidth;
-      const h = pre.clientHeight;
-      if (!w || !h || `${w}x${h}` === lastSize) return;
-      lastSize = `${w}x${h}`;
-
-      // Measure the real glyph box rather than assuming monospace proportions.
-      const probe = document.createElement("span");
-      probe.textContent = "MMMMMMMMMM";
-      probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
-      pre.appendChild(probe);
-      const charW = probe.getBoundingClientRect().width / 10 || 4;
-      probe.remove();
-      const lineH = parseFloat(getComputedStyle(pre).lineHeight) || charW;
-      const cols = Math.max(12, Math.floor(w / charW));
-      const rows = Math.max(8, Math.floor(h / lineH));
-
-      const img = await loadImage(src).catch(() => null);
-      if (disposed || !img) return;
-      const lum = sampleImage(img, cols, rows);
-      let out = "";
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          out += RAMP[Math.min(RAMP.length - 1, ((lum[y * cols + x] / 255) * RAMP.length) | 0)];
-        }
-        out += "\n";
-      }
-      pre.textContent = out;
-    };
-
-    // Built when it's about a screen and a half away, and again if its box
-    // changes size.
-    const resized = new ResizeObserver(() => build());
-    const near = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        near.disconnect();
-        resized.observe(pre);
-      },
-      { rootMargin: "150% 0px" },
-    );
-    near.observe(pre);
-    return () => {
-      disposed = true;
-      near.disconnect();
-      resized.disconnect();
-    };
-  }, [src]);
-
-  return <pre ref={ref} aria-hidden="true" className={`ascii-art ${className}`} />;
-}
 
 type Wall = {
   cols: number;
@@ -279,7 +174,7 @@ export default function AsciiStory({ first, second }: { first: ReactNode; second
       // Spread from the thinking monkey; pull back into the realising one.
       const fr = frame.getBoundingClientRect();
       const centre = (panel: HTMLElement) => {
-        const art = panel.querySelector(".ascii-art")?.getBoundingClientRect();
+        const art = panel.querySelector("[data-story-origin]")?.getBoundingClientRect();
         return art
           ? { x: (art.left + art.width / 2 - fr.left) * dpr, y: (art.top + art.height / 2 - fr.top) * dpr }
           : { x: canvas.width / 2, y: canvas.height / 2 };

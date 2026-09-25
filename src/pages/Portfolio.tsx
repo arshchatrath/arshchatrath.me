@@ -8,7 +8,7 @@ import { usePageMeta } from "@/lib/page-meta";
 import { EASE, DUR, STAGGER, deviceTier, prefersReducedMotion } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
 import Preloader from "@/components/Preloader";
-import AsciiStory, { AsciiArt } from "@/components/AsciiStory";
+import AsciiStory from "@/components/AsciiStory";
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
 
 // ── Images (user-provided, transparent PNGs) ────────────────────────────────
@@ -28,6 +28,36 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // ── Static data ──────────────────────────────────────────────────────────────
 const HERO_NAME = "ARSH CHATRATH";
+// Water-drop hover: a displacement map for a round lens, drawn once. Red and
+// green hold how far to pull each pixel towards the centre (128 = stay put),
+// fading to nothing at the rim, so the edge of the drop is seamless.
+let lensMap = "";
+function getLensMap() {
+  if (lensMap) return lensMap;
+  const n = 128;
+  const c = document.createElement("canvas");
+  c.width = c.height = n;
+  const ctx = c.getContext("2d");
+  if (!ctx) return "";
+  const img = ctx.createImageData(n, n);
+  const peak = 0.2862; // max of u(1-u^2)^2, so the strongest pull maps to full range
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      const u = (x + 0.5) / n * 2 - 1;
+      const v = (y + 0.5) / n * 2 - 1;
+      const r2 = u * u + v * v;
+      const g = r2 < 1 ? (1 - r2) * (1 - r2) / peak : 0;
+      const o = (y * n + x) * 4;
+      img.data[o] = Math.round(128 - 127 * u * g);
+      img.data[o + 1] = Math.round(128 - 127 * v * g);
+      img.data[o + 2] = 128;
+      img.data[o + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return (lensMap = c.toDataURL());
+}
+
 // Three numbers under the intro. `s` is the suffix, drawn in teal.
 const HERO_PROOF = [
   { n: "8,000", s: "+", v: "users on Talkeys" },
@@ -384,7 +414,11 @@ export default function Portfolio() {
       const heroState = heroChars.map(() => ({ w: 75, g: 760, breath: 0 }));
       let heroCenters: { x: number; y: number }[] = [];
       let heroRadius = 150;
+      const nameEl = document.querySelector<HTMLElement>(".hero-name");
+      const nameBox = { x: 0, y: 0, w: 0, h: 0 };
       const cacheHeroCenters = () => {
+        const nb = nameEl?.getBoundingClientRect();
+        if (nb) Object.assign(nameBox, { x: nb.left + scrollX, y: nb.top + scrollY, w: nb.width, h: nb.height });
         heroCenters = heroChars.map((el) => {
           const r = el.getBoundingClientRect();
           return { x: r.left + r.width / 2 + scrollX, y: r.top + r.height / 2 + scrollY };
@@ -453,12 +487,67 @@ export default function Portfolio() {
         }
       };
       gsap.ticker.add(heroTick);
+
+      // Water drop: hovering the name puts a drop of water under the pointer
+      // that magnifies the letters beneath it. It trails the pointer, swells
+      // and stretches the way you move (so it drags, a little sticky), and
+      // dries up when you leave. The filter is only attached while it's there.
+      const liquid = document.getElementById("hero-liquid");
+      const lens = liquid?.querySelector("feImage");
+      const disp = liquid?.querySelector("feDisplacementMap");
+      if (lens && finePointer) lens.setAttribute("href", getLensMap());
+      let wet = 0;
+      let lx = hx;
+      let ly = hy;
+      let prevX = hx;
+      let prevY = hy;
+      let sx = 0; // smoothed speed, per axis
+      let sy = 0;
+      let wetOn = false;
+      const liquidTick = () => {
+        if (!nameEl || !lens || !disp || !nameBox.w) return;
+        const vx = Math.abs(hx - prevX);
+        const vy = Math.abs(hy - prevY);
+        prevX = hx;
+        prevY = hy;
+        sx += (Math.min(vx, 60) - sx) * 0.15;
+        sy += (Math.min(vy, 60) - sy) * 0.15;
+        const pad = heroRadius * 0.3;
+        const over = hx > nameBox.x - pad && hx < nameBox.x + nameBox.w + pad && hy > nameBox.y - pad && hy < nameBox.y + nameBox.h + pad;
+        const target = over && heroThin < 0.5 ? 0.6 + 0.4 * Math.min(1, (sx + sy) / 30) : 0;
+        wet += (target - wet) * (target > wet ? 0.18 : 0.08);
+        lx += (hx - lx) * 0.22; // trails the pointer, like a drag through liquid
+        ly += (hy - ly) * 0.22;
+        if (wet < 0.01) {
+          if (wetOn) {
+            nameEl.style.filter = "";
+            wetOn = false;
+          }
+          return;
+        }
+        if (!wetOn) {
+          nameEl.style.filter = "url(#hero-liquid)";
+          wetOn = true;
+        }
+        const r = heroRadius * 0.62 * (0.55 + 0.45 * wet);
+        const w = r * 2 * (1 + sx / 45);
+        const h = r * 2 * (1 + sy / 45);
+        lens.setAttribute("x", (lx - nameBox.x - w / 2).toFixed(1));
+        lens.setAttribute("y", (ly - nameBox.y - h / 2).toFixed(1));
+        lens.setAttribute("width", w.toFixed(1));
+        lens.setAttribute("height", h.toFixed(1));
+        disp.setAttribute("scale", (wet * r * 0.55).toFixed(1));
+      };
+      if (finePointer) gsap.ticker.add(liquidTick);
+
       const onHeroResize = () => { gsap.delayedCall(0.2, cacheHeroCenters); };
       window.addEventListener("resize", onHeroResize);
       const heroCleanup = () => {
         window.removeEventListener("pointermove", onHeroPointer);
         window.removeEventListener("resize", onHeroResize);
         gsap.ticker.remove(heroTick);
+        gsap.ticker.remove(liquidTick);
+        if (nameEl) nameEl.style.filter = "";
         heroST.kill();
         heroTl.kill();
       };
@@ -889,6 +978,20 @@ export default function Portfolio() {
       <section className="hero-section relative min-h-[100svh] flex items-center gutter-x pt-[calc(var(--nav-h)+var(--space-stack))] pb-[var(--space-block)] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none hero-glow-bg" />
 
+        {/* Water drop: a lens (set from the effect) laid on a flat grey map.
+            Grey means "don't move"; sRGB keeps that grey the exact midpoint. */}
+        <svg aria-hidden="true" width="0" height="0" className="absolute">
+          <filter id="hero-liquid" x="-5%" y="-25%" width="110%" height="150%" colorInterpolationFilters="sRGB">
+            <feFlood floodColor="rgb(128,128,128)" result="flat" />
+            <feImage x="0" y="0" width="0" height="0" preserveAspectRatio="none" result="lens" />
+            <feMerge result="map">
+              <feMergeNode in="flat" />
+              <feMergeNode in="lens" />
+            </feMerge>
+            <feDisplacementMap in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </svg>
+
         <div className="hero-inner relative w-full max-w-[1600px] mx-auto">
           <p data-wire="Text / kicker" className="hero-kicker opacity-0 font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-[#00B4D8]">
             Product &amp; Growth Builder
@@ -1058,15 +1161,15 @@ export default function Portfolio() {
             </div>
 
             {/* Journey map */}
-            <div className="journey-map w-full max-w-[34rem] flex items-end justify-between gap-[var(--space-stack)] relative">
+            <div className="journey-map w-full max-w-[36rem] flex items-end justify-between gap-3 relative">
               {/* Amritsar */}
-              <div className="flex flex-col items-center gap-3 fade-up">
-                <img src={goldenTemple} width={368} height={460} alt="Golden Temple, Amritsar" className="w-[clamp(6rem,11vw,10rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+              <div className="flex flex-col items-center gap-2 fade-up">
+                <img src={goldenTemple} width={318} height={188} alt="Golden Temple, Amritsar" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
                 <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Amritsar</span>
               </div>
 
               {/* Traveling dashed SVG arrow */}
-              <div className="flex-1 min-w-0 relative h-20 md:h-24">
+              <div className="flex-1 min-w-[3rem] self-center relative h-14 md:h-16">
                 <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 300 90" preserveAspectRatio="none">
                   <defs>
                     <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -1089,8 +1192,8 @@ export default function Portfolio() {
               </div>
 
               {/* Thapar */}
-              <div className="flex flex-col items-center gap-3 fade-up">
-                <img src={thaparUniversity} width={368} height={460} alt="Thapar University, Patiala" className="w-[clamp(6rem,11vw,10rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
+              <div className="flex flex-col items-center gap-2 fade-up">
+                <img src={thaparUniversity} width={368} height={222} alt="Thapar University, Patiala" className="w-[clamp(7.5rem,15vw,13rem)] h-auto object-contain drop-shadow-xl" loading="lazy" decoding="async" />
                 <span className="font-mono text-xs tracking-widest uppercase text-[#f5f0e8]/50">Patiala</span>
               </div>
             </div>
@@ -1118,7 +1221,8 @@ export default function Portfolio() {
               </div>
 
               <div className="sg-art monkey-left opacity-0">
-                <AsciiArt src={monkeyThinking} />
+                <img src={monkeyThinking} width={624} height={780} alt="" data-story-origin
+                  className="story-img" loading="lazy" decoding="async" />
               </div>
 
               <ul className="sg-text flex flex-col gap-3 md:gap-5">
@@ -1159,7 +1263,8 @@ export default function Portfolio() {
               </ul>
 
               <div className="sg-art monkey-right opacity-0">
-                <AsciiArt src={monkeyRealising} />
+                <img src={monkeyRealising} width={624} height={780} alt="" data-story-origin
+                  className="story-img" loading="lazy" decoding="async" />
               </div>
             </div>
           </section>
@@ -1179,22 +1284,23 @@ export default function Portfolio() {
       {/* SECTION 5 — PROOF, NOT PROMISES                                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <section id="work" className="work-section relative section-pad">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="reveal-wrap overflow-hidden">
-            <h2 className="reveal-heading text-center" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
-              PROOF, NOT JUST PROMISES
-            </h2>
+        {/* Heading left, with the ticker running behind it */}
+        <div className="work-head relative">
+          <div aria-hidden="true" className="absolute top-1/2 left-[calc(50%-50vw)] w-screen -translate-y-1/2 overflow-hidden border-y border-[#00B4D8]/20 bg-[#00B4D8]/[0.03] py-1.5">
+            <div className="ticker-track flex gap-12 whitespace-nowrap">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <span key={i} className="text-[#00B4D8]/70 font-mono text-xs tracking-[0.35em] uppercase shrink-0">
+                  SEVEN PROJECTS · THREE DISCIPLINES ·
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Marquee */}
-        <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen overflow-hidden border-y border-[#00B4D8]/20 py-1.5 mt-8">
-          <div className="ticker-track flex gap-12 whitespace-nowrap">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <span key={i} className="text-[#00B4D8] font-mono text-xs tracking-[0.35em] uppercase shrink-0">
-                SEVEN PROJECTS · THREE DISCIPLINES ·
-              </span>
-            ))}
+          <div className="relative max-w-7xl mx-auto w-full">
+            <div className="reveal-wrap overflow-hidden">
+              <h2 className="reveal-heading" style={{ fontFamily: "var(--ff-display)", fontWeight: 800, fontSize: "clamp(1.8rem, 4vw, 3.8rem)", letterSpacing: "-0.02em" }}>
+                PROOF, NOT JUST PROMISES
+              </h2>
+            </div>
           </div>
         </div>
 
@@ -1593,13 +1699,18 @@ export default function Portfolio() {
         .hero-btn:hover { background: #f5f0e8; box-shadow: 4px 4px 0 #00B4D8; }
         .hero-postmark { position: absolute; left: -34%; bottom: 8%; width: 80%; color: rgba(0, 180, 216, 0.92); pointer-events: none; transform: rotate(-12deg); }
         @media (min-width: 1024px), (orientation: landscape) {
-          .hero-inner { --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.7 / 5.1025), 19svh); --stamp-w: clamp(170px, min(21vw, 36svh), 320px); }
+          /* --stamp-x centres the stamp in the space right of the name
+             (5.1025em is the name's width), without passing the edge */
+          .hero-inner {
+            --name-fs: min(calc((min(100vw, 1600px) - 2 * var(--gutter)) * 0.7 / 5.1025), 19svh);
+            --stamp-w: clamp(170px, min(27vw, 46svh), 440px);
+            --stamp-x: min(calc((var(--name-fs) * 5.1025 + 100% - var(--stamp-w)) / 2), calc(100% - var(--stamp-w)));
+          }
           .name-line { display: inline-block; vertical-align: top; }
           .name-gap { display: inline-block; width: 0.22em; }
-          /* the stamp lands on the end of the name, like on an envelope */
-          .hero-stamp { position: absolute; left: calc(var(--name-fs) * 4.7); top: calc(2rem + var(--name-fs) * 0.55); width: var(--stamp-w); margin: 0; }
+          .hero-stamp { position: absolute; left: var(--stamp-x); top: 50%; margin: calc(var(--stamp-w) * -0.625) 0 0; width: var(--stamp-w); }
           /* the copy stops short of the stamp and its postmark */
-          .hero-copy { max-width: min(58%, 40rem, calc(var(--name-fs) * 4.7 - var(--stamp-w) * 0.3 - 1.5rem)); margin-top: clamp(1rem, 4svh, 3rem); }
+          .hero-copy { max-width: min(58%, 40rem, calc(var(--stamp-x) - var(--stamp-w) * 0.3 - 1.5rem)); margin-top: clamp(1rem, 4svh, 3rem); }
           .hero-postmark { left: -26%; bottom: -9%; width: 88%; }
         }
         /* Portrait tablets: the intro wraps beside the stamp, magazine style,
@@ -1726,16 +1837,16 @@ export default function Portfolio() {
         .story { position: relative; --story-track: 180svh; }
         .story-click { width: fit-content; margin: 0 auto; font-family: var(--ff-mono); font-size: clamp(1rem, 0.8rem + 1.2vw, 1.75rem); letter-spacing: 0.08em; white-space: pre; color: #f2b544; }
         .story-curtain, .story-mark { display: none; }
-        .ascii-art { margin: 0; width: 100%; overflow: hidden; white-space: pre; user-select: none; font-family: var(--ff-mono); font-size: clamp(3.4px, 0.52vw, 7.5px); line-height: 0.58em; letter-spacing: 0.02em; color: rgba(0, 180, 216, 0.9); text-shadow: 0 0 16px rgba(0, 180, 216, 0.3); }
+        .story-img { display: block; width: auto; max-width: 100%; margin-inline: auto; object-fit: contain; filter: drop-shadow(0 0 40px rgba(0, 180, 216, 0.08)); }
         .story-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(7.5rem, 36vw, 12rem); grid-template-areas: "head art" "text text"; column-gap: 1rem; row-gap: clamp(1rem, 3svh, 2rem); align-items: center; }
         .sg-head { grid-area: head; }
         .sg-art { grid-area: art; }
         .sg-text { grid-area: text; }
-        .sg-art .ascii-art { height: clamp(8rem, 44vw, 15rem); }
+        .sg-art .story-img { height: clamp(8rem, 44vw, 15rem); }
         @media (min-width: 768px) {
           .story-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "head head" "art text"; column-gap: var(--space-block); }
           .story-grid--flip { grid-template-areas: "head head" "text art"; }
-          .sg-art .ascii-art { height: clamp(12rem, 46svh, 30rem); }
+          .sg-art .story-img { height: clamp(12rem, 46svh, 30rem); }
         }
         /* held: one screen-tall frame that sticks while the scene plays */
         .story--pinned { height: calc(100svh + var(--story-track)); }

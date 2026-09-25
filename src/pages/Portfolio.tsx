@@ -33,7 +33,7 @@ const HERO_TAGLINE = "Product & Growth Builder";
 // The intro under the name. [Bracketed] words are the bright ones.
 const HERO_LEAD =
   "Founding Product & Growth Associate at [Talkeys], studying CS & Business Systems at [Thapar]. " +
-  "Looking for product and growth internships.";
+  "Looking for product and growth opportunities.";
 const HERO_LEAD_WORDS = HERO_LEAD.split(" ").map((w) =>
   w.startsWith("[") ? { w: w.replace(/[[\]]/g, ""), em: true } : { w, em: false },
 );

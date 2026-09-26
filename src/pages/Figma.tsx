@@ -2,7 +2,7 @@ import { usePageMeta } from "@/lib/page-meta";
 
 export default function Figma() {
   usePageMeta(
-    "Figma Portfolio — Arsh Chatrath",
+    "Figma Portfolio · Arsh Chatrath",
     "Interactive Figma prototype of Arsh Chatrath's product design and case study work.",
     "/figma",
   );

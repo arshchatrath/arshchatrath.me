@@ -113,7 +113,7 @@ const PROJECTS: Project[] = [
     img: banner3,
     title: "Perplexity AI Campus Growth",
     problem: "Drive product adoption in a saturated student market",
-    role: "VIP Campus Partner — growth & user acquisition",
+    role: "VIP Campus Partner · growth & user acquisition",
     approach: "Segmented target users (CS + research students) → ran campus activations by need",
     result: "₹8.5L+ in revenue · Top 15 Campus Partners nationwide",
     stack: ["Growth", "GTM", "Community"],
@@ -134,8 +134,8 @@ const PROJECTS: Project[] = [
     category: "PRODUCT",
     img: banner2,
     title: "Capstone Team Finder Portal",
-    problem: "Students struggled to find capstone teammates — fragmented WhatsApp chaos",
-    role: "Product Builder — identified the gap, built end to end",
+    problem: "Students struggled to find capstone teammates amid fragmented WhatsApp chaos",
+    role: "Product Builder · identified the gap, built end to end",
     approach: "Found the pain point → built a platform for posting projects with tech requirements",
     result: "Turned scattered WhatsApp groups into one place teams actually form",
     stack: ["Full-stack", "Product"],
@@ -146,7 +146,7 @@ const PROJECTS: Project[] = [
     title: "SafeSpace AI",
     flow: ["ESP32 WEARABLE", "VOICE", "DASS-21", "→ LATE FUSION →", "XAI EXPLANATION"],
     problem: "Stress detection is either self-reported and unreliable, or a model nobody can question",
-    role: "Built end to end — wearable firmware, ML stack and API",
+    role: "Built end to end · wearable firmware, ML stack and API",
     approach: "Fused ECG/EDA/EMG/temp biosignals, voice and the DASS-21 survey by late fusion, with SHAP and LIME explaining every prediction in plain language",
     result: "73% accuracy on 500+ samples · 3rd place at the Indian-Israeli Hackathon",
     stack: ["Python", "FastAPI", "TensorFlow", "ESP32", "SHAP / LIME"],
@@ -161,9 +161,9 @@ const PROJECTS: Project[] = [
     title: "Two-Hand Gesture Mouse",
     flow: ["WEBCAM", "MEDIAPIPE", "→ 2-HAND STATE →", "SYSTEM CURSOR"],
     problem: "Hands-free cursor control almost always stops at a browser demo",
-    role: "Solo build — computer vision, input layer and UI",
+    role: "Solo build · computer vision, input layer and UI",
     approach: "Two-hand MediaPipe tracking: left hand open drives the cursor, a fist switches to scroll, pinching thumb+index or thumb+middle fires left and right click",
-    result: "Controls Windows system-wide — over Chrome, VS Code, Figma, Explorer. Losing tracking never emits a stray input",
+    result: "Controls Windows system-wide, across Chrome, VS Code, Figma and Explorer. Losing tracking never emits a stray input",
     stack: ["Python", "MediaPipe", "OpenCV"],
     links: [{ label: "Code", href: "https://github.com/arshchatrath/gestured-mouse" }],
   },
@@ -173,7 +173,7 @@ const PROJECTS: Project[] = [
     title: "AI Job Search Agent",
     flow: ["SERPAPI JOBS", "BATCH x5", "→ LLM SCORE 1-10 →", "DAILY DIGEST"],
     problem: "Finding the few listings worth applying to means scrolling job boards every day",
-    role: "Solo build — workflow design and prompt engineering",
+    role: "Solo build · workflow design and prompt engineering",
     approach: "An n8n workflow pulls listings, batches them five at a time and has a model score each 1–10 against a target profile with a one-line reason; anything under 7 is dropped",
     result: "One daily email of only the listings worth applying to. AI is used for the single judgment step; everything else stays rule-based",
     stack: ["n8n", "SerpApi", "Groq", "Gmail"],
@@ -185,7 +185,7 @@ const PROJECTS: Project[] = [
     title: "Daily LeetCode Agent",
     flow: ["DAILY + TOPIC", "LLM SOLUTION", "→ SUBMIT / JUDGE →", "SELF-CORRECT x5"],
     problem: "Daily practice dies the moment the streak breaks",
-    role: "Solo build — agent loop, API client and tracking",
+    role: "Solo build · agent loop, API client and tracking",
     approach: "Fetches the daily challenge plus one problem from a rotating topic list, generates a solution, submits it, then feeds the judge's failure detail back and retries up to five times",
     result: "Runs unattended once a day and tracks streak, success rate and average attempts to accept",
     stack: ["Python", "Claude Code CLI"],
@@ -211,11 +211,11 @@ const FAQS = [
   },
   {
     q: "Are you technical?",
-    a: "Yes — I build full-stack, so I scope with engineers instead of throwing specs over the wall. That's the overlap the X-Factor section describes: technical, product and leadership.",
+    a: "Yes. I build full-stack, so I scope with engineers instead of throwing specs over the wall. That's the overlap the X-Factor section describes: technical, product and leadership.",
   },
   {
     q: "Where are you based?",
-    a: "Patiala, Punjab — I'm at Thapar Institute of Engineering and Technology. I'm from Amritsar originally.",
+    a: "Patiala, Punjab. I'm at Thapar Institute of Engineering and Technology. I'm from Amritsar originally.",
   },
   {
     q: "What's the fastest way to reach you?",
@@ -993,7 +993,7 @@ export default function Portfolio() {
           if (!self.isActive) return;
           chapterEl.textContent = `${String(i + 1).padStart(2, "0")} / ${String(
             chapters.length,
-          ).padStart(2, "0")} — ${label}`;
+          ).padStart(2, "0")} · ${label}`;
         },
       });
     });
@@ -1141,7 +1141,7 @@ export default function Portfolio() {
           Arsh Chatrath
         </a>
           <span className="nav-chapter hidden lg:block font-mono text-xs tracking-[0.3em] uppercase text-[#f5f0e8]/55">
-          01 / 09 &mdash; intro
+          01 / 09 &middot; intro
         </span>
         </div>
         <div className="flex items-center gap-4 md:gap-7">

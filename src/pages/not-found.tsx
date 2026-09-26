@@ -11,7 +11,7 @@ const LINKS = [
 
 export default function NotFound() {
   usePageMeta(
-    "Page not found — Arsh Chatrath",
+    "Page not found · Arsh Chatrath",
     "That page doesn't exist. Head back to the portfolio, resume or case studies.",
     "/404",
   );

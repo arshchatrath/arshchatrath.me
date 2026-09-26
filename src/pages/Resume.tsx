@@ -2,7 +2,7 @@ import { usePageMeta } from "@/lib/page-meta";
 
 export default function Resume() {
   usePageMeta(
-    "Resume — Arsh Chatrath, Product Builder",
+    "Resume · Arsh Chatrath, Product Builder",
     "Download or read Arsh Chatrath's resume: product and growth experience at Talkeys, Perplexity Campus Partner, national competition wins.",
     "/resume",
   );

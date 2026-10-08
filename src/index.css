@@ -115,6 +115,50 @@
   }
 }
 
+/* A quiet, rounded scrollbar across routes. Preserve native high-contrast colors. */
+@media (forced-colors: none) {
+  @supports selector(::-webkit-scrollbar) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: var(--ink);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      min-height: 48px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      background: #36545b;
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #50818c;
+    }
+
+    ::-webkit-scrollbar-thumb:active {
+      background-color: var(--teal);
+    }
+
+    ::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #50818c var(--ink);
+    }
+  }
+}
+
 /* Layout utilities built on the spacing tokens. Sections use these instead of
    fixed padding, so a phone gets phone-sized gaps. */
 @utility section-pad {

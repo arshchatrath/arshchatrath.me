@@ -83,6 +83,13 @@ export default function Cursor() {
     let onText = false;
     let lastTextAt = -Infinity;
     let seen = false;
+    let onBrush = false;
+    let fluidAngle = 0;
+    let stretch = 0;
+    let stretchVelocity = 0;
+    let shear = 0;
+    let shearVelocity = 0;
+    let lastTick = performance.now();
 
     // Centre both on the pointer through GSAP itself. A CSS translate got
     // folded into GSAP's transform when it first read each element, and the
@@ -107,6 +114,8 @@ export default function Cursor() {
       }
 
       const now = performance.now();
+      const brushHost = (e.target as Element | null)?.closest<HTMLElement>("[data-cursor-brush]") ?? null;
+      const brush = !!brushHost;
 
       const el =
         (e.target as HTMLElement | null)?.closest<HTMLElement>(
@@ -114,22 +123,31 @@ export default function Cursor() {
         ) ?? null;
       const cursorLabel = el?.dataset.cursor ?? "";
       // A labelled disc can't invert (its label would too).
-      const hit = !cursorLabel && overText(mx, my);
+      const hit = !brush && !cursorLabel && overText(mx, my);
       if (hit) lastTextAt = now;
       // grace period: crossing the gap between two words isn't leaving text
-      const text = hit || (!cursorLabel && now - lastTextAt < TEXT_GRACE_MS);
+      const text = !brush && (hit || (!cursorLabel && now - lastTextAt < TEXT_GRACE_MS));
 
-      if (el !== magnet || text !== onText) {
+      if (el !== magnet || text !== onText || brush !== onBrush) {
         magnet = el;
         onText = text;
+        onBrush = brush;
+        if (brush) lastTextAt = -Infinity;
+        ring.dataset.brush = String(brush);
         label.textContent = cursorLabel;
-        const size = cursorLabel ? 74 : text ? (el ? 58 : 40) : el ? 46 : 26;
+        const size = brush ? Math.max(64, Math.min(150, brushHost!.getBoundingClientRect().width * 310 / 1080)) : cursorLabel ? 74 : text ? (el ? 58 : 40) : el ? 46 : 26;
+        ring.style.backgroundImage = brush
+          ? "radial-gradient(ellipse at 30% 32%, rgba(42,80,134,0.32), transparent 68%), radial-gradient(ellipse at 75% 70%, rgba(7,23,56,0.3), transparent 72%)"
+          : "none";
         gsap.to(ring, {
           width: size,
           height: size,
-          borderColor: text ? "rgba(0,180,216,0)" : el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
-          backgroundColor: cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(0,180,216,0)",
-          duration: 0.55,
+          borderColor: brush ? "rgba(74,116,167,0)" : text ? "rgba(0,180,216,0)" : el ? "rgba(0,180,216,0.9)" : "rgba(0,180,216,0.45)",
+          backgroundColor: brush ? "rgba(9,31,70,0.44)" : cursorLabel ? "rgba(0,180,216,0.12)" : "rgba(0,180,216,0)",
+          ...(brush ? {} : { borderRadius: "50%" }),
+          filter: brush ? "blur(0.7px)" : "blur(0px)",
+          boxShadow: brush ? "inset 0 0 16px rgba(24,60,105,0.22), 0 0 10px rgba(9,31,70,0.12)" : "inset 0 0 0 rgba(24,60,105,0), 0 0 0 rgba(9,31,70,0)",
+          duration: brush ? 0.32 : 0.5,
           ease: "power3.out",
           overwrite: "auto",
         });
@@ -143,7 +161,7 @@ export default function Cursor() {
           overwrite: "auto",
         });
         gsap.to(label, { opacity: cursorLabel ? 1 : 0, duration: 0.25 });
-        gsap.to(dot, { opacity: cursorLabel ? 0 : 1, duration: 0.25 });
+        gsap.to(dot, { opacity: cursorLabel || brush ? 0 : 1, duration: 0.25, overwrite: "auto" });
       }
     };
 
@@ -168,13 +186,20 @@ export default function Cursor() {
       gsap.to(fill, { width: 0, height: 0, opacity: 0, duration: 0.3, overwrite: "auto" });
     };
     const onEnter = () => {
-      if (seen) gsap.to([ring, dot], { opacity: 1, duration: 0.2 });
+      if (seen) {
+        gsap.to(ring, { opacity: 1, duration: 0.2 });
+        gsap.to(dot, { opacity: onBrush ? 0 : 1, duration: 0.2 });
+      }
     };
 
     const tick = () => {
+      const now = performance.now();
+      const dt = Math.min(Math.max((now - lastTick) / 1000, 1 / 240), 0.032);
+      lastTick = now;
       // Ring trails; dot is immediate. The gap is what reads as weight.
-      rx += (mx - rx) * 0.16;
-      ry += (my - ry) * 0.16;
+      const follow = onBrush ? 1 - Math.exp(-13 * dt) : 0.16;
+      rx += (mx - rx) * follow;
+      ry += (my - ry) * follow;
 
       const vx = rx - prevX;
       const vy = ry - prevY;
@@ -189,12 +214,46 @@ export default function Cursor() {
       setDotX(mx);
       setDotY(my);
 
-      // Stretch along the direction of travel.
-      gsap.set([ring, fill], {
-        rotate: angle,
-        scaleX: 1 + speed * 0.012,
-        scaleY: 1 - speed * 0.006,
-      });
+      if (onBrush) {
+        // Soft springs retain momentum after the pointer stops. A brief overshoot
+        // makes the blob recoil, then settle over roughly 1–2 seconds.
+        const motionSpeed = Math.min(Math.hypot(vx, vy) / (dt * 60), 40);
+        const turn = gsap.utils.wrap(-180, 180, angle - fluidAngle);
+        if (motionSpeed > 0.2) fluidAngle += turn * (1 - Math.exp(-5 * dt));
+        const targetStretch = Math.min(motionSpeed / 27, 1.15);
+        const targetShear = motionSpeed > 0.5 ? gsap.utils.clamp(-0.55, 0.55, turn / 160) : 0;
+        // Small substeps keep the spring stable on slower displays.
+        const steps = Math.ceil(dt / (1 / 120));
+        const step = dt / steps;
+        for (let i = 0; i < steps; i++) {
+          stretchVelocity += ((targetStretch - stretch) * 30 - stretchVelocity * 6) * step;
+          stretch += stretchVelocity * step;
+          shearVelocity += ((targetShear - shear) * 24 - shearVelocity * 5.5) * step;
+          shear += shearVelocity * step;
+        }
+        const t = now / 1000;
+        const wobble = 2 + Math.min(Math.abs(stretchVelocity) * 3 + Math.abs(stretch) * 12, 20);
+        const a = 48 + Math.sin(t * 2.1) * wobble + shear * 12;
+        const b = 52 + Math.cos(t * 1.7 + 1) * wobble;
+        const c = 46 + Math.sin(t * 1.8 + 2) * wobble;
+        const d = 54 + Math.cos(t * 2.3) * wobble - shear * 12;
+        ring.style.borderRadius = `${a}% ${100 - a}% ${b}% ${100 - b}% / ${c}% ${d}% ${100 - d}% ${100 - c}%`;
+        gsap.set(ring, {
+          rotate: fluidAngle,
+          scaleX: Math.max(0.8, 1 + stretch * 0.8),
+          scaleY: Math.max(0.55, 1 - stretch * 0.3),
+          skewX: shear * 24,
+        });
+      } else {
+        fluidAngle = angle;
+        stretch = stretchVelocity = shear = shearVelocity = 0;
+        gsap.set([ring, fill], {
+          rotate: angle,
+          scaleX: 1 + speed * 0.012,
+          scaleY: 1 - speed * 0.006,
+          skewX: 0,
+        });
+      }
 
       // Magnetic pull on the element itself.
       if (magnet && magnet.hasAttribute("data-magnetic")) {

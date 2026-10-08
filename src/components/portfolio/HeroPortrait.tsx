@@ -219,8 +219,9 @@ export default function HeroPortrait() {
             <use href={`#${id}-strokes`} color="black" />
           </mask>
         </defs>
-        <image className="hero-main-layer" href={MAIN_IMAGE} width="1080" height="1440" preserveAspectRatio="xMidYMid meet" mask={`url(#${id}-base)`} onLoad={() => setMainLoaded(true)} />
-        <image href={REVEAL_IMAGE} x="50" y="0" width="960" height="1215" preserveAspectRatio="xMidYMin meet" mask={`url(#${id}-trail)`} />
+        {/* Both portraits fill the same frame and share its bottom crop. */}
+        <image className="hero-main-layer" href={MAIN_IMAGE} width="1080" height="1440" preserveAspectRatio="xMidYMin slice" mask={`url(#${id}-base)`} onLoad={() => setMainLoaded(true)} />
+        <image href={REVEAL_IMAGE} width="1080" height="1440" preserveAspectRatio="xMidYMin slice" mask={`url(#${id}-trail)`} />
       </svg>
       <span className="hero-reveal-hint" aria-hidden="true"><span /> Hover to discover</span>
     </div>

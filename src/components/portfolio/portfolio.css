@@ -46,7 +46,7 @@
   from { opacity: 0.5; transform: scale(0.93); }
   to { opacity: 1; transform: scale(1.08); }
 }
-.hero-portrait-base { position: relative; z-index: 1; aspect-ratio: 3 / 4; object-fit: cover; object-position: center top; filter: blur(0.2px); }
+.hero-portrait-base { position: relative; z-index: 1; width: 92%; margin-inline: auto; aspect-ratio: 993.6 / 1440; object-fit: cover; object-position: center top; filter: blur(0.2px); }
 /* SVG units scale with the portrait: this is about 0.2px at desktop size. */
 .hero-main-layer { filter: blur(0.5px); }
 .hero-binary-trail {

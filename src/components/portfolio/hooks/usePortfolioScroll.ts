@@ -2,7 +2,7 @@ import { useEffect, useRef, type RefObject } from "react";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { EASE } from "@/lib/motion";
+import { EASE, deviceTier } from "@/lib/motion";
 import { fieldState } from "@/gl/fieldState";
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,7 +10,7 @@ export function usePortfolioScroll(progressRef: RefObject<HTMLDivElement | null>
   const lenisRef = useRef<Lenis | null>(null);
   // ── Lenis smooth scroll ───────────────────────────────────────────────────
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
+    const lenis = new Lenis({ lerp: 0.08, smoothWheel: !reduceMotion && deviceTier() === 2 });
     lenisRef.current = lenis;
     // Lenis moves the page on its own clock. Without this line ScrollTrigger
     // only hears native scroll events, so scrubbed/pinned effects never track
@@ -18,7 +18,6 @@ export function usePortfolioScroll(progressRef: RefObject<HTMLDivElement | null>
     lenis.on("scroll", ScrollTrigger.update);
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
     return () => {
       gsap.ticker.remove(raf);
       lenis.off("scroll", ScrollTrigger.update);
@@ -35,6 +34,26 @@ export function usePortfolioScroll(progressRef: RefObject<HTMLDivElement | null>
       gsap.set(progressRef.current, { scaleX: 0, transformOrigin: "left center" });
     }
 
+    // Only lean sections that can actually be seen. Reuse tweens instead of
+    // allocating a new tween for the entire page on every scroll event.
+    const visible = new Set<HTMLElement>();
+    const setters = new Map<HTMLElement, ReturnType<typeof gsap.quickTo>>();
+    const observer = !reduceMotion && deviceTier() === 2 && window.matchMedia("(pointer: fine)").matches
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            const el = target as HTMLElement;
+            if (isIntersecting) visible.add(el);
+            else { visible.delete(el); setters.get(el)?.(0); }
+          });
+        })
+      : null;
+    if (observer) {
+      document.querySelectorAll<HTMLElement>(".skewable").forEach((el) => {
+        setters.set(el, gsap.quickTo(el, "skewY", { duration: 0.5, ease: EASE.out }));
+        observer.observe(el);
+      });
+    }
+
     const st = ScrollTrigger.create({
       trigger: document.documentElement,
       start: "top top",
@@ -46,17 +65,14 @@ export function usePortfolioScroll(progressRef: RefObject<HTMLDivElement | null>
         // and the global skew.
         const v = gsap.utils.clamp(-1, 1, self.getVelocity() / 2600);
         fieldState.velocity = v;
-        if (!reduceMotion && skewables.current.length) {
-          gsap.to(skewables.current, {
-            skewY: v * 2.2,
-            duration: 0.5,
-            ease: EASE.out,
-            overwrite: "auto",
-          });
-        }
+        visible.forEach((el) => setters.get(el)?.(v * 2.2));
       },
     });
-    return () => st.kill();
+    return () => {
+      st.kill();
+      observer?.disconnect();
+      setters.forEach((set) => set.tween.kill());
+    };
   }, []);
   return lenisRef;
 }

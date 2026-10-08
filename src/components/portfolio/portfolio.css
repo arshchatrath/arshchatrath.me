@@ -245,14 +245,9 @@
   to   { transform: translateX(-50%); }
 }
 
-/* Venn photo pulsing glow */
+/* Static glow avoids rerasterizing the entire portrait on every frame. */
 .venn-photo {
   filter: drop-shadow(0 0 20px rgba(0,180,216,0.12));
-  animation: photoGlow 3.5s ease-in-out infinite;
-}
-@keyframes photoGlow {
-  0%, 100% { filter: drop-shadow(0 0 20px rgba(0,180,216,0.12)); }
-  50%       { filter: drop-shadow(0 0 50px rgba(0,180,216,0.35)); }
 }
 
 /* Venn label hover scale + glow */
@@ -279,6 +274,11 @@
 }
 
 /* FAQ board — one screen, cards expand instead of scrolling */
+.faq-mobile-item summary { list-style: none; }
+.faq-mobile-item summary::-webkit-details-marker { display: none; }
+.faq-mobile-item[open] { border-color: rgba(0,180,216,0.45); background: rgba(0,180,216,0.06); }
+.faq-mobile-item[open] .faq-mobile-toggle { transform: rotate(45deg); }
+.faq-mobile-item summary:focus-visible { outline: 2px solid #00B4D8; outline-offset: 2px; border-radius: 0.5rem; }
 .faq-card {
   flex-basis: 0;
   transition:

@@ -13,7 +13,20 @@ function FaqBoard() {
   };
 
   return (
-    <div className="faq-board flex flex-col md:flex-row gap-2.5 h-[clamp(24rem,56vh,30rem)] md:h-[clamp(16rem,42vh,20rem)]">
+    <>
+    <div className="faq-mobile grid gap-3 md:hidden">
+      {FAQS.map(({ q, a }, i) => (
+        <details key={q} className="faq-mobile-item rounded-lg border border-white/10 bg-white/[0.02]" name="portfolio-faq" open={i === 0 ? true : undefined}>
+          <summary className="flex cursor-pointer items-center gap-3 p-4 text-left text-sm font-medium leading-snug">
+            <span className="font-mono text-xs text-[#00B4D8]">{String(i + 1).padStart(2, "0")}</span>
+            <span className="flex-1">{q}</span>
+            <span className="faq-mobile-toggle text-[#00B4D8]" aria-hidden="true">+</span>
+          </summary>
+          <p className="px-4 pb-5 text-sm leading-relaxed text-[#f5f0e8]/65">{a}</p>
+        </details>
+      ))}
+    </div>
+    <div className="faq-board hidden md:flex flex-row gap-2.5 h-[clamp(16rem,42vh,20rem)]">
       {FAQS.map(({ q, a }, i) => {
         const open = i === active;
         return (
@@ -22,6 +35,7 @@ function FaqBoard() {
             type="button"
             data-hover
             aria-expanded={open}
+            aria-label={q}
             onClick={() => setActive(i)}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
@@ -87,6 +101,7 @@ function FaqBoard() {
         );
       })}
     </div>
+    </>
   );
 }
 

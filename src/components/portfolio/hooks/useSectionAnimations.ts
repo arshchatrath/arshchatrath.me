@@ -31,6 +31,12 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
       return;
     }
 
+    const context = gsap.context(() => {
+    const listeners: Array<() => void> = [];
+    const listen = (el: Element, event: string, handler: EventListener) => {
+      el.addEventListener(event, handler);
+      listeners.push(() => el.removeEventListener(event, handler));
+    };
     // ── Section headings: masked per-line reveal ────────────────────────────
     // SplitText with autoSplit re-splits on resize, so lines stay correct when
     // the layout reflows. This replaces the old whole-block fade.
@@ -108,8 +114,8 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
         { opacity: 1, x: 0, duration: 0.55, delay: i * 0.12,
           scrollTrigger: { trigger: ".pm-section", start: "top 70%" } }
       );
-      el.addEventListener("mouseenter", () => gsap.to(el, { x: 8, duration: 0.2, ease: "power2.out" }));
-      el.addEventListener("mouseleave", () => gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }));
+      listen(el, "mouseenter", () => { gsap.to(el, { x: 8, duration: 0.2, ease: "power2.out" }); });
+      listen(el, "mouseleave", () => { gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }); });
     });
 
     // ── SECTION 4: Realizations ─────────────────────────────────────────────
@@ -124,8 +130,8 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
         { opacity: 1, x: 0, duration: 0.55, delay: i * 0.12,
           scrollTrigger: { trigger: ".realize-section", start: "top 70%" } }
       );
-      el.addEventListener("mouseenter", () => gsap.to(el, { x: -8, duration: 0.2, ease: "power2.out" }));
-      el.addEventListener("mouseleave", () => gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }));
+      listen(el, "mouseenter", () => { gsap.to(el, { x: -8, duration: 0.2, ease: "power2.out" }); });
+      listen(el, "mouseleave", () => { gsap.to(el, { x: 0, duration: 0.35, ease: "power3.out" }); });
     });
     gsap.fromTo(".proof-callout",
       { opacity: 0, y: 30 },
@@ -254,7 +260,12 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
       const half = track.scrollWidth / 2 || 1;
       const wrap = gsap.utils.wrap(-half, 0);
       let x = 0;
+      let onScreen = false;
+      const seen = new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; });
+      seen.observe(track);
+      listeners.push(() => seen.disconnect());
       const marquee = () => {
+        if (!onScreen || document.hidden) return;
         const v = fieldState.velocity;
         const dir = v < -0.02 ? 1 : -1;
         x += dir * (0.5 + Math.abs(v) * 16);
@@ -307,14 +318,14 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
       const onVennLeave = () => {
         circles.forEach((c) => c && gsap.to(c, { x: 0, y: 0, duration: 0.9, ease: EASE.out }));
       };
-      vennSvg.addEventListener("mousemove", onVennMove);
-      vennSvg.addEventListener("mouseleave", onVennLeave);
+      listen(vennSvg, "mousemove", onVennMove as EventListener);
+      listen(vennSvg, "mouseleave", onVennLeave);
 
       vennSvg.querySelectorAll<SVGTextElement>(".venn-label").forEach((labelEl, i) => {
-        labelEl.addEventListener("mouseenter", () => {
+        listen(labelEl, "mouseenter", () => {
           circles.forEach((c, j) => c && gsap.to(c, { opacity: j === i ? 1 : 0.25, duration: 0.3 }));
         });
-        labelEl.addEventListener("mouseleave", () => {
+        listen(labelEl, "mouseleave", () => {
           circles.forEach((c) => c && gsap.to(c, { opacity: 1, duration: 0.4 }));
         });
       });
@@ -341,15 +352,20 @@ export function useSectionAnimations(pageReady: boolean, containerRef: RefObject
     // Images and webfonts land after this effect runs and shift every trigger's
     // start/end. Without a refresh the scrubbed sections can sit at the wrong
     // progress — which looks exactly like "the animation isn't running".
-    const refresh = () => ScrollTrigger.refresh();
+    let mounted = true;
+    const refresh = () => { if (mounted) ScrollTrigger.refresh(); };
     window.addEventListener("load", refresh);
     if (document.fonts?.ready) document.fonts.ready.then(refresh);
 
     return () => {
+      mounted = false;
+      listeners.forEach(remove => remove());
       window.removeEventListener("load", refresh);
       splits.forEach(sp => sp.revert());
       tickers.forEach(fn => gsap.ticker.remove(fn));
     };
+    }, containerRef);
+    return () => context.revert();
   }, [pageReady]);
 
 }

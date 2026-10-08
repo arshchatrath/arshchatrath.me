@@ -90,6 +90,7 @@ export default function Cursor() {
     let shear = 0;
     let shearVelocity = 0;
     let lastTick = performance.now();
+    let lastMotionAt = lastTick;
 
     // Centre both on the pointer through GSAP itself. A CSS translate got
     // folded into GSAP's transform when it first read each element, and the
@@ -101,6 +102,7 @@ export default function Cursor() {
     const setDotY = gsap.quickSetter(dot, "y", "px");
 
     const onMove = (e: PointerEvent) => {
+      lastMotionAt = performance.now();
       mx = e.clientX;
       my = e.clientY;
 
@@ -194,6 +196,11 @@ export default function Cursor() {
 
     const tick = () => {
       const now = performance.now();
+      // Let the fluid springs settle, then stop writing transforms while idle.
+      if (document.hidden || !seen || now - lastMotionAt > 2500) {
+        lastTick = now;
+        return;
+      }
       const dt = Math.min(Math.max((now - lastTick) / 1000, 1 / 240), 0.032);
       lastTick = now;
       // Ring trails; dot is immediate. The gap is what reads as weight.

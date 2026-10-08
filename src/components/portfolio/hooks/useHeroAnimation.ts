@@ -170,6 +170,7 @@ export function useHeroAnimation(intro: boolean, nameEngraved: RefObject<boolean
       // ones nearest it brighten and lift a hair, then ease back when it
       // moves on. Positions are cached with the letter centres.
       const leadTick = () => {
+        if (document.hidden || heroThin >= 1) return;
         for (const w of leadWords) {
           // distance squashed vertically, so the light spreads along a line
           const d = Math.hypot(hx - w.cx, (hy - w.cy) * 1.8);
@@ -196,7 +197,7 @@ export function useHeroAnimation(intro: boolean, nameEngraved: RefObject<boolean
       });
 
       const heroTick = () => {
-        if (heroThin >= 1 || !heroCenters.length) return;
+        if (document.hidden || heroThin >= 1 || !heroCenters.length) return;
         for (let i = 0; i < heroChars.length; i++) {
           const st = heroState[i];
           let near = 0;
@@ -238,6 +239,7 @@ export function useHeroAnimation(intro: boolean, nameEngraved: RefObject<boolean
       let sy = 0;
       let wetOn = false;
       const liquidTick = () => {
+        if (document.hidden || (heroThin >= 1 && !wetOn)) return;
         if (!nameEl || !lens || !disp || !nameBox.w) return;
         const vx = Math.abs(hx - prevX);
         const vy = Math.abs(hy - prevY);

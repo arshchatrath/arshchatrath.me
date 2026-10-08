@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 const REVEAL_IMAGE = "/img/hero-reveal.png";
 const MAIN_IMAGE = "/img/hero-blue-shirt.png";
 const TRAIL_LIFETIME = 1800;
-const MAX_STROKES = 90;
+const MAX_STROKES = 48;
 type Point = { x: number; y: number };
 type Stroke = { node: SVGPathElement; born: number; width: number };
 type Bit = { node: SVGTextElement; born: number; x: number; y: number; drift: number };
@@ -58,7 +58,13 @@ export default function HeroPortrait() {
       setReadyToReveal(!motion.matches && pointer.matches);
     };
 
+    let lastPaint = 0;
     const tick = (now: number) => {
+      if (now - lastPaint < 1000 / 30) {
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      lastPaint = now;
       strokes = strokes.filter((stroke) => {
         const age = (now - stroke.born) / TRAIL_LIFETIME;
         if (age >= 1) {
@@ -129,11 +135,11 @@ export default function HeroPortrait() {
           node.setAttribute("opacity", "0");
           binaryRef.current.appendChild(node);
           bits.push({ node, born: now, x, y, drift: (Math.random() - 0.5) * 90 });
-          if (bits.length > 90) bits.shift()?.node.remove();
+          if (bits.length > 48) bits.shift()?.node.remove();
         }
         lastBit = now;
       }
-      if (previous && now - lastStamp < 12) return;
+      if (previous && now - lastStamp < 30) return;
       const start = previous ?? point;
       const distance = Math.hypot(point.x - start.x, point.y - start.y);
       const width = 310 + Math.min(distance * 0.9, 150) + Math.sin(now * 0.008) * 25;

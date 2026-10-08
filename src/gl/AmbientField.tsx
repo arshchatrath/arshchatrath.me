@@ -58,7 +58,7 @@ const FRAG = /* glsl */ `
   float fbm(vec2 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 3; i++) {
       v += a * noise(p);
       p *= 2.02;
       a *= 0.5;
@@ -123,8 +123,10 @@ export default function AmbientField() {
       renderer = new Renderer({
         alpha: false,
         antialias: false,
-        dpr: Math.min(window.devicePixelRatio || 1, tier === 2 ? 1.75 : 1),
-        powerPreference: "high-performance",
+        // This is a soft background texture: full retina resolution adds GPU
+        // work without visible detail. Keep foreground content at native DPR.
+        dpr: tier === 2 ? 0.65 : 0.5,
+        powerPreference: "low-power",
       });
     } catch {
       return; // context creation failed — leave the CSS background in place
@@ -169,16 +171,23 @@ export default function AmbientField() {
     let raf = 0;
     let running = true;
     const start = performance.now();
+    let lastFrame = 0;
+    const frameInterval = 1000 / (tier === 2 ? 30 : 20);
 
     const frame = () => {
       if (!running) return;
       const now = performance.now();
+      raf = requestAnimationFrame(frame);
+      if (now - lastFrame < frameInterval) return;
+      const elapsed = lastFrame ? Math.min(now - lastFrame, 100) : frameInterval;
+      lastFrame = now;
+      const ease = (amount: number) => 1 - Math.pow(1 - amount, elapsed / (1000 / 60));
 
-      order += (fieldState.order - order) * 0.06;
-      velocity += (fieldState.velocity - velocity) * 0.08;
-      mx += (fieldState.mouse[0] - mx) * 0.06;
-      my += (fieldState.mouse[1] - my) * 0.06;
-      intensity += (fieldState.intensity - intensity) * 0.08;
+      order += (fieldState.order - order) * ease(0.06);
+      velocity += (fieldState.velocity - velocity) * ease(0.08);
+      mx += (fieldState.mouse[0] - mx) * ease(0.06);
+      my += (fieldState.mouse[1] - my) * ease(0.06);
+      intensity += (fieldState.intensity - intensity) * ease(0.08);
 
       program.uniforms.uTime.value = (now - start) / 1000;
       program.uniforms.uOrder.value = order;
@@ -187,7 +196,6 @@ export default function AmbientField() {
       program.uniforms.uIntensity.value = intensity;
 
       renderer.render({ scene: mesh });
-      raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
 

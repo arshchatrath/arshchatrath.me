@@ -70,6 +70,9 @@ export function deviceTier(): Tier {
       c.getContext("webgl") ||
       c.getContext("experimental-webgl");
     if (!gl) return (cachedTier = 0);
+    // The probe is not the renderer. Release it immediately, especially on
+    // browsers with a small WebGL context budget.
+    (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context")?.loseContext();
   } catch {
     return (cachedTier = 0);
   }

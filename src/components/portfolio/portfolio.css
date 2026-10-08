@@ -94,10 +94,10 @@
 .hero-silhouette {
   position: absolute;
   /* Match the reveal image's x/y/width/height in the 1080 × 1440 SVG. */
-  left: -9.259%;
-  top: 5.556%;
-  width: 118.519%;
-  height: 114.583%;
+  left: 4.630%;
+  top: 0;
+  width: 88.889%;
+  height: 84.375%;
   z-index: 0;
   --silhouette-line: #00b4d8;
   background-image:

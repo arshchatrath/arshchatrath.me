@@ -220,7 +220,7 @@ export default function HeroPortrait() {
           </mask>
         </defs>
         <image className="hero-main-layer" href={MAIN_IMAGE} width="1080" height="1440" preserveAspectRatio="xMidYMid meet" mask={`url(#${id}-base)`} onLoad={() => setMainLoaded(true)} />
-        <image href={REVEAL_IMAGE} x="-100" y="80" width="1280" height="1650" preserveAspectRatio="xMidYMin meet" mask={`url(#${id}-trail)`} />
+        <image href={REVEAL_IMAGE} x="50" y="0" width="960" height="1215" preserveAspectRatio="xMidYMin meet" mask={`url(#${id}-trail)`} />
       </svg>
       <span className="hero-reveal-hint" aria-hidden="true"><span /> Hover to discover</span>
     </div>
